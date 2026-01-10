@@ -1,0 +1,108 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<main id="main" style="padding-top:35px">
+
+    <!-- ======= About Section ======= -->
+    <section id="about" class="about">
+        <div class="container">
+            <h1>Self Service</h1>
+            <p>If you miss your invitation card, no need to worry, our self service feature will help you to deliver the Invitation card at your invited Whatsapp no in few minutes</p>
+            <p>Process is very simple and hassle free, enter your Whatspp no with countrycode, we will send you One Time Password (OTP) for verification, after verification you will able to see all the events in which you are invited, click on sent to Whatsapp, in few minutes Card will delivered in your whatsapp</p>
+            @if (!@ViewBag.Verified)
+            {
+                @using (Html.BeginForm("Index", null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="input-group mb-3">
+                                <input type="number" name="wanumber" disabled="@ViewBag.Session" value="@ViewBag.MobileNo" class="form-control" required placeholder="Mobile No with country code" />
+
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <button type="submit" class="btn btn-success btn-block">Send OTP</button>
+                        </div>
+                    </div>
+
+                }
+                @if (Convert.ToBoolean(ViewBag.Session))
+                {
+                    @using (Html.BeginForm("Verify", null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+                    {
+                        <div class="row">
+                            <div class="col-9">
+                                <div class="input-group mb-3">
+                                    <input type="number" disabled="@ViewBag.Verified" maxlength="6" name="otp" class="form-control" required placeholder="OTP" />
+                                    <span>@TempData["message"]</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <button type="submit" disabled="@ViewBag.Verified" class="btn btn-primary btn-block">Verify</button>
+                            </div>
+                        </div>
+                    }
+                }
+            }
+
+
+            @if (ViewBag.List != null)
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <a href="~/SelfService/reset" class="btn btn-warning"><i class="far fa-comments" style="color:green"></i>&nbsp;Logout</a>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Event</th>
+                                    <th scope="col">Guest Name</th>
+                                    <th scope="col">Mobile No</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var g in ViewBag.List)
+                                {
+                                    <tr>
+                                        <td scope="col">@g.GuestId</td>
+                                        <td scope="col">@g.EventTitle</td>
+                                        <td scope="col">@g.FirstName</td>
+                                        <td scope="col">@g.PrimarycontactNo</td>
+                                        <td scope="col">
+                                            @if (AppSession.GetSession(this.Context, Convert.ToString(g.GuestId)) != null && AppSession.GetSession(this.Context, Convert.ToString(g.GuestId))=="sent")
+                                            {
+                                                <span>sent</span>
+                                            }
+                                            else
+                                            {
+                                                <div class="btn-group">
+                                                    <a href="~/SelfService/sentWA?id=@g.GuestId" class="btn btn-warning"><i class="far fa-comments" style="color:green"></i>&nbsp;Sent on WA</a>
+                                                </div>
+                                            }
+
+                                        </td>
+                                    </tr>
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else if (@ViewBag.Verified)
+            {
+                <a href="~/SelfService/reset" class="btn btn-warning"><i class="far fa-comments" style="color:green"></i>&nbsp;Logout</a>
+                <p>No Active event found</p>
+            }
+
+
+        </div>
+    </section>
+</main>
+

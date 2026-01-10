@@ -1,0 +1,7 @@
+﻿alter table GuestsDeliveredourServiceMessage 
+add ProviderName nvarchar(50) null 
+
+-------------------
+alter table GuestsDeliveredourServiceMessage 
+add ProviderNumber nvarchar(50) null 
+--------------

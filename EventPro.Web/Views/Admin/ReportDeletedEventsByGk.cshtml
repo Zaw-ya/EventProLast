@@ -1,0 +1,216 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+
+@{
+    ViewData["Title"] = "ReportDeletedEventsByGk";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"]
+            </div>
+        }
+
+        <div class="card card-default color-palette-box">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-trash"></i> Deleted Events By Gatekeeper</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="GKId">Gatekeeper</label>
+                            @Html.DropDownList("GKId", ViewBag.Users as SelectList, "--Select--",
+                            new { @class = "form-control select2", id = "GKId" })
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="EventId">Event ID</label>
+                            <input type="text" name="EventId" id="EventId" value="@ViewBag.EventId" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="Address">Address</label>
+                            @Html.DropDownList("Address", ViewBag.Address as SelectList, "--Select--",
+                                                        new { @class = "form-control select2", id = "Address" })
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="startFrom">Start From</label>
+                            <input type="date" name="startFrom" id="startFrom" value="@ViewBag.startFrom" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="startTo">Start To</label>
+                            <input type="date" name="startTo" id="startTo" value="@ViewBag.startTo" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="col-md-6" style="float:right">
+                    <button style="width:100px" class="btn btn-primary btn-sm" id="SearchBtn">Search</button>
+                    <button style="width:100px" class="btn btn-warning btn-sm" id="RefreshPage">Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid">
+                        <div class="card-body p-0" style="margin-top:10px">
+                            <table id="ResultTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Event ID</th>
+                                        <th>Linked To</th>
+                                        <th>Title</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Venue</th>
+                                        <th>Location</th>
+                                        <th>Deleted On</th>
+                                        <th>Deleted By (Id)</th>
+                                        <th>Gatekeeper Name</th>
+                                        <th>Assigned</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @* Data will be rendered here via AJAX *@
+                                </tbody>
+                            </table>
+                        </div> <!-- /.card-body -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var dataTable = $("#ResultTable").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "language": {
+                    "emptyTable": "?? ???? ?????? ????? ?? ??????",
+                    "processing": "???? ????????...",
+                    "search": "?????:",
+                    "lengthMenu": "??? _MENU_ ?????",
+                    "info": "??? _START_ ??? _END_ ?? _TOTAL_ ?????",
+                    "infoEmpty": "??? 0 ??? 0 ?? 0 ?????",
+                    "paginate": {
+                        "first": "?????",
+                        "last": "??????",
+                        "next": "??????",
+                        "previous": "??????"
+                    }
+                },
+                "ajax": {
+                    "url": "/Admin/FilterDeletedEventsByGk",
+                    "type": "POST",
+                    "datatype": "json",
+                    "data": function (d) {
+                        d.GKId = $('#GKId').val();
+                        d.EventId = $('#EventId').val();
+                        d.Address = $('#Address').val();
+                        d.startFrom = $('#startFrom').val();
+                        d.startTo = $('#startTo').val();
+                    }
+                },
+                order: [[0, 'desc']],
+                "columnDefs": [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+                "columns": [
+                    { "data": "id", "name": "Id", "autoWidth": true },
+                    { "data": "eventId", "name": "EventId", "autoWidth": true },
+                    {
+                        "data": "linkedTo",
+                        "name": "LinkedTo",
+                        "autoWidth": true,
+                        "render": function (data, type, row) {
+                            return data || "--";
+                        }
+                    },
+                    { "data": "systemEventTitle", "name": "SystemEventTitle", "autoWidth": true },
+                    {
+                        "data": "eventFrom",
+                        "name": "EventFrom",
+                        "autoWidth": true,
+                        "render": function (data, type, row) {
+                            return moment(row.eventFrom).format('DD-MMM-YYYY');
+                        }
+                    },
+                    {
+                        "data": "eventTo",
+                        "name": "EventTo",
+                        "autoWidth": true,
+                        "render": function (data, type, row) {
+                            return moment(row.eventTo).format('DD-MMM-YYYY');
+                        }
+                    },
+                    { "data": "eventVenue", "name": "EventVenue", "autoWidth": true },
+                    { "data": "location", "name": "Location", "autoWidth": true },
+                    {
+                        "data": "deletedOn",
+                        "name": "DeletedOn",
+                        "autoWidth": true,
+                        "render": function (data, type, row) {
+                            return moment(row.deletedOn).format('DD-MMM-YYYY HH:mm');
+                        }
+                    },
+                    { "data": "deletedById", "name": "DeletedById", "autoWidth": true },
+                    { "data": "deletedByName", "name": "DeletedByName", "autoWidth": true },
+                    {
+                        "data": "assignedNames",
+                        "name": "AssignedNames",
+                        "autoWidth": true,
+                        "render": function (data, type, row) {
+                            if (data && data.length > 0) {
+                                var names = data.map(name => `<li>${name}</li>`).join('');
+                                return `<ul class="mb-0">${names}</ul>`;
+                            } else {
+                                return '<span class="badge badge-danger">Not Assigned</span>';
+                            }
+                        }
+                    }
+                ]
+            });
+
+            $('#RefreshPage').click(function () {
+                // Reset all filters
+                $("#GKId")[0].selectedIndex = 0;
+                $("#Address")[0].selectedIndex = 0;
+                $('#EventId').val('');
+                $('#startFrom').val('');
+                $('#startTo').val('');
+
+                // Redraw table with reset filters
+                dataTable.draw();
+            });
+
+            $('#SearchBtn').click(function () {
+                dataTable.draw();
+            });
+        });
+    </script>
+}

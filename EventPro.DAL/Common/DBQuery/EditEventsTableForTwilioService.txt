@@ -1,0 +1,5 @@
+
+ALTER TABLE Events
+ADD 
+	SendingType NVARCHAR(25) NULL,
+	ThanksMessage NVARCHAR(max) NULL;

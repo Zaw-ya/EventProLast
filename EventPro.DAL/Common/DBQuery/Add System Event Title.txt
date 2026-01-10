@@ -1,0 +1,165 @@
+alter table Events 
+add SystemEventTitle nvarchar(300)
+--------------------------------------------------------------------------------------------
+update Events
+set SystemEventTitle = EventTitle
+--------------------------------------------------------------------------------------------
+ALTER View [dbo].[Vw_Events]                
+as                
+select e.Id,            
+e.EventCode,            
+e.EventTitle,  
+e.SystemEventTitle,
+e.Type,            
+e.EventFrom,            
+e.EventTo,            
+e.EventVenue,            
+CONCAT('E', REPLACE(STR(id, 5), SPACE(1), '0'))  as GmapCode,            
+e.GmapCode as GLocation,            
+e.EventDescription,            
+e.CreatedBy,            
+e.CreatedFor,            
+e.CreatedOn,            
+e.ModifiedBy,            
+e.ModifiedOn,            
+e.IsArchived,   
+e.LinkedEvent,
+e.Status,'~/upload/card/'+ec.Icon as IconUrl,ec.Icon, u.FirstName,u.LastName,ec.Category from Events (nolock) e                
+inner join EventCategory(nolock) ec                
+on e.type=ec.eventid                
+inner join Users(nolock) u                
+on e.CreatedBy=u.UserId 
+------------------------------------------------------------------------------------------
+
+ALTER view [dbo].[vw_ConfirmationReport]
+ as    
+ select Id,linkedEvent,eventTitle,ge.SystemEventTitle,  
+ (select count(*) from Guest(nolock)  
+ where Eventid=ge.Id and
+ (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as YesResponse, 
+ (select sum(NoOfMembers) from Guest(nolock)    where Eventid=ge.Id and (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as TotalConfirmedGuests, 
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response = N'اعتذار' or Response = N'الاعتذار عن الدعوة' or Response = N'Decline'   or Response = 'اعتذار' or Response = 'الاعتذار عن الدعوة' or Response = 'Decline'    )) as NoResponse,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,    
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.Id  and ResponseCode='Declined' ) as Declined,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and TextDelivered = 1) as TextDelivered,   
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and MessageId is not null) as TextSent
+ from Events ge
+ where WhatsappConfirmation = 1  
+-----------------------------------------------------------------------------------------
+
+ALTER PROCEDURE [dbo].[ProcScanSummary]      
+AS      
+BEGIN  
+    SELECT TOP 200  
+        e.id,
+        e.LinkedEvent,
+        e.EventTitle,
+        e.SystemEventTitle,
+        (SELECT ISNULL(SUM(g.NoOfMembers), 0) FROM Guest g WHERE g.EventId = e.id) AS TotalGuests,
+        COUNT(CASE WHEN sch.ResponseCode = 'Allowed' THEN 1 END) AS Allowed,
+        COUNT(CASE WHEN sch.ResponseCode = 'Declined' THEN 1 END) AS Declined
+    FROM events e     
+    LEFT JOIN Guest g ON e.Id = g.EventId   
+    LEFT JOIN ScanHistory sch ON sch.GuestId = g.GuestId   
+    WHERE e.EventFrom <= GETDATE() + 1   
+    GROUP BY 
+        e.id, 
+        e.LinkedEvent, 
+        e.EventTitle,
+        e.SystemEventTitle 
+    ORDER BY e.id DESC  
+END
+
+-----------------------------------------------------------------------------------------
+
+ALTER view [dbo].[VwScanLogs]    
+as     
+select sh.*,u.FirstName +' '+u.LastName as ScannedBy,g.FirstName as GuestName 
+,g.NoOfMembers as Nos,    e.LinkedEvent,e.SystemEventTitle,e.EventTitle,e.GmapCode as EventCode
+,e.CreatedFor ,e.Id as EventId
+from ScanHistory(nolock) sh    left join Users(nolock) u    
+on sh.ScanBy=u.UserId   left join guest(nolock) g        
+on g.GuestId=sh.GuestId left join Events (nolock) e       
+on e.Id=g.EventId 
+--------------------------------------------------------------------------------------------
+/****** Object:  StoredProcedure [dbo].[Proc_GetEventsStatsByGK]    Script Date: 5/29/2025 6:20:19 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[Proc_GetEventsStatsByGK]       
+@GatekeeperId int null, 
+@pageNo int =1,
+@PageSize int =30,
+@NoOfPages INT = 0 OUTPUT
+AS     
+BEGIN  
+ BEGIN--
+	SET NOCOUNT ON;
+	  WITH cte AS (   
+		  SELECT  E.id,E.ContactName,E.ContactPhone,
+		  RIGHT(CONVERT(VARCHAR, AttendanceTime, 100), 7) AS AttendanceTime ,
+		   RIGHT(CONVERT(VARCHAR, LeaveTime, 100), 7) AS LeaveTime ,
+
+		  GMapCode ,Country.CountryName,City.CityName ,
+		        E.SystemEventTitle as EventTitle,E.eventFrom,E.eventTo,E.eventVenue,CONCAT('E',FORMAT(e.Id, '00000')) AS EventCode     
+		 ,(SELECT count( Allowed.GuestId) ) scanned	  			   
+	
+		FROM EventGatekeeperMapping EGKM
+			INNER JOIN Events E            on E.Id=EGKM.EventId  
+			LEFT JOIN   guest GH            on GH.EventId=E.Id 
+			Left JOIN  ScanHistory Allowed ON Allowed.GuestId=GH.GuestId  AND Allowed.ResponseCode='Allowed' 
+		    Left Join City on City.id=E.CityID
+		    Left Join Country on City.CountryId=Country.Id
+	 
+	  WHERE    EGKM.GatekeeperId=@GatekeeperId  AND GH.Archived is null				
+          
+	  GROUP BY E.ContactName,E.ContactPhone,E.LeaveTime,E.AttendanceTime,GMapCode 
+	  ,Eventlocation,Country.CountryName,City.CityName,
+	        E.id,E.SystemEventTitle,E.EventFrom,E.EventTo,E.EventVenue,EventCode
+	)
+
+	SELECT    CTE.id,CTE.ContactName,CTE.ContactPhone,CTE.AttendanceTime,CTE.LeaveTime,
+		  'https://maps.app.goo.gl/'+GMapCode as 'GmapCode' ,CTE.EventTitle,CTE.eventFrom,CTE.eventTo,CTE.eventVenue
+		  , EventCode, scanned	 ,
+	CountryName+'|'+CityName as Eventlocation,
+	--5 as Eventlocation,
+	(SELECT sum (g.NoOfMembers) ) 'totalAllocated'
+	FROM cte 
+	 LEFT JOIN guest G  on G.EventId=cte.Id --and G.Archived is null
+	  GROUP BY  cte.ContactName,cte.ContactPhone,cte.LeaveTime,cte.AttendanceTime,
+	         GMapCode ,CountryName,CityName,
+	         cte.id,cte.EventTitle,cte.EventFrom,cte.EventTo,cte.EventVenue,EventCode,cte.scanned,GmapCode
+	  
+	 ORDER BY EventFrom DESC
+	  OFFSET ((@pageNo - 1) * @PageSize) ROWS FETCH NEXT @PageSize ROWS ONLY;
+ END
+
+ if(@pageNo=1)---For count all
+BEGIN 
+	 SELECT  @NoOfPages=CEILING(cast(COUNT_BIG(distinct E.Id)as float) /@PageSize)
+	FROM EventGatekeeperMapping EGKM
+		INNER JOIN Events E            on E.Id=EGKM.EventId  	 
+  WHERE   EGKM.GatekeeperId=@GatekeeperId                                                 
+END
+
+END
+
+------------------------------------------------------------------------------------
+
+alter View vw_GateKeeperScheduled 
+as
+select
+em.*,e.EventFrom,e.EventTo,e.SystemEventTitle as EventTitle ,e.EventVenue
+from 
+EventGatekeeperMapping em  
+inner join
+Events e
+on e.Id=em.EventId
+
+------------------------------------------------------------------------------------
+
+
+

@@ -1,0 +1,137 @@
+@model EventPro.DAL.Models.EventCategory
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-warning">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="col-md-2" style="float:right">
+                                <button type="button"  style="float:right" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-default">
+                                    Create Category
+                                </button>
+                            </div>
+                        </div>
+                        <div class="container-fluid">
+
+                            <!-- /.card-header -->
+                            <div class="card-body p-0" style="margin-top:10px;">
+
+                                <table id="searchableTable" class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Id</th>
+                                            <th>Icon</th>
+                                            <th>Category</th>
+                                            <th>Created By</th>
+                                            <th>Created On</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var cat in ViewBag.EventCategory)
+                                        {
+                                            <tr>
+                                                <td>@cat.EventId</td>
+                                                <td>
+                                                    @if (@cat.Icon == null)
+                                                    {
+                                                        <img src="~/Upload/card/default.png" width="40px" height="40px" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="~/upload/card/@cat.Icon" width="40px" height="40px" />
+                                                    }
+                                                </td>
+                                                <td>@cat.Category</td>
+                                                <td>@cat.FirstName @cat.LastName</td>
+                                                <td align="right">@cat.CreatedOn.ToLocalTime()</td>
+                                                <td>
+                                                    @if (cat.Status)
+                                                    {
+                                                        <span class="badge badge-success">active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-warning">inactive</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                        <a href="#" onclick="EditCategory(@cat.EventId,'@cat.Category')" data-toggle="modal" data-target="#modal-default"><i class="nav-icon fas fa-edit" style="color:gray; "></i></a>
+                                                  
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">New Category</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Category Name</label>
+                            @Html.HiddenFor(model => model.EventId)
+                            @Html.TextBoxFor(model => model.Category, new { @required = "required", @class = "form-control", @name = "Name", @type = "text", @placeholder = "Category Name" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Icon</label>
+                            @Html.TextBoxFor(model => model.Icon, new {  @class = "form-control", @name = "Icon", @type = "file", @placeholder = "Icon" })
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+<script>
+    function EditCategory(id, catName) {
+        $('#Category').val(catName);
+        $('#EventId').val(id);
+    }
+</script>

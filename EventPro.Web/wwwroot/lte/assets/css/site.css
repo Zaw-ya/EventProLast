@@ -1,0 +1,37 @@
+﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification\ 
+for details on configuring this project to bundle and minify static web assets. */
+
+/* Hide/rearrange for smaller screens */
+@media screen and (max-width: 767px) {
+    /* Hide captions */
+    .carousel-caption {
+        display: none;
+    }
+}
+.form-group.required .control-label:after {
+    content: "*";
+    color: red;
+}
+.grid-icon{
+    width:30px;
+    height:30px;
+}
+.dataTables_filter{
+    float:right;
+}
+.fontPreview
+{
+    color:red;
+}
+.toast.show {
+    display: fixed;
+    opacity: 1;
+}
+.required{
+    font-size:medium;
+    margin-left:5px;
+}
+.required .control-label:after {
+    content: "*";
+    color: red;
+}

@@ -1,0 +1,305 @@
+@model EventPro.DAL.Models.Guest
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_User.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="card card-default color-palette-box">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-tag"></i>
+                    Guest Info
+                </h3>
+                @foreach (var log in ViewBag.Data)
+                {
+                    <div class="col-md-1" style="float: right;">
+                        <a href="#" class="btn btn-success btn-sm" style="width:100%; margin-bottom:0px;">Yes - @log.YesResponse</a>
+                    </div>
+                    <div class="col-md-1" style="float: right;">
+                        <a href="#" class="btn btn-danger btn-sm" style="width:100%; margin-bottom:0px;">No - @log.NoResponse</a>
+                    </div>
+                    <div class="col-md-1" style="float: right;">
+                        <a href="#" class="btn btn-warning btn-sm" style="width:100%; margin-bottom:0px;">Waiting - @log.WaitingResponse</a>
+                    </div>
+                    <div class="col-md-2" style="float: right;">
+                        <a href="~/user/viewevent/@ViewBag.EventId" class="btn btn-primary btn-sm" style="width:100%; margin-bottom:0px;">Back to Events</a>
+                    </div>
+                }
+
+            </div>
+        </div>
+
+        <div class="row">
+
+
+            <div class="col-md-12">
+                <div class="card card-warning">
+
+                    <div class="card">
+                        <div class="container-fluid">
+                            <!-- /.card-header -->
+                            <div class="card-body p-0">
+                                <table id="searchableTable3" class="table table-bordered table-hover" style="display:none">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Detail</th>
+
+                                            <th>Total Yes</th>
+                                            <th>Total No</th>
+                                            <th>No Resp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{ int iCounter = 0;}
+                                        @foreach (var log in ViewBag.Data)
+                                        {
+                                            iCounter++;
+                                            <tr>
+                                                <td>@iCounter</td>
+                                                <td>Confirmation</td>
+
+                                                <td>@log.YesResponse</td>
+                                                <td>@log.NoResponse</td>
+                                                <td>@log.WaitingResponse</td>
+                                            </tr>
+
+                                        }
+
+                                    </tbody>
+                                </table>
+                                <div class="table-title">
+
+                                </div>
+                                <table id="searchableTable" class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Guest Name</th>
+                                            <th>Mobile No</th>
+                                            <th>Validity</th>
+                                            @if (ViewBag.Route == null )
+                                            {
+                                                <th>Invitation</th>
+                                            }
+                                            <th>QR</th>
+                                            <th>Response</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var guest in ViewBag.GuestList)
+                                        {
+                                        <tr>
+                                            <td>@guest.FirstName</td>
+                                            <td>@guest.PrimaryContactNo</td>
+                                            <td>@guest.NoOfMembers</td>
+                                            @if (ViewBag.Route == null )
+                                            {
+                                                <td>
+                                                    @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                    {
+                                                        <span>Failed</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.TextRead))
+                                                    {
+                                                        <span>Read</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.TextDelivered))
+                                                    {
+                                                        <span>Delivered</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.TextSent))
+                                                    {
+                                                        <span>Sent</span>
+                                                    }
+                                                    else if (guest.MessageId != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Initiated</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Pending</span>
+                                                        }
+                                                    }
+                                                </td>
+                                            }
+
+
+                                            <td>
+                                                @if (guest.ImgFailed != null && Convert.ToBoolean(guest.ImgFailed))
+                                                {
+                                                    <span>Failed</span>
+                                                }
+                                                else if (Convert.ToBoolean(guest.ImgRead))
+                                                {
+                                                    <span>Read</span>
+                                                }
+                                                else if (Convert.ToBoolean(guest.ImgDelivered))
+                                                {
+                                                    <span>Delivered</span>
+                                                }
+                                                else if (Convert.ToBoolean(guest.ImgSent))
+                                                {
+                                                    <span>QR-Sent</span>
+                                                }
+                                                else if (guest.ImgSentMsgId != null)
+                                                {
+                                                    if (guest.Response == "Whatsapp Not exists")
+                                                    {
+                                                        <span>Whatsapp Not exists</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Initiated</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (guest.Response == "Whatsapp Not exists")
+                                                    {
+                                                        <span>Whatsapp Not exists</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Pending</span>
+                                                    }
+                                                }
+                                            </td>
+                                            <td>@guest.Response</td>
+
+                                        </tr>
+
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</section>
+<!-- Modal -->
+<div class="modal fade" id="deleteConfirmation" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Confirmation - <label id="selectedGuest"></label></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure want to delete this guest, once deleted you will not able to recover this.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <a href="#" id="deleteGuest" class="btn btn-warning btn-sm">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-guest">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><lablel id="modalTitle">Add Guest</lablel></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("Guest", "User", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+                    @Html.HiddenFor(Model => Model.EventId)
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Full Name</label>
+                            @Html.HiddenFor(Model => Model.GuestId)
+                            @Html.TextBoxFor(model => model.FirstName, new { @required = "required", @class = "form-control", @name = "Name", @type = "text", @placeholder = "Full Name" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">No. of Member</label>
+                            @Html.TextBoxFor(model => model.NoOfMembers, new { @required = "required", @class = "form-control", @name = "NOM", @type = "number", @placeholder = "No. of Member" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Contact No</label>
+                            @Html.TextBoxFor(model => model.PrimaryContactNo, new { @required = "required", @class = "form-control", @name = "Contact No", @type = "text", @placeholder = "Contact No" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Additional Text</label>
+                            @Html.TextBoxFor(model => model.AdditionalText, new { @required = "required", @class = "form-control", @name = "Additional Text", @type = "text", @placeholder = "Additional Text" })
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-uploadguest">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Upload Guest</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("Guests", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+                    @Html.HiddenFor(Model => Model.EventId)
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            @Html.TextBoxFor(Model => Model.Address, new { @required = "required", @class = "form-control", @name = "file", @type = "file", @placeholder = "Excel file" })
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="submit">Upload</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>

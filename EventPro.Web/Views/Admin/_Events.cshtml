@@ -1,0 +1,388 @@
+@model EventPro.DAL.Models.Events
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+@if(TempData["entry-error"] != null)
+{
+    <blockquote class="quote-danger">
+        <h5>Error!</h5>
+        <p>@TempData["entry-error"]</p>
+    </blockquote>
+}
+<section class="content">
+    <div class="container-fluid">
+        <!-- SELECT2 EXAMPLE -->
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">Create Events</h3>
+
+            </div>
+            <!-- /.card-header -->
+            @using(Html.BeginForm(null,null,FormMethod.Post,new { enctype = "multipart/form-data" }))
+            {
+                @Html.ValidationSummary(true)
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 ">
+                            <div class="form-group">
+                                <label>Message Header Image</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.MessageHeaderImage, new { @class = "form-control", @type = "file" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-picture-o"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 col-md-6 ">
+                            <div class="form-group">
+                                <label>Message Header Text</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.MessageHeaderText, new { @class = "form-control", @type = "text"})
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Created For<span class="required">*</span></label>
+                                <div class="input-group mb-3">
+                                    @Html.DropDownListFor(Model => Model.CreatedFor, ViewBag.Users as SelectList, "--Select--", new { @class = "form-control select2", @required = "required" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Parent Welcoming<span class="required">*</span></label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.ParentTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Parent Title", @tabindex = 0 })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Parent Welcoming Gender<span class="required">*</span></label>
+                                <select class="form-control" asp-items="ViewBag.GenderList" asp-for="ParentTitleGender">
+                                    <option>Female</option>
+                                    <option>Male</option>
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Message Language<span class="required">*</span></label>
+                                <select class="form-control" asp-items="ViewBag.MessageLanguage" asp-for="MessageLanguage">
+                                    <option>Arabic Male</option>
+                                    <option>Arabic Female</option>
+                                    <option>English</option>
+                                    <option>Work Invitaion</option>
+                                    <option>Custom-Invitation</option>
+                                    <option>Custom-Invitation with client name</option>
+                                    <option>QR-Invitation</option>
+                                    <option>Twilio | Arabic</option>
+                                    <option>Twilio | English</option>
+                                    <option>Twilio | Custom</option>
+
+                                    
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Sending Type<span class="required">*</span></label>
+                                <select class="form-control"  asp-for="@Model.SendingType">
+                                    <option>Basic</option>
+                                    <option>With Guest Name</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-6 ">
+                            <div class="form-group">
+                                <label>Custom Invitation Message Template ID </label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.CustomInvitationMessageTemplateName, new { @class = "form-control", @type = "text" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Card Invitation Template<span class="required">*</span></label>
+                                <select class="form-control" asp-for="CardInvitationTemplateType">
+                                    <option disabled selected>-- select --</option>
+                                    <option>Default</option>
+                                    <option>Custom with client name</option>
+                                </select>
+                            </div>
+
+                        </div>
+                        <div class="col-lg-6 col-md-6 ">
+                            <div class="form-group">
+                                <label>Custom Card Invitation ID</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.CustomCardInvitationTemplateName, new { @class = "form-control", @type = "text" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Title</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.EventTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Title", @tabindex = 0 })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-comment"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.form-group -->
+                            <!-- /.form-group -->
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Category</label>
+                                <div class="input-group mb-3">
+                                    @Html.DropDownListFor(Model => Model.Type, ViewBag.Type as SelectList, "--Select--", new { @class = "form-control select2",@required = "required"})
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.EventFrom, new { @required = "required", @class = "form-control", @type = "date", @placeholder = "Start Date", @tabindex = 2 })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-calendar"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.form-group -->
+                            <div class="form-group">
+                                <label>End Date &nbsp; &nbsp; &nbsp;<span id="lbldateMsg" style="color:red; font-style:italic; font-size:small">@ViewBag.ErrorDate</span></label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.EventTo, new { @required = "required", @class = "form-control", @type = "date", @placeholder = "End Date", @tabindex = 3 })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-calendar"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.form-group -->
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Venue</label><div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.EventVenue, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Venue", @tabindex = 4 })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-map-marker"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @*@Html.DropDownList("ProductType", ViewBag.ProductTypeList as SelectList, "--Select--", new { @class = "form-control select2", @style = "width:100%" })*@
+                            </div>
+                            <div class="form-group">
+                                <label>Google Map Location</label><div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.GmapCode, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Google Map Location", @tabindex = 4 })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-map-marker"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @*@Html.DropDownList("ProductType", ViewBag.ProductTypeList as SelectList, "--Select--", new { @class = "form-control select2", @style = "width:100%" })*@
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Event Location</label>
+                                <div class="input-group mb-3">
+                                    @Html.DropDownListFor(Model => Model.CityId, ViewBag.EventLocations as SelectList, "--Select--", new { @class = "form-control select2", @required = "required"})
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Attendance Time</label>
+                                <div class="input-group mb-3">
+                                    <input type="time" name="AttendanceTime" value="18:00">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Leave Time</label>
+                                <div class="input-group mb-3">
+                                    <input type="time" name="LeaveTime" value="01:00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Show on application Calender?</label>
+                                <div class="input-group mb-3">
+                                    <input type="checkbox" name="ShowOnCalender" checked value="true">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label asp-for="SendInvitation">Send Invitation?</label>
+                                <div class="input-group mb-3">
+                                    @Html.CheckBoxFor(model => model.SendInvitation, new { @checked = "checked" })
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Linked To</label>
+                                <div class="input-group mb-3">
+                                    @Html.DropDownListFor(Model => Model.LinkedEvent, ViewBag.LinkedEvents as SelectList, "--Select--", new { @class = "form-control select2" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>
+                                    Description
+                                    <span id="lblDescMsg" style="color:red; font-style:italic; font-size:small">@ViewBag.ErrorDesc</span>
+                                </label>
+                                <div class="input-group mb-3">
+                                    @Html.TextAreaFor(model => model.EventDescription, new { @class = "textarea", @type = "text",@placeholder = Html.DisplayNameFor(m => m.EventDescription), @tabindex = 5 })
+                                </div>
+                            </div>
+                        </div>
+                      
+
+
+                        <div class="col-lg-3 col-md-3">
+                            <div class="form-group">
+                                <label for="ContactName">Contact Name</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.ContactName, new { @required = "required",@placeholder = "Contact Name", @class = "form-control", @type = "text"})
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-3">
+                            <div class="form-group">
+                                <label for="ContactPhone">Contact Phone</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.ContactPhone, new {pattern="^[0-9]+$", @required = "required", @class = "form-control",@placeholder = "Contact Phone", @minlength = "3", @maxlength = "20",@type = "text"})
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-6 ">
+                            <div class="form-group">
+                                <label>Thanks Cards send on Number</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.ConguratulationsMsgSentOnNumber, new { @class = "form-control", @type = "text" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                        <div class="row">
+                            <div class="col-lg-6 col-md-6 ">
+                                <div class="form-group">
+                                  
+                                   
+                                        <label class="form-label">Thanks Card Template Type</label>
+                                        <div>
+                                        <select class="form-control" asp-for="ConguratulationsMsgType">
+                                            <option disabled selected>-- select --</option>
+                                            <option>Custom</option>
+                                            <option>Custom with client name</option>
+                                        </select>
+                                       
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 col-md-6 ">
+                                <div class="form-group">
+                                    <label>Thanks Card Template ID</label>
+                                    <div class="input-group mb-3">
+                                        @Html.TextBoxFor(model => model.ConguratulationsMsgTemplateName, new { @class = "form-control", @type = "text" })
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">
+                                                <span class="fas fa-arrows-h"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                    <!-- /.row -->
+
+
+                    <div class="modal-footer justify-content-between">
+                        <a href="@Url.Content("~")/admin/events" class="btn btn btn-danger">Back</a>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.card -->
+        </div><!-- /.container-fluid -->
+    </div>
+</section>

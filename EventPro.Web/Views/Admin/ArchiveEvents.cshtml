@@ -1,0 +1,322 @@
+@model EventPro.DAL.Models.EventCategory
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="card card-default color-palette-box">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-tag"></i>
+                    Archive Events
+                </h3>
+                @*<div class="col-md-6" style="float: inline-start; left: 20px;">
+                    <span class="accent-indigo">@AppSession.GetSession(this.Context, SesionConstant.TempData)</span>
+                </div>
+                <div class="col-md-2" style="float: right; ">
+                    <a href="~/admin/RefreshCache" class="btn btn-warning btn-sm" style="width:100%; margin-bottom:0px;">Refesh Cache</a>
+                </div>
+                <div class="col-md-2" style="float: right;">
+                    <a href="~/admin/_events" class="btn btn-primary btn-sm" style="width:100%; margin-bottom:0px;">Create Events</a>
+                </div>*@
+            </div>
+            @*@using (Html.BeginForm(null, null, FormMethod.Post))
+            {
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Client Name</label>
+                                @Html.DropDownList("", ViewBag.Client as SelectList, "--Select--", new { @class = "form-control select2", @name = "clientName" })
+
+                            </div>
+
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Event Status</label>
+
+                                <select class="form-control select2 select2-hidden-accessible" name="eventStatus" multiple="" data-placeholder="Select Status" style="width: 100%;" data-select2-id="7" tabindex="-1" aria-hidden="true">
+                                    <option data-select2-id="In Progress">In Progress</option>
+                                    <option data-select2-id="Upcoming">Upcoming</option>
+                                    <option data-select2-id="Past">Past</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>Start Date</label>
+                            <input type="date" name="dateFrom" class="form-control" />
+
+                        </div>
+                        <div class="col-md-3">
+                            <label>End Date</label>
+                            <input type="date" name="dateTo" class="form-control" />
+
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="col-md-3" style="float:right">
+                        <button type="submit" style="width:100px" class="btn btn-warning btn-sm">Search</button>
+                    </div>
+                </div>
+            }*@
+            <!-- /.card-body -->
+        </div>
+        <div class="row">
+
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0" style="margin-top:10px">
+                            <table id="searchableTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Linked To</th>
+                                        <th>Title</th>
+
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Venue</th>
+                                        <th>Created On</th>
+                                        <th>Created By</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var cat in ViewBag.Events)
+                                    {
+                                        <tr>
+                                            <td>@cat.Id</td>
+                                            <td> @(cat.LinkedEvent == null ? "--" : cat.LinkedEvent)</td>
+                                            <td>
+                                                <a href="~/admin/viewevent/@cat.Id">
+                                                    @if (@cat.Icon != null)
+                                                    {
+
+                                                        <img src="~/Upload/card/@cat.Icon" class="grid-icon" /> @cat.EventTitle
+
+                                                    }
+
+                                                    else
+                                                    { <img src="~/Upload/card/default.png" class="grid-icon" /> @cat.EventTitle
+                                                }
+                                                </a>
+                                            </td>
+                                            <td align="right">@Convert.ToDateTime(cat.EventFrom).ToString("dd-MMM-yyyy")</td>
+                                            <td align="right">@Convert.ToDateTime(cat.EventTo).ToString("dd-MMM-yyyy")</td>
+                                            <td>@cat.EventVenue</td>
+                                            <td align="right">@Convert.ToDateTime(cat.CreatedOn).ToLocalTime().ToString("dd-MMM-yyyy hh:mm")</td>
+                                            @{
+                                                var users = (Dictionary<int, string>)ViewBag.Users;
+                                                var name = users.Where(p => p.Key == @cat.CreatedBy).Select(p => p.Value).FirstOrDefault();
+                                            }
+                                            <td align="right">@name</td>
+                                            <td>
+                                                @{ var eventType = string.Empty;}
+                                                @if (@cat.EventTo < DateTime.Now.Date)
+                                                {
+                                                    eventType = "past";
+                                                    <span>Past</span>
+                                                }
+                                                else if (@cat.EventFrom >= DateTime.Now.Date && @cat.EventTo <= DateTime.Now.Date)
+                                                {
+                                                    eventType = "in-progress";
+                                                    <span>In Progress</span>
+                                                }
+                                                else if (@cat.EventFrom > DateTime.Now.Date)
+                                                {
+                                                    eventType = "upcoming";
+
+
+                                                    <span>Upcoming</span>
+                                                }
+                                                else
+                                                {
+                                                    eventType = "in-progress";
+                                                    <span>In Progress</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        Action
+                                                    </button>
+                                                    <div class="dropdown-menu" style="font-size: small">
+                                                        @{ var fileName = cat.Id + ".pdf";
+                                                            bool fileExist = System.IO.File.Exists(ViewBag.FilePath + "/" + fileName);
+                                                        }
+                                                        @{ switch (eventType)
+                                                            {
+                                                                case "past":
+                                                                    <a href="~/admin/viewevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-eye" style="color:cornflowerblue"></i>&nbsp; View Event</a>
+                                                                    <a href="~/admin/GenerateInvoice/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-file" style="color:cornflowerblue"></i>&nbsp; Generate Invoice</a>
+                                                                    @if (fileExist)
+                                                                    {
+                                                                        <a href="~/Upload/Invoice/@fileName" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Invoice</a>
+                                                                    }
+                                                                    break;
+                                                                case "in-progress":
+                                                                    <a href="~/admin/viewevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-eye" style="color:cornflowerblue"></i>&nbsp; View Event</a>
+                                                                    <div class="dropdown-divider"></div>
+                                                                    <a href="~/admin/guests/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Event Guest</a>
+                                                                    <a href="#" disabled="disabled" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp; QR Settings</a>
+                                                                    @if (AppSession.GetSession(this.Context, SesionConstant.Operator) != "Operator")
+                                                                    {
+                                                                        <div class="dropdown-divider"></div>
+                                                                        <a href="~/admin/assigngatekeeper/@cat.Id" disabled="disabled" class="dropdown-item"><i class="nav-icon fas fa-user" style="color:cornflowerblue"></i>&nbsp; Assign Gatekeeper</a>
+                                                                        <div class="dropdown-divider"></div>
+                                                                    }
+                                                                    <a href="~/admin/editevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-archive" style="color:cornflowerblue"></i>&nbsp; Archive</a>
+                                                                    <div class="dropdown-divider"></div>
+                                                                    <a href="~/admin/GenerateInvoice/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-file" style="color:cornflowerblue"></i>&nbsp; Generate Invoice</a>
+                                                                    @if (fileExist)
+                                                                    {
+                                                                        <a href="~/Upload/Invoice/@fileName" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Invoice</a>
+                                                                    }break;
+                                                                case "upcoming":
+                                                                    <a href="~/admin/editevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:cornflowerblue"></i>&nbsp; Edit Event</a>
+                                                                    <a href="~/admin/viewevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-eye" style="color:cornflowerblue"></i>&nbsp; View Event</a>
+                                                                    <div class="dropdown-divider"></div>
+                                                                    <a href="~/admin/guests/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Event Guest</a>
+                                                                    <a href="~/admin/QRSettings/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp; QR Settings</a>
+                                                                    @if (AppSession.GetSession(this.Context, SesionConstant.Operator) != "Operator")
+                                                                    {
+                                                                        <div class="dropdown-divider"></div>
+                                                                        <a href="~/admin/assigngatekeeper/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-user" style="color:cornflowerblue"></i>&nbsp; Assign Gatekeeper</a>
+                                                                        <div class="dropdown-divider"></div>
+                                                                    }
+                                                                    <a href="~/admin/editevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-archive" style="color:cornflowerblue"></i>&nbsp; Archive</a>
+                                                                    <div class="dropdown-divider"></div>
+                                                                    <a href="~/admin/GenerateInvoice/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-file" style="color:cornflowerblue"></i>&nbsp; Generate Invoice</a>
+                                                                    @if (fileExist)
+                                                                    {
+                                                                        <a href="~/Upload/Invoice/@fileName" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Invoice</a>
+                                                                    }break;
+                                                                default:
+                                                                    <a href="~/admin/editevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:cornflowerblue"></i>&nbsp; Edit Event</a>
+                                                                    <a href="~/admin/viewevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-eye" style="color:cornflowerblue"></i>&nbsp; View Event</a>
+                                                                    <div class="dropdown-divider"></div>
+                                                                    <a href="~/admin/guests/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Event Guest</a>
+                                                                    <a href="~/admin/QRSettings/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp; QR Settings</a>
+                                                                    @if (AppSession.GetSession(this.Context, SesionConstant.Operator) != "Operator")
+                                                                    {
+                                                                        <div class="dropdown-divider"></div>
+                                                                        <a href="~/admin/assigngatekeeper/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-user" style="color:cornflowerblue"></i>&nbsp; Assign Gatekeeper</a>
+                                                                        <div class="dropdown-divider"></div>
+                                                                    }
+                                                                    <a href="~/admin/editevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-archive" style="color:cornflowerblue"></i>&nbsp; Archive</a>
+                                                                    <div class="dropdown-divider"></div>
+                                                                    <a href="~/admin/GenerateInvoice/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-file" style="color:cornflowerblue"></i>&nbsp; Generate Invoice</a>
+                                                                    @if (fileExist)
+                                                                    {
+                                                                        <a href="~/Upload/Invoice/@fileName" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Invoice</a>
+                                                                    }break;
+
+
+                                                            }
+                                                        }
+
+                                                    </div>
+                                                </div>
+
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Assign Gatekeeper</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Category Name</label>
+                            @Html.HiddenFor(model => model.EventId)
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">New Category</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Category Name</label>
+                            @Html.TextBoxFor(model => model.Category, new { @required = "required", @class = "form-control", @name = "Name", @type = "text", @placeholder = "Category Name" })
+                        </div>
+                        <div class="form-group">
+
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>

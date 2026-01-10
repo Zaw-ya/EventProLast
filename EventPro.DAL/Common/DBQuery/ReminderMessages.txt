@@ -1,0 +1,49 @@
+﻿-------------
+alter table [dbo].[Guest]
+add ReminderMessageId nvarchar(70) null,
+ReminderMessageSent bit null,
+ReminderMessageDelivered  bit null,
+ReminderMessageRead  bit null,
+ReminderMessageFailed bit null,
+ReminderMessageWatiId nvarchar(100) null 
+--------------------
+
+-------------
+ drop view vw_ScannedInfo
+--------------------
+
+-------------
+    create view vw_ScannedInfo  as 
+	select g.GuestId,g.whatsappMessageId ,g.whatsappMessageImgId ,
+	g.EventId, g.FirstName, g.LastName, g.Address,
+	sum(sh.ScanId) as ScanId,   g.PrimaryContactNo, g.SecondaryContactNo,
+	g.EmailAddress, g.ModeOfCommunication, g.NoOfMembers, g.CreatedOn, 
+	g.CreatedBy,   g.Source, g.WAResponseTime, g.GateKeeper, g.MessageId,
+	g.AdditionalText,g.ImgSentMsgId, g.TextSent, g.TextDelivered, g.TextRead,
+	g.EventLocationSent  , g.EventLocationRead  , g.EventLocationDelivered  ,
+	g.EventLocationFailed   ,g.waMessageEventLocationForSendingToAll     
+	,g.whatsappWatiEventLocationId ,g.TextFailed,  g.ImgFailed,g.ConguratulationMsgDelivered,
+	g.ConguratulationMsgRead,   g.ConguratulationMsgFailed,g.ConguratulationMsgSent,
+	g.WatiConguratulationMsgId,g.ConguratulationMsgId , g.ReminderMessageId ,g.ReminderMessageSent,
+	g.ReminderMessageDelivered , g.ReminderMessageRead , g.ReminderMessageFailed,ReminderMessageWatiId ,
+	(select max(createdon) from WhatsappResponseLogs(nolock) where WAKey=g.MessageId) as TextTime,
+	(select max(createdon) from WhatsappResponseLogs(nolock) where WAKey=g.ImgSentMsgId) as ImageTime,
+	g.ImgSent, g.ImgDelivered, g.ImgRead, g.Cypertext,
+	g.WhatsappStatus,g.Response,count(*)-1 as Scanned from guest(nolock) 
+	g left join ScanHistory(nolock) sh
+	on g.GuestId=sh.GuestId   and  sh.ResponseCode is not null and sh.ResponseCode='Allowed'
+	Group by g.GuestId,g.EventId,g.FirstName,LastName,Address,
+	g.whatsappMessageId, g.whatsappMessageImgId, PrimaryContactNo,
+	SecondaryContactNo,EmailAddress,ModeOfCommunication, 
+	NoOfMembers,CreatedOn,CreatedBy,Source,GateKeeper,AdditionalText,
+	Cypertext,WhatsappStatus,g.Response,g.MessageId,g.ImgSentMsgId,
+	WAResponseTime,TextSent,TextDelivered,TextRead,ImgSent,
+	ImgDelivered, ImgRead,g.TextFailed, g.ImgFailed,g.EventLocationSent  ,
+	g.EventLocationRead  , g.EventLocationDelivered  ,
+	g.EventLocationFailed   ,g.waMessageEventLocationForSendingToAll    ,
+	g.whatsappWatiEventLocationId ,g.ConguratulationMsgDelivered,  
+	g.ConguratulationMsgRead,g.ConguratulationMsgFailed,g.ConguratulationMsgSent,
+	g.WatiConguratulationMsgId,g.ConguratulationMsgId  ,g.ReminderMessageId ,g.ReminderMessageSent,
+	g.ReminderMessageDelivered , g.ReminderMessageRead , g.ReminderMessageFailed , ReminderMessageWatiId
+
+--------------------

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="7.0.5" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
+    <PackageReference Include="MimeKit" Version="4.3.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.13.1" />
+    <PackageReference Include="System.Collections" Version="4.3.0" />
+	
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kernal\EventPro.Kernal.csproj" />
+    <ProjectReference Include="..\EventPro.DAL\EventPro.DAL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="PinnacleService\Implementaion\" />
+  </ItemGroup>
+
+</Project>
+
+
+

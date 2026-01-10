@@ -1,0 +1,19 @@
+﻿-------------
+alter table [dbo].[Guest]
+add  YesButtonId nvarchar(100) null,
+ NoButtonId nvarchar(100) null,
+ EventLocationButtonId nvarchar(100) null
+--------------------
+Alter table Events
+Add WhatsappConfirmation bit null,
+WhatsappPush bit null
+
+---------------------------------------------------------------
+update Events
+set WhatsappConfirmation = 0
+
+----------------------------------------------------------
+update Events
+set WhatsappPush = 0
+
+------------------------------------------------------------

@@ -1,0 +1,5 @@
+ALTER TABLE Events
+ADD ReminderMessageTempName NVARCHAR(50);
+
+ALTER TABLE Events
+ALTER COLUMN ReminderMessage NVARCHAR(MAX);

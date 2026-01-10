@@ -1,0 +1,111 @@
+@model EventPro.DAL.Models.LocallizationMaster
+@{
+    ViewData["Title"] = "Localization";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-warning">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="col-md-2" style="float:right">
+                                <button type="button" style="float:right" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-default">
+                                    Locallization
+                                </button>
+                            </div>
+                        </div>
+                        <div class="container-fluid">
+
+                            <!-- /.card-header -->
+                            <div class="card-body p-0" style="margin-top:10px;">
+
+                                <table id="searchableTable" class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Id</th>
+                                            <th>Label</th>
+                                            <th>Text</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var cat in ViewBag.Localization)
+                                        {
+                                            <tr>
+                                                <td>@cat.Id</td>
+                                                <td>@cat.LabelName</td>
+
+                                                <td>@cat.Translation</td>
+                                                <td>
+                                                    <a href="~/admin/LocalizationDelete?id=@cat.Id" onclick="return confirm('Are you sure you want to delete?')"><i class="nav-icon fas fa-recycle" style="color:red; "></i></a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add New</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">English</label>
+                            @Html.TextBoxFor(model => model.LabelName, new { @required = "required", @class = "form-control", @name = "Name", @type = "text", @placeholder = "English" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Translation</label>
+                            @Html.TextBoxFor(model => model.Translation, new { @class = "form-control", @name = "Translation", @type = "text", @placeholder = "Translation" })
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+<script>
+    function EditCategory(id, catName) {
+        $('#Category').val(catName);
+        $('#EventId').val(id);
+    }
+</script>

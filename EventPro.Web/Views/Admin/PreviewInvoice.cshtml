@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="callout callout-info">
+                    <h5><i class="fas fa-info"></i> Note:</h5>
+                    Preview Bill
+                </div>
+                <div class="row no-print">
+                    <div class="col-12">
+                        <button  onclick="convertHTMLToPDF()"><i class="fas fa-download"></i>Generate PDF</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="callout callout-info" id="html-template">
+                        @Html.Raw(ViewBag.Invoice)
+                    </div>
+                </div>
+                <!-- /.col -->
+            </div>
+        </div>
+    </div>
+</section>

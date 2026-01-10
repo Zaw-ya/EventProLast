@@ -1,0 +1,178 @@
+@model EventPro.DAL.Models.CardInfo
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+@if (TempData["entry-error"] != null)
+{
+    <blockquote class="quote-danger">
+        <h5>Error!</h5>
+        <p>@TempData["entry-error"]</p>
+    </blockquote>
+}
+<section class="content">
+    <div class="container-fluid">
+        <!-- SELECT2 EXAMPLE -->
+        <div class="card card-default">
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                <div class="card-header">
+                    <h3 class="card-title">Template Settings</h3>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group required">
+                                <label>Template Background</label>
+                                <div class="input-group mb-3">
+                                    @Html.HiddenFor(model => model.CardId)
+                                    @Html.HiddenFor(model => model.EventId)
+                                    @Html.TextBoxFor(model => model.BackgroundImage, new { @class = "form-control", @type = "file" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-picture-o"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Template Size (optional)</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.CardWidth, new { @class = "form-control", @type = "number", @placeholder = "Template Width" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label style="color:white">.</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.CardHeight, new { @class = "form-control", @type = "number", @placeholder = "Template Height" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-arrows-v"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+                <div class="card-header">
+                    <h3 class="card-title">QR Settings</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="customRange1">Barcode Size</label>
+                            <input type="range" class="custom-range" id="barcodeRange" onchange="BarcodeSizeChange()" min="10" max="800" value="@Model.BarcodeWidth">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Barcode Size (Width)</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.BarcodeWidth, new { @class = "form-control", @type = "number", @placeholder = "Barcode Width" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fa fa-fw fa-arrows-h"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Barcode Size (Hight)</label>
+                                <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.BarcodeHeight, new { @class = "form-control", @type = "number", @placeholder = "Barcode Height" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fa fa-fw fa-arrows-v"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                          
+                            <div class="form-group required">
+                                <label>Transparent Background</label><div class="input-group mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="customSwitch1" onchange="ToggleTransBackground()">
+                                        <label class="custom-control-label" for="customSwitch1">Transparent Background</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group required">
+                                <label>Background Color</label><div class="input-group mb-3">
+
+                                    @Html.TextBoxFor(model => model.ForegroundColor, new { @required = "required", @class = "form-control color-picker", @type = "text", @placeholder = "Foreground Color" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-paint-brush"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group required">
+                                <label>Foreground Color</label><div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.BackgroundColor, new { @required = "required", @class = "form-control color-picker", @type = "text", @placeholder = "Background Color" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-photo"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group required">
+                                <label>Default Font</label><div class="input-group mb-3">
+                                    @Html.DropDownListFor(Model => Model.DefaultFont, ViewBag.Fonts as SelectList, new { @class = "form-control select2" })
+                                    <div class="input-group-append">
+                                        <div class="input-group-text">
+                                            <span class="fas fa-font"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Barcode Preview</label>
+                                <div class="input-group mb-3">
+                                    <div id="qrcode" class="qrcode"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Font Preview</label>
+                                <h3 id="fontPreview">This is sample text for font preview</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card-body">
+                    <div class="modal-footer justify-content-between">
+                        <a href="@Url.Content("~")/admin/events" class="btn btn btn-danger">Back</a>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

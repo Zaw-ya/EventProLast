@@ -1,0 +1,74 @@
+@model EventPro.DAL.Models.Guest
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_User.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content(" ~") /lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+        <div class="alert alert-danger" role="alert">
+            <strong>Error!</strong> @TempData["message"].
+        </div>
+        }
+    </div>
+    @using (Html.BeginForm(null, null, FormMethod.Post))
+    {
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid" style="margin-top:10px">
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-title">
+
+                            </div>
+                            <table id="searchableTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Event</th>
+                                        <th>Total Guest</th>
+                                        <th>Sent</th>
+                                        <th>Yes</th>
+                                        <th>No</th>
+                                        <th>Waiting</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ int iCounter = 0;}
+                                    @foreach (var log in ViewBag.Data)
+                                    {
+                                    iCounter++;
+                                    <tr>
+                                        <td>@iCounter</td>
+                                        <td><a href="~/user/guests/@log.EventId">@log.EventTitle</a></td>
+                                        <td>@log.TotalFamily</td>
+                                        <td>@log.TextSent</td>
+                                        <td>@log.YesResponse</td>
+                                        <td>@log.NoResponse</td>
+                                        <td>@log.WaitingResponse</td>
+                                    </tr>
+
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                </div>
+                <!-- /.card -->
+
+
+            </div>
+        </div>
+    </div>
+    }
+</section>
+<!-- Modal -->
+
+
+
+

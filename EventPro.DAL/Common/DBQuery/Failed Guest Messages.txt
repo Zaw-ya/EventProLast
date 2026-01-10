@@ -1,0 +1,26 @@
+﻿-------------
+alter table [dbo].[Events]
+add FailedGuestsMessag nvarchar(max) null
+--------------------
+-------------
+alter table [dbo].[Events]
+add FailedGuestsCardText nvarchar(max) null
+--------------------
+
+-------------
+alter table [dbo].[Events]
+add FailedGuestsLocationEmbedSrc nvarchar(max) null
+--------------------
+
+-------------
+alter table [dbo].[Events]
+add FailedGuestsReminderMessage nvarchar(max) null
+--------------------
+
+-------------
+alter table [dbo].[Events]
+add FailedGuestsCongratulationMsg nvarchar(max) null
+--------------------
+
+
+

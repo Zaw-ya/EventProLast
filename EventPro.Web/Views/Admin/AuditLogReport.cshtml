@@ -1,0 +1,231 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+@{
+    ViewData["Title"] = "Total Guest";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css" />
+<section class="content">
+    <div class="container-fluid">
+        @if(TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="card card-default color-palette-box">
+            @using(Html.BeginForm(null,null,FormMethod.Post))
+            {
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="EventTitle">Event Title</label>
+                                @Html.TextBox("EventTitle", null, new { @class= "form-control"})
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="EventId">Event ID</label>
+                                @Html.TextBox("EventId", null, new { @class= "form-control",min="1",max="99999999", @type = "number"})
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="Action">Action</label>
+                                @Html.DropDownList("", ViewBag.Action as SelectList, "--Select Action--",new { id = "Action", @class = "form-control select2 ", @name = "Action" })                               
+                            </div>
+                        </div>
+                    </div>
+                   
+                    <div class="row">
+                      
+                        <div class="col-md-3">
+                            <label for="startFrom">Log Date from</label>
+                            <input type="date" id="startFrom" name="startFrom" value="@ViewBag.startFrom" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="startTo">Log Date To</label>
+                            <input type="date" id="startTo" name="startTo" value="@ViewBag.startTo" class="form-control" />
+                        </div>
+                                                <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="User">User</label>
+                                @Html.DropDownList("", ViewBag.Users as SelectList, "--Select User--", new { id = "User", @class = "form-control select2", @name = "User" })
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="col-md-3" style="float:right">
+                        <button type="submit" style="width:100px" class="btn btn-warning btn-sm">Search</button>
+                        <button type="submit" style="width:100px" class="btn btn-primary btn-sm" id="RefreshPage">Reset</button>
+                    </div>
+                </div>
+
+                @if(ViewBag.Action != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#Action").val('@ViewBag.actionId');
+                        });
+                    </script>
+                }
+                @if (ViewBag.Users != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#User").val('@ViewBag.userId');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.startFrom != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#startFrom").val('@ViewBag.startFrom');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.startTo != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#startTo").val('@ViewBag.startTo');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.type != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#type").val('@ViewBag.type');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.eventTitle != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#eventTitle").val('@ViewBag.eventTitle');
+                        });
+                    </script>
+                }
+                @if(ViewBag.eventId != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#eventId").val('@ViewBag.eventId');
+                        });
+                    </script>
+                }
+
+            }            
+        </div>
+        <div class="row">
+
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid">                        
+                        <div class="card-body p-0" style="margin-top:10px">
+                            <table id="searchableTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Linked To</th>
+                                        <th>Event Id</th>
+                                        <th>Title</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                      
+                                        <th>UserName</th>
+                                        <th>Action</th>
+                                        <th>Related Id</th>                                        
+                                        <th>affected</th>                                        
+                                        <th>Created on</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(var ev in ViewBag.AuditLogs)
+                                    {
+                                        <tr>
+                                            <td>@ev.Id</td>
+                                            <td> @(ev.linkedTo == null ? "--" : ev.linkedTo)</td>
+                                            <td>@ev.EventId</td>
+                                            <td>@ev.EventTitle</td>
+                                            <td align="right">@Convert.ToDateTime(ev.EventFrom).ToString("dd-MMM-yyyy")</td>
+                                            <td align="right">@Convert.ToDateTime(ev.EventTo).ToString("dd-MMM-yyyy")</td>
+                                           
+                                            <td>@ev.UserName</td>
+                                            <td>@ev.Action</td>
+                                            <td>@ev.RelatedId</td>
+                                            <td>@ev.Desc</td>                                            
+                                            <td>@ev.CreatedOn</td>                                            
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Assign Gatekeeper</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using(Html.BeginForm(null,null,FormMethod.Post,new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name"></label>
+                        </div>
+                        <div class="form-group">
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }            
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+            $('#RefreshPage').click(function () {
+                $("#Action")[0].selectedIndex = 0;
+                $("#EventTitle").val("");
+                $("#EventId").val("");
+
+                $("#startFrom").value = "";
+                $("#startTo").value = "";
+                $('#startFrom').val('').attr('type', 'text').attr('type', 'date');
+                $('#startTo').val('').attr('type', 'text').attr('type', 'date');
+                window.location.reload();
+            });
+        });
+    </script>
+}

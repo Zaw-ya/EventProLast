@@ -1,0 +1,612 @@
+@model EventPro.DAL.Models.Guest;
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+        window.addEventListener("load", () => {
+          const loader = document.querySelector(".loader-init");
+          loader.classList.add("loader-init--hidden");
+          loader.addEventListener("transitionend", () => {
+            if (!document.querySelector(".loader-init")) return;
+            document.body.removeChild(loader);
+            });
+        });
+    </script>
+    <script defer src="https://cdn.assets.salla.network/themes/1247874246/1.157.0/product-card.js" type="ac67db2fac69178aa370f3bc-text/javascript"></script>
+    <script defer src="https://cdn.assets.salla.network/themes/1247874246/1.157.0/main-menu.js" type="ac67db2fac69178aa370f3bc-text/javascript"></script>
+    <script data-cfasync="false">
+        window.header_is_sticky = "1"
+        window.imageZoom = "1"
+    </script>
+    <link rel="preconnect" href="https://cdn.assets.salla.network" />
+    <link rel="preconnect" href="https://cdn.salla.network" />
+    <link rel="stylesheet" href="~/assets/css/wishes.css" />
+
+    <meta name="msapplication-navbutton-color" content="#2d4e43">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#2d4e43">
+
+    <link rel="icon" type="image/png" href="https://cdn.salla.sa/PjxoO/9yr6HmKoHdUYo9BVSN7VnBhC20e0NlOQ2d5Dm78f.jpg" />
+    <link rel="apple-touch-icon-precomposed" href="https://cdn.salla.sa/PjxoO/MSFmRPeKNmXVY3ZkNIMPwNQymlE1uRaYkTuWPiTw.png">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="https://cdn.salla.sa/PjxoO/MSFmRPeKNmXVY3ZkNIMPwNQymlE1uRaYkTuWPiTw.png">
+    <meta name="_token" content="pXGErI9YFIutvetwGekbyBObPzrWoCJvKEm7Y4AR">
+    <script data-cfasync="false">
+
+        window.salla = window.Salla = window.Salla || {};
+        Salla.onReady = Salla.onReady || function (callback) {
+            return new Promise(function (resolve) {
+                return Salla.status == 'ready'
+                    ? resolve(callback ? callback(salla.config.all()) : salla.config.all())
+                    : window.addEventListener('twilight::initiated', function (config) { resolve(callback ? callback(config.detail) : config.detail) }, { once: true });
+            });
+        };
+    </script>
+    <script async src="https://cdn.salla.network/js/twilight/2.13.74/twilight.js" type="ac67db2fac69178aa370f3bc-text/javascript"></script>
+    <script type="application/ld+json">{"context":"http:\/\/schema.org","type":"BreadcrumbList","itemListElement":[{"type":"ListItem","position":1,"item":{"id":"https:\/\/EventPro.store\/en\/","name":"Home","image":null}},{"type":"ListItem","position":2,"item":{"id":"https:\/\/EventPro.store\/en\/blog","name":"Blog","image":null}}]}</script>
+    <title>???? ??? ????? , my invite store</title>
+    <meta name="description" content="???? ??? ????? ???? ??? ???? ????? ????? ????????? ?????? ?????? ?? ????? ?????? ?????? ?????? ?????? ???? ???????? ???????? ??? ????? ????? ???? ???? ?????? ???????? ???? ????? ??? ?? ????????">
+    <meta name="keywords" content="???? ??? ????? , my invite store , ??? ????? ???? , ???? my invite , ??? ????? store , ????? , ????? ??? , ????? ??????? , ????? ?????  , ???? ??? ,">
+    <meta property="store:published_time" content="2022-12-03T11:14:20+03:00">
+    <meta property="og:description" content="???? ??? ????? ???? ??? ???? ????? ????? ????????? ?????? ?????? ?? ????? ?????? ?????? ?????? ?????? ???? ???????? ???????? ??? ????? ????? ???? ???? ?????? ???????? ???? ????? ??? ?? ????????">
+    <meta property="og:title" content="???? ??? ????? , my invite store">
+    <meta property="og:type" content="store">
+    <meta property="og:locale" content="ar_AR">
+    <meta property=":locale:alternate" content="ar_AR">
+    <meta property=":locale:alternate" content="en_US">
+    <meta property="og:url" content="https://EventPro.store/blog">
+    <meta property="og:image" content="https://cdn.salla.sa/PjxoO/MSFmRPeKNmXVY3ZkNIMPwNQymlE1uRaYkTuWPiTw.png">
+    <meta property="og:image:width" content="600">
+    <meta property="og:image:height" content="300">
+    <meta name="twitter:description" content="???? ??? ????? ???? ??? ???? ????? ????? ????????? ?????? ?????? ?? ????? ?????? ?????? ?????? ?????? ???? ???????? ???????? ??? ????? ????? ???? ???? ?????? ???????? ???? ????? ??? ?? ????????">
+    <meta name="twitter:image" content="https://cdn.salla.sa/PjxoO/MSFmRPeKNmXVY3ZkNIMPwNQymlE1uRaYkTuWPiTw.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="???? ??? ????? , my invite store">
+    <meta name="twitter:url" content="https://EventPro.store/blog">
+    <meta name="twitter:site" content="EventPro1">
+    <meta name="twitter:creator" content="EventPro1">
+    <script type="application/ld+json">{"context":"https://schema.org","type":"WebPage","name":"???? ??? ????? , my invite store","description":"???? ??? ????? ???? ??? ???? ????? ????? ????????? ?????? ?????? ?? ????? ?????? ?????? ?????? ?????? ???? ???????? ???????? ??? ????? ????? ???? ???? ?????? ???????? ???? ????? ??? ?? ????????"}</script>
+    <link rel="canonical" href="https://EventPro.store/ar/blog" />
+    <link rel="alternate" hreflang="ar" href="https://EventPro.store/ar/blog" />
+    <link rel="alternate" hreflang="en" href="https://EventPro.store/en/blog" />
+    <link rel="stylesheet" href="https://cdn.assets.salla.network/themes/1247874246/1.157.0/app.css">
+    <link rel="stylesheet" href="https://cdn.salla.network/fonts/default.css?v=2.0.3" />
+    <link rel="stylesheet" href="https://cdn.salla.network/fonts/sallaicons.css?v=2.0.3" />
+    <style>
+        :root {
+            --font-main: 'DINNextLTArabic-Regular';
+            --color-primary: #2d4e43;
+            --color-primary-dark: #07281d;
+            --color-primary-light: #537469;
+            --color-primary-reverse: #f9ffff;
+        }
+    </style>
+    <style>
+        .body {
+            height: 100vh;
+        }
+
+        .loader2 {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        keyframes spin {
+            0%
+
+        {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+
+        }
+    </style>
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({"page":{"fingerprint":"2ef19cee1077cc52912877f49d79b9434fb20a48","pageName":"blogIndex","mobileApp":0,"referrer":"https:\/\/EventPro.store\/en\/search?q=fh","theme":"1298199463"},"store":{"store":"EventPro","facebook_pixel_id":null,"google_analytics_id":null,"snapchat_pixel_id":null},"customer":{"isGuest":true}});
+    </script>
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','GTM-TGFC6FV');</script>
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-N7F9RWWS');</script>
+</head>
+<body id="app" class="overflow-x-hidden blog-index salla-1298199463 color-mode-light ltr font-dinnextltarabic-regular   footer-is-light
+
+   is-sticky-product-bar
+  ">
+    <div class="loader-init"></div>
+    <noscript>
+        To get full functionality of this site you need to enable JavaScript. Here is how
+        <a href="https://www.enable-javascript.com/" rel="noreferrer"
+           target="_blank">To enable JavaScript on webpage</a>.
+    </noscript>
+    <div class=" flex flex-col min-h-full" style="height: 100vh;">
+        <noscript>
+            <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TGFC6FV"
+                    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+        </noscript>
+        <header class="store-header">
+            <div class="top-navbar">
+                <div class="container flex justify-between">
+                    <div class="flex-1 flex items-center gap-2">
+                        <salla-menu source="footer" topnav="" class="hydrated"><div><div class="s-menu-topnav-list"><a href="https://EventPro.store/en/blog" target="_self" class="s-menu-topnav-item topnav-link-item right-side">???????</a><a href="https://EventPro.store/en/??-???/page-2140765833" target="_self" class="s-menu-topnav-item topnav-link-item right-side">?? ??? !</a><a href="https://EventPro.store/en/?????-?????-????????/page-458013835" target="_self" class="s-menu-topnav-item topnav-link-item right-side">????? ????? ????????</a></div></div></salla-menu>
+                        <div class="header-buttons">
+                        </div>
+
+                    </div>
+                    <salla-contacts is-header="" class="s-contacts s-contacts-header hydrated">
+                        <a href="tel:5550100" class="s-contacts-topnav-link">
+                            <span>Contact us: </span><a class="unicode" href="<!-- Generated by IcoMoon.io -->
+    <svg version=&quot;1.1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;32&quot; height=&quot;32&quot; viewBox=&quot;0 0 32 32&quot;>
+    <title>phone</title>
+    <path d=&quot;M30.823 21.713l-3.883-3.883c-1.569-1.568-4.12-1.568-5.689 0l-2.568 2.568c-3.063-1.499-5.583-4.019-7.081-7.083l2.568-2.567c0.759-0.76 1.177-1.771 1.177-2.845s-0.419-2.084-1.179-2.844l-3.881-3.881c-1.52-1.521-4.171-1.521-5.689 0l-1.845 1.847c-2.22 2.219-3.183 5.407-2.573 8.527 1.98 10.144 10.125 18.292 20.269 20.271 0.616 0.121 1.236 0.18 1.849 0.18 2.492 0 4.896-0.972 6.677-2.752l1.847-1.847c1.568-1.571 1.568-4.121 0.001-5.691zM28.936 25.517l-1.845 1.847c-1.592 1.592-3.883 2.283-6.132 1.841-9.089-1.776-16.388-9.075-18.163-18.165-0.439-2.247 0.249-4.539 1.841-6.129l1.847-1.847c0.256-0.257 0.596-0.397 0.959-0.397s0.703 0.14 0.959 0.397l3.883 3.883c0.256 0.256 0.397 0.596 0.397 0.959s-0.141 0.703-0.397 0.96l-3.22 3.217c-0.383 0.384-0.496 0.959-0.287 1.457 1.813 4.339 5.343 7.868 9.683 9.684 0.497 0.207 1.073 0.095 1.457-0.288l3.22-3.22c0.529-0.529 1.389-0.528 1.917 0l3.881 3.883c0.528 0.529 0.528 1.389 0 1.919z&quot;></path>
+    </svg>
+    ">5550100</a>
+                        </a><a href="mailto:cs@EventPro.org" class="s-contacts-topnav-link">cs@EventPro.org</a>
+                    </salla-contacts>
+                </div>
+            </div>
+            <div id="mainnav" class="main-nav-container shadow-default bg-white" style="height: 88px;">
+                <div class="inner bg-inherit">
+                    <div class="container">
+                        <div class="flex items-stretch justify-between relative">
+                            <div class="flex items-center">
+                                <a class="lg:hidden mburger mburger--collapse leading-none rtl:ml-4 ltr:mr-4" id="sidebar_open_button" href="#mobile-menu" aria-label="Open-menu">
+                                    <i class="sicon-menu text-primary text-2xl"></i>
+                                </a>
+                                <a class="navbar-brand" href="https://EventPro.store/en">
+                                    <img fetchpriority="high" width="100%" height="100%" loading="eager" src="https://cdn.salla.sa/cdn-cgi/image/fit=scale-down,width=400,height=400,onerror=redirect,format=auto/PjxoO/MSFmRPeKNmXVY3ZkNIMPwNQymlE1uRaYkTuWPiTw.png" alt="EventPro logo">
+                                    <h1 class="sr-only">EventPro</h1>
+                                </a>
+                                <custom-main-menu>
+                                    <!--original menu location--><nav id="mobile-menu" class="mobile-menu mm-spn--light mm-spn--navbar mm-spn--main" data-mm-spn-title="Main Menu">
+                                        <ul class="main-menu mm-spn--open">
+                                            <button class="btn--close"></button>
+                                            <li class="lg:hidden text-sm font-bold" id="1629702394">
+
+                                                <a href="https://EventPro.store/en/?????-?????-?????????/c1629702394" aria-label="????? ????? ?????????" class="text-gray-500 " target="_self">
+
+                                                    <span>????? ????? ?????????</span>
+                                                </a>
+                                            </li>
+
+                                            <li class="!hidden lg:!block root-level lg:!inline-block
+                " id="1629702394">
+                                                <a href="https://EventPro.store/en/?????-?????-?????????/c1629702394" aria-label="????? ????? ?????????" target="_self">
+                                                    <span>????? ????? ?????????</span>
+                                                </a>
+
+                                            </li>
+
+
+
+                                            <li class="lg:hidden text-sm font-bold" id="offers">
+
+                                                <a href="https://EventPro.store/en/offers" aria-label="Offers" class="text-gray-500 " target="_self">
+
+                                                    <span>Offers</span>
+                                                </a>
+                                            </li>
+
+                                            <li class="!hidden lg:!block root-level lg:!inline-block
+                " id="offers">
+                                                <a href="https://EventPro.store/en/offers" aria-label="Offers" target="_self" class="offers-link">
+                                                    <span>Offers</span>
+                                                </a>
+
+                                            </li>
+
+
+
+                                            <li class="lg:hidden text-sm font-bold" id="blog">
+
+                                                <a href="https://EventPro.store/en/blog" aria-label="???????" class="text-gray-500 " target="_self">
+
+                                                    <span>???????</span>
+                                                </a>
+                                            </li>
+
+                                            <li class="!hidden lg:!block root-level lg:!inline-block
+                " id="blog">
+                                                <a href="https://EventPro.store/en/blog" aria-label="???????" target="_self" class="blog-link">
+                                                    <span>???????</span>
+                                                </a>
+
+                                            </li>
+                                        </ul>
+                                    </nav>
+
+                                </custom-main-menu>
+                            </div>
+                            <div class="flex items-center justify-end">
+                                <a class="header-btn" href="https://EventPro.store/en" aria-label="user-icon">
+                                    <i class="header-btn__icon sicon-user-circle"></i>
+                                </a>
+                                <salla-cart-summary class="ml-4 rtl:ml-[unset] rtl:mr-4 hydrated">
+                                    <!---->
+
+                                    <a class="s-cart-summary-wrapper" href="https://EventPro.store/en/cart">
+                                        <div id="s-cart-icon">
+                                            <slot-fb name="icon" hidden="">
+                                                <i class="s-cart-summary-icon">
+                                                    <!-- Generated by IcoMoon.io -->
+                                                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="30" height="32" viewBox="0 0 30 32">
+                                                        <title>cart</title>
+                                                        <path d="M15.426 28.084c0-1.412-0.85-2.684-2.156-3.226-1.305-0.54-2.807-0.241-3.805 0.758-0.999 0.998-1.298 2.5-0.758 3.805 0.54 1.303 1.815 2.155 3.226 2.155 1.928-0.003 3.49-1.564 3.492-3.492h0.001zM10.597 28.084h0.001c0-0.54 0.326-1.027 0.825-1.235 0.498-0.206 1.074-0.091 1.455 0.29 0.383 0.382 0.497 0.957 0.29 1.456-0.208 0.5-0.695 0.825-1.235 0.825-0.355 0-0.695-0.142-0.944-0.391-0.251-0.251-0.392-0.591-0.392-0.946h-0.001l0.001 0.001zM28.23 28.084c0-1.412-0.85-2.684-2.155-3.226-1.305-0.54-2.807-0.241-3.806 0.758s-1.297 2.5-0.756 3.805c0.54 1.303 1.813 2.155 3.226 2.155 1.927-0.003 3.49-1.564 3.491-3.492zM23.401 28.084c0-0.54 0.326-1.027 0.825-1.235 0.5-0.206 1.075-0.091 1.457 0.29s0.497 0.957 0.289 1.456c-0.206 0.5-0.693 0.825-1.233 0.825-0.738 0-1.337-0.599-1.337-1.337l-0.001 0.001zM1.953 0.234l-0.342-0.059c-0.29-0.064-0.594-0.004-0.839 0.166-0.247 0.169-0.414 0.436-0.463 0.734-0.050 0.3 0.023 0.607 0.201 0.85s0.444 0.402 0.738 0.44l0.341 0.059c1.825 0.324 3.248 1.794 3.548 3.662l1.981 12.369h-0.001c0.218 1.387 0.913 2.651 1.96 3.563s2.379 1.412 3.754 1.41h14.242c0.601 0 1.088-0.498 1.088-1.112s-0.487-1.112-1.088-1.112h-14.242c-1.679-0.001-3.139-1.183-3.525-2.854h11.463c1.614 0.004 3.188-0.518 4.493-1.49 1.305-0.973 2.271-2.346 2.762-3.918l1.298-4.136c0.145-0.455 0.065-0.953-0.213-1.336-0.278-0.385-0.72-0.608-1.187-0.602h-20.467l-0.181-1.141c-0.218-1.367-0.849-2.631-1.802-3.615-0.954-0.983-2.184-1.64-3.518-1.878h-0.001zM26.946 9.096l-0.993 3.169v-0.001c-0.353 1.122-1.044 2.101-1.975 2.796s-2.056 1.067-3.208 1.067h-11.833l-1.125-7.042 19.134 0.011z"></path>
+                                                    </svg>
+                                                </i>
+                                            </slot-fb><i slot="icon" class="header-btn__icon icon sicon-shopping-bag"></i>
+                                        </div><span class="s-cart-summary-count">0</span><p class="s-cart-summary-content"><b class="s-cart-summary-total">0 SAR</b></p>
+                                    </a>
+                                </salla-cart-summary>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class=" container mb-3 sm:mb-5">
+            <div class="center-between">
+                <nav class="breadcrumbs w-full py-5">
+                    <salla-breadcrumb></salla-breadcrumb>
+                </nav>
+                <div class="dropdown-toggler cat-filter lg:hidden">
+                    <button aria-label="Categories Trigger" type="button" class="dropdown__trigger rtl:space-x-reverse space-x-1.5 flex text-sm text-primary" aria-expanded="true" aria-haspopup="true">
+                    </button>
+                    <div class="dropdown__menu" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                        <div class="flex items-center p-4 border-b mb-1 lg:hidden relative">
+                            <h2 class="font-bold">Categories</h2>
+                            <button class="dropdown__close h-12 w-12 text-red-500 text-lg rounded-full absolute top-2 rtl:left-1 ltr:right-1 z-50">
+                                <i class="sicon-cancel pointer-events-none"></i>
+                            </button>
+                        </div>
+                        <ul class="pb-4 lg:pb-2 py-2 px-2 lg:px-0 space-y-px">
+                            <li>
+                                <a class="p-2.5 block text-sm hover:text-primary " href="https://EventPro.store/en/blog/???/c-1584792745">
+                                    <span class="rtl:ml-auto ltr:mr-auto">???</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            @@media screen and (min-width : 1500px ) {
+                .store-footer {
+                    position: fixed;
+                    bottom: 0px;
+                    width: 100%;
+                }
+
+                .loader2 {
+                    z-index: 2;
+                }
+            }
+
+            @@media screen and (max-width : 1500px ) {
+
+                .loader2 {
+                    z-index: 2;
+                }
+            }
+
+        </style>
+        <div class="details  m-5 p-3 container">
+           
+            @if (ViewBag.language == "Arabic")
+            {
+                <div><h3 style="text-align: right; padding-right: 5px; width: 100%; ">@Model.FirstName</h3></div>
+                <div id="guestInfo"><h5 style="text-align: right; margin-top: 12px;  padding-right: 5px; width: 100%; "> ??  <span style="color: orange; font-size: large;">???????? ?? ??????</span>  </h5></div>
+                <div style="clear: right;"> <h4 style="text-align: right; margin-top: 12px; display:block; padding-right: 5px; width: 100%; "> ????? ??? ???? ?????</h4></div>
+            }
+            else if (ViewBag.language == "English")
+            {
+                <div><h3 style="text-align: left; padding-left: 5px; width: 100%; ">@Model.FirstName</h3></div>
+                <div id="guestInfo"><h5 style="text-align: left; margin-top: 12px;  padding-left: 5px; width: 100%; "> The invitation is  <span style="color: orange; font-size: large;">Declined</span>  </h5></div>
+                <div style="clear: left;"> <h4 style="text-align: left; margin-top: 12px; display:block; padding-left: 5px; width: 100%; "> Wishing you a pleasant day</h4></div>
+            }
+
+        </div>
+
+        <footer class="store-footer ">
+            <div aria-label="footer" class="store-footer__inner">
+                <div class="container grid grid-col-1 lg:grid-cols-6 gap-8 lg:gap-6">
+                    <div class="lg:col-span-2 rtl:lg:pl-20 ltr:lg:pr-20">
+                        <a href="https://EventPro.store/en/" class="flex items-center m-0">
+                            <h3>EventPro</h3>
+                        </a>
+                        <p class="max-w-sm leading-6 mb-6">
+                            ????? ?????? ????? ????????? ????? ?????? ????? ?? ??? ???????? ??? ???? ??????? ?? ???? ?????? ??
+                        </p>
+                        <div class="hidden lg:block">
+                            <salla-social class="mb-6 s-social-list hydrated">
+                                <li class="s-social-link">
+                                    <a href="https://www.instagram.com/EventProapp" rel="noopener" target="_blank" title="instagram" aria-label="instagram">
+                                        <span class="s-social-icon">
+                                            <!-- Generated by IcoMoon.io -->
+                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                                <title>instagram</title>
+                                                <path d="M23 32h-14c-4.971 0-9-4.029-9-9v0-14c0-4.971 4.029-9 9-9v0h14c4.971 0 9 4.029 9 9v0 14c0 4.971-4.029 9-9 9v0zM9 2c-3.866 0-7 3.134-7 7v0 14c0 3.866 3.134 7 7 7v0h14c3.866 0 7-3.134 7-7v0-14c0-3.866-3.134-7-7-7v0zM16 24c-4.418 0-8-3.582-8-8s3.582-8 8-8c4.418 0 8 3.582 8 8v0c0 4.418-3.582 8-8 8v0zM16 10c-3.314 0-6 2.686-6 6s2.686 6 6 6c3.314 0 6-2.686 6-6v0c0-3.314-2.686-6-6-6v0zM25 9c-1.105 0-2-0.895-2-2s0.895-2 2-2c1.105 0 2 0.895 2 2v0c0 1.105-0.895 2-2 2v0zM25 7v0z"></path>
+                                            </svg>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="s-social-link"><a href="https://twitter.com/EventPro1" rel="noopener" target="_blank" title="twitter" aria-label="twitter"><span class="s-social-icon"><svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-lrsllp r-1nao33i r-16y2uox r-8kz0gk"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg></span></a></li>
+                            </salla-social>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Important Links</h3>
+                        <salla-menu source="footer" class="hydrated"><div><div class="s-menu-footer-list"><a href="https://EventPro.store/en/blog" target="_self" class="s-menu-footer-item">???????</a><a href="https://EventPro.store/en/??-???/page-2140765833" target="_self" class="s-menu-footer-item">?? ??? !</a><a href="https://EventPro.store/en/?????-?????-????????/page-458013835" target="_self" class="s-menu-footer-item">????? ????? ????????</a><a href="https://EventPro.store/en/????-??-???-??????/page-1055200513" target="_self" class="s-menu-footer-item">???? ?? ??? ??????</a></div></div></salla-menu>
+                    </div>
+                    <div>
+                        <salla-contacts class="s-contacts hydrated">
+                            <h3 class="s-contacts-title">Contact us</h3><div class="s-contacts-list s-contacts-list-vertical">
+                                <div id="contact-slot">
+                                    <a href="tel:5550100" class="s-contacts-item">
+                                        <span class="s-contacts-icon">
+                                            <!-- Generated by IcoMoon.io -->
+                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                                <title>phone</title>
+                                                <path d="M30.823 21.713l-3.883-3.883c-1.569-1.568-4.12-1.568-5.689 0l-2.568 2.568c-3.063-1.499-5.583-4.019-7.081-7.083l2.568-2.567c0.759-0.76 1.177-1.771 1.177-2.845s-0.419-2.084-1.179-2.844l-3.881-3.881c-1.52-1.521-4.171-1.521-5.689 0l-1.845 1.847c-2.22 2.219-3.183 5.407-2.573 8.527 1.98 10.144 10.125 18.292 20.269 20.271 0.616 0.121 1.236 0.18 1.849 0.18 2.492 0 4.896-0.972 6.677-2.752l1.847-1.847c1.568-1.571 1.568-4.121 0.001-5.691zM28.936 25.517l-1.845 1.847c-1.592 1.592-3.883 2.283-6.132 1.841-9.089-1.776-16.388-9.075-18.163-18.165-0.439-2.247 0.249-4.539 1.841-6.129l1.847-1.847c0.256-0.257 0.596-0.397 0.959-0.397s0.703 0.14 0.959 0.397l3.883 3.883c0.256 0.256 0.397 0.596 0.397 0.959s-0.141 0.703-0.397 0.96l-3.22 3.217c-0.383 0.384-0.496 0.959-0.287 1.457 1.813 4.339 5.343 7.868 9.683 9.684 0.497 0.207 1.073 0.095 1.457-0.288l3.22-3.22c0.529-0.529 1.389-0.528 1.917 0l3.881 3.883c0.528 0.529 0.528 1.389 0 1.919z"></path>
+                                            </svg>
+                                        </span><span class="unicode">5550100</span>
+                                    </a>
+                                </div><div id="contact-slot">
+                                    <a href="mailto:cs@EventPro.org" class="s-contacts-item">
+                                        <span class="s-contacts-icon">
+                                            <!-- Generated by IcoMoon.io -->
+                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                                <title>mail</title>
+                                                <path d="M28 2.667h-24c-2.205 0-4 1.795-4 4v18.667c0 2.205 1.795 4 4 4h24c2.205 0 4-1.795 4-4v-18.667c0-2.205-1.795-4-4-4zM29.333 25.333c0 0.735-0.599 1.333-1.333 1.333h-24c-0.735 0-1.333-0.599-1.333-1.333v-12.685l10.54 4.865c0.888 0.409 1.84 0.613 2.793 0.613s1.907-0.204 2.793-0.615l10.54-4.864zM29.333 9.711l-11.657 5.38c-1.065 0.492-2.288 0.492-3.353 0l-11.656-5.38v-3.044c0-0.735 0.599-1.333 1.333-1.333h24c0.735 0 1.333 0.599 1.333 1.333z"></path>
+                                            </svg>
+                                        </span><span class="unicode">cs@EventPro.org</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </salla-contacts>
+                        <div class="lg:hidden contact-social">
+                            <salla-social class="s-social-list hydrated">
+                                <li class="s-social-link">
+                                    <a href="https://www.instagram.com/EventProapp" rel="noopener" target="_blank" title="instagram" aria-label="instagram">
+                                        <span class="s-social-icon">
+                                            <!-- Generated by IcoMoon.io -->
+                                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                                                <title>instagram</title>
+                                                <path d="M23 32h-14c-4.971 0-9-4.029-9-9v0-14c0-4.971 4.029-9 9-9v0h14c4.971 0 9 4.029 9 9v0 14c0 4.971-4.029 9-9 9v0zM9 2c-3.866 0-7 3.134-7 7v0 14c0 3.866 3.134 7 7 7v0h14c3.866 0 7-3.134 7-7v0-14c0-3.866-3.134-7-7-7v0zM16 24c-4.418 0-8-3.582-8-8s3.582-8 8-8c4.418 0 8 3.582 8 8v0c0 4.418-3.582 8-8 8v0zM16 10c-3.314 0-6 2.686-6 6s2.686 6 6 6c3.314 0 6-2.686 6-6v0c0-3.314-2.686-6-6-6v0zM25 9c-1.105 0-2-0.895-2-2s0.895-2 2-2c1.105 0 2 0.895 2 2v0c0 1.105-0.895 2-2 2v0zM25 7v0z"></path>
+                                            </svg>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="s-social-link"><a href="https://twitter.com/EventPro1" rel="noopener" target="_blank" title="twitter" aria-label="twitter"><span class="s-social-icon"><svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-lrsllp r-1nao33i r-16y2uox r-8kz0gk"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg></span></a></li>
+                            </salla-social>
+                        </div>
+                    </div>
+                    <salla-apps-icons class="lg:col-span-2 rtl:lg:pr-20 ltr:lg:pl-20 hydrated"></salla-apps-icons>
+                </div>
+            </div>
+            <div class="md:flex items-center justify-between py-4 container text-center">
+                <span class="text-sm copyright-text">
+                    <p class="text-gray-400 mb-2.5 md:mb-0">
+                        Copyright | 2024
+                        <a href="https://EventPro.store/en" class="hover:text-primary" target="_blank" rel="noreferrer">EventPro</a>
+                    </p>
+                </span>
+                <salla-payments class="s-payments-list hydrated"><li class="s-payments-list-item"><img class="lazy loaded" width="100%" height="100%" src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/mada_mini.png" data-src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/mada_mini.png" alt="mada" loading="lazy" data-ll-status="loaded"></li><li class="s-payments-list-item"><img class="lazy loaded" width="100%" height="100%" src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/credit_card_mini.png" data-src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/credit_card_mini.png" alt="credit_card" loading="lazy" data-ll-status="loaded"></li><li class="s-payments-list-item"><img class="lazy loaded" width="100%" height="100%" src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/apple_pay_mini.png" data-src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/apple_pay_mini.png" alt="apple_pay" loading="lazy" data-ll-status="loaded"></li><li class="s-payments-list-item"><img class="lazy loaded" width="100%" height="100%" src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/tamara_installment_mini.png" data-src="https://cdn.salla.network/cdn-cgi/image/fit=scale-down,width=58,height=58,onerror=redirect,format=auto/images/payment/tamara_installment_mini.png" alt="tamara_installment" loading="lazy" data-ll-status="loaded"></li></salla-payments>
+            </div>
+        </footer>
+        <span class="hidden bottom-2 rtl:pl-24 ltr:pr-24 md:grid-cols-3"></span></footer>
+    </div>
+    <div id="sidebar34" class="mm-ocd mm-ocd--left mm-ocd--open hidden">
+        <div class="mm-ocd__content">
+            <button id="close-sidebar" class=" btn sicon-cancel " style="display: block; float: right; color: red; "></button>
+            <nav id="mobile-menu" class=" mm-spn--light mm-spn--navbar mm-spn--main mm-spn" data-mm-spn-title="Main Menu">
+
+                <ul class="">
+
+                    <li class="lg:hidden text-sm font-bold" id="1629702394">
+
+                        <a href="https://EventPro.store/en/?????-?????-?????????/c1629702394" aria-label="????? ????? ?????????" class="text-gray-500 " target="_self">
+
+                            <span>????? ????? ?????????</span>
+                        </a>
+                    </li>
+
+                    <li class="!hidden lg:!block root-level lg:!inline-block
+" id="1629702394">
+                        <a href="https://EventPro.store/en/?????-?????-?????????/c1629702394" aria-label="????? ????? ?????????" target="_self">
+                            <span>????? ????? ?????????</span>
+                        </a>
+
+                    </li>
+
+
+
+                    <li class="lg:hidden text-sm font-bold" id="offers">
+
+                        <a href="https://EventPro.store/en/offers" aria-label="Offers" class="text-gray-500 " target="_self">
+
+                            <span>Offers</span>
+                        </a>
+                    </li>
+
+                    <li class="!hidden lg:!block root-level lg:!inline-block
+" id="offers">
+                        <a href="https://EventPro.store/en/offers" aria-label="Offers" target="_self" class="offers-link">
+                            <span>Offers</span>
+                        </a>
+
+                    </li>
+
+
+
+                    <li class="lg:hidden text-sm font-bold" id="blog">
+
+                        <a href="https://EventPro.store/en/blog" aria-label="???????" class="text-gray-500 " target="_self">
+
+                            <span>???????</span>
+                        </a>
+                    </li>
+
+                    <li class="!hidden lg:!block root-level lg:!inline-block
+" id="blog">
+                        <a href="https://EventPro.store/en/blog" aria-label="???????" target="_self" class="blog-link">
+                            <span>???????</span>
+                        </a>
+
+                    </li>
+                </ul>
+
+            </nav>
+        </div><div class="mm-ocd__backdrop"></div>
+    </div>
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">window.baseUrl='https://EventPro.store/en/'; window.is_rtl=false; window.locale='en';</script>
+    <link rel="stylesheet" href="https://cdn.assets.salla.network/themes/customization/1793306541/1298199463.css?v=1707384005">
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+
+         var ignoreKeys = ["__said", "__ssid", "_fbp", "_scid", "cf_", "XSRF-TOKEN", "_gac", "_ga", "_twitter_sess", "personalization_id", "_hjid", "intercom-session-"];
+         ignoreKeys.push("__said");
+
+        function checkAndCleanCookies() {
+          if (new TextEncoder().encode(document.cookie).length < 16000) {
+            return;
+          }
+
+          document.cookie.split("; ").forEach(function(cookie) {
+            var cookieItem = cookie.split("=");
+            if(cookieItem[0].trim() === "__said"){
+              ignoreKeys.push(cookieItem[1]);
+            }
+          });
+
+
+          document.cookie.split("; ").forEach(function (cookie) {
+            if (!ignoreKeys.includes(cookie.split("=")[0].trim())) {
+
+
+              document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+          });
+        }
+        setInterval(checkAndCleanCookies, 10000);//10 seconds
+    </script>
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+        function dispatchSallaEvents() {
+          salla.event.dispatchEvents({"page.view":{"route":"blog.index","link":"https:\/\/EventPro.store\/blog","fingerprint":"2ef19cee1077cc52912877f49d79b9434fb20a48"},"twilight::init":{"store":{"id":1793306541,"logo":"https:\/\/cdn.salla.sa\/cdn-cgi\/image\/fit=scale-down,width=400,height=400,onerror=redirect,format=auto\/PjxoO\/MSFmRPeKNmXVY3ZkNIMPwNQymlE1uRaYkTuWPiTw.png","name":"EventPro","url":"https:\/\/EventPro.store\/en\/","settings":{"auth":{"email_allowed":true,"mobile_allowed":false,"is_email_required":false},"cart":{"apply_coupon_enabled":false},"product":{"total_sold_enabled":1,"fit_type":"contain","related_products_enabled":true,"filters":null,"show_comments":true,"user_can_comment":true,"show_price_as_dash":false,"notify_options_availability":true,"show_special_offers":false},"category":{"testimonial_enabled":true},"payments":["mada","credit_card","apple_pay","tamara_installment"],"arabic_numbers_enabled":false,"is_multilingual":true,"currencies_enabled":false,"rating_enabled":true,"rating":[],"is_loyalty_enabled":false,"keys":{"maps":"AIzaSyBFgFISAizDP3YVWj0y5rF8JKKNQ2vohdc","gtm":[]},"is_salla_gateway":true,"tax":{"number":null,"certificate":null,"taxable_prices_enabled":false},"certificate":null,"made_in_ksa":false,"buy_now":null,"installments":null,"quick_order":null},"scope":null,"template":null,"contacts":{"phone":"5550100","email":"cs@EventPro.org"},"social":{"instagram":"https:\/\/www.instagram.com\/EventProapp","twitter":"https:\/\/twitter.com\/EventPro1"},"description":"\u062a\u0635\u0645\u064a\u0645 \u0648\u062a\u0646\u0641\u064a\u0630 \u062f\u0639\u0648\u0627\u062a \u0627\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629 \u0631\u0642\u0645\u064a\u0629 \u0628\u062a\u0642\u0646\u064a\u0629 \u0627\u0644\u0643\u064a\u0648 \u0622\u0631 \u0643\u0648\u062f \u0628\u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u062e\u062f\u0645\u0629 \u0627\u0644\u0625\u0631\u0633\u0627\u0644 \u0639\u0646 \u0637\u0631\u064a\u0642 \u0627\u0644\u0648\u0627\u062a\u0633 \u0627\u0628","apps":[],"features":[]},"debug":false,"theme":{"name":"1298199463","mode":"live","translations_hash":"16727807822","is_rtl":false,"color":{"primary":"#2d4e43","text":"#000000","is_dark":true,"reverse_primary":"#000000","reverse_text":"#f9ffff"},"settings":{"placeholder":"images\/placeholder.png"},"assets":"https:\/\/cdn.assets.salla.network\/themes\/1247874246\/1.157.0\/:path"},"trace_console":false,"user":{"id":"NjMJCWpILn6FKi1L2fd3af4SmR8sG2Dg8j6OWs9Z","type":"guest","email":null,"mobile":null,"language_code":"en","currency_code":"SAR","country_code":"EG","can_comment":false,"avatar":"https:\/\/cdn.assets.salla.network\/prod\/stores\/themes\/default\/assets\/images\/avatar_male.png"},"currencies":{"AED":{"code":"AED","name":"UAE Dirham","symbol":"AED","amount":0.979268,"country_code":"ae"},"EGP":{"code":"EGP","name":"Egyptian Pound","symbol":"EGP","amount":12.689832,"country_code":"eg"},"KWD":{"code":"KWD","name":"Kuwaiti Dinar","symbol":"KWD","amount":0.08179,"country_code":"kw"},"QAR":{"code":"QAR","name":"Qatari Riyal","symbol":"QAR","amount":0.974633,"country_code":"qa"},"SAR":{"code":"SAR","name":"Saudi Riyal","symbol":"SAR","amount":1,"country_code":"sa"}},"page":{"title":"","slug":"blog.index","id":null}},"services::get_button.init":{"services":{"get_button":{"options":{"whatsapp":"+1-555-0100","call_to_action":"\u0644\u0644\u0627\u0633\u062a\u0641\u0633\u0627\u0631 \u062a\u0648\u0627\u0635\u0644 \u0645\u0639\u0646\u0627 ","button_color":"#932C8B","position":"left"}}}},"services::snapchat_pixel.init":{"services":{"snapchat_pixel":{"pixel_id":"1b1ed7f0-61a9-4e06-8e19-749a90e08d08"}}},"services::facebook_pixel.init":{"services":{"facebook_pixel":{"pixel_id":"603360854623087"}}},"services::google_analytics.init":{"services":{"google_analytics":{"tracking_id":"G-5NQZ2810ZC"}}},"services::tiktok_pixel.init":{"services":{"tiktok_pixel":{"pixel_id":"CKKT1IRC77UF4DIA3U40"}}},"services::adwords.init":{"services":{"adwords":{"conversion_id":"11486468455","conversion_label":"Zm05CMXKzY8ZEOeyluUq","add_to_cart_label":"O9m5CJitt5EZEOeyluUq","begin_checkout_label":"Zm05CMXKzY8ZEOeyluUq","view_item_label":"Zm05CMXKzY8ZEOeyluUq"}}}})
+        }
+
+        if (window.Salla && Salla.status)
+          dispatchSallaEvents();
+        else window.addEventListener('salla::created', dispatchSallaEvents, {once: true});
+    </script>
+    <script type="ac67db2fac69178aa370f3bc-text/javascript">
+         var _user_id = ''; // Set to the user's ID, username, or email address, or '' if not yet known.
+         var _session_id = 'NjMJCWpILn6FKi1L2fd3af4SmR8sG2Dg8j6OWs9Z'; // Set to a unique session ID for the visitor's current browsing session.
+
+         var _sift = window._sift = window._sift || [];
+         _sift.push(['_setAccount', '42e2369b33']);
+         _sift.push(['_setUserId', _user_id]);
+         _sift.push(['_setSessionId', _session_id]);
+         _sift.push(['_trackPageview']);
+
+        (function() {
+          function ls() {
+            var e = document.createElement('script');
+            e.src = 'https://cdn.sift.com/s.js';
+            document.body.appendChild(e);
+          }
+          if (window.attachEvent) {
+            window.attachEvent('onload', ls);
+          } else {
+            window.addEventListener('load', ls, false);
+          }
+        })();
+    </script>
+    <script defer src="https://cdn.assets.salla.network/themes/1247874246/1.157.0/app.js" type="ac67db2fac69178aa370f3bc-text/javascript"></script>
+    <salla-offer-modal></salla-offer-modal>
+    <salla-search></salla-search>
+    <salla-login-modal></salla-login-modal>
+    <script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="ac67db2fac69178aa370f3bc-|49" defer></script>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vef91dfe02fce4ee0ad053f6de4f175db1715022073587" integrity="sha512-sDIX0kl85v1Cl5tu4WGLZCpH/dV9OHbA4YlKCuCiMmOQIk4buzoYDZSFj+TvC71mOBLh8CDC/REgE0GX0xcbjA==" data-cf-beacon='{"rayId":"88b6ed9aeb1fac1b","version":"2024.4.1","token":"0ba4cd7067784c07aa8f5f733dd0f1a2"}' crossorigin="anonymous"></script>
+    <script>
+        console.log('hello world')
+        var sidebar_open_button = document.getElementById('sidebar_open_button');
+        var sidebar_close_button = document.getElementById('close-sidebar');
+        var sidebar = document.getElementById('sidebar34');
+        console.log(sidebar);
+        console.log(sidebar_open_button)
+        function showSideBar() {
+            console.log('inside func');
+            sidebar.classList.remove('hidden');
+        }
+        function closeSideBar() {
+            console.log('inside func');
+            sidebar.classList.add('hidden');
+        }
+        sidebar_open_button.addEventListener('click', showSideBar);
+        sidebar_close_button.addEventListener('click', closeSideBar);
+    </script>
+    <script>
+        const guestInfo = document.getElementById('guestInfo')
+        const message = document.getElementById('message')
+        const sendButton = document.getElementById('sendMessage')
+        const loader = document.getElementById('loadersp')
+        const sentSuccess = document.getElementById('sentSuccess')
+        const sentFail = document.getElementById('sentFail')
+        const designs = document.getElementById('designs')
+        var messageText = document.getElementById('message').value;
+
+        function sendMessage() {
+            guestInfo.classList.add('hidden');
+            message.classList.add('hidden');
+            loader.classList.remove('hidden');
+            sendButton.classList.add('hidden')
+            sendMessageVia()
+
+        }
+        async function sendMessageVia() {
+            console.log(message.textContent);
+            console.log(message.nodeValue);
+            console.log(messagetextt.value);
+            var data = await fetch(`https://www.EventPro.me/feedback/sendMessage?id=${@Model.GuestId}&&message=${messagetextt.value}`);
+            console.log(data);
+            console.log(data.statusText)
+            if (data.status == 200) {
+                sentSuccess.classList.remove('hidden');
+            } else {
+                sentFail.classList.remove('hidden');
+            }
+            loader.classList.add('hidden');
+            designs.classList.remove('hidden');
+        }
+        sendButton.addEventListener('click', sendMessage)
+    </script>
+</body>
+</html>

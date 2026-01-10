@@ -1,0 +1,18 @@
+﻿ALTER procedure ProcScanSummary      
+  as      
+BEGIN  
+select top 200  
+e.id,e.LinkedEvent,e.EventTitle,  
+   (select isnull(sum(g.NoOfMembers), 0)  from  Guest g  where g.EventId=e.id )TotalGuests  
+      ,COUNT(CASE WHEN sch.ResponseCode='Allowed'   THEN 1 END )  'Allowed'   
+      ,COUNT(CASE WHEN sch.ResponseCode='Declined' THEN 1 END )  'Declined'       
+from   
+  events e     
+  left join Guest g  on e.Id=g.EventId   
+     left join ScanHistory sch on sch.GuestId=g.GuestId   
+where   
+e.EventFrom<=GETDATE()+1   
+  
+group by e.id,LinkedEvent,e.EventTitle  
+order by  e.id desc  
+END  

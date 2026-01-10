@@ -1,0 +1,117 @@
+@model EventPro.DAL.Models.EventCategory
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_User.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-warning">
+
+                    <div class="card">
+                        <div class="container-fluid">
+                            <!-- /.card-header -->
+                            <div class="card-body p-0">
+                                <table id="searchableTable" class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Linked To</th>
+                                            <th>Title</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Venue</th>
+                                            <th>Created On</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var cat in ViewBag.Events)
+                                        {
+                                            <tr>
+                                                <td>@cat.Id</td>
+                                                <td> @(cat.LinkedEvent == null ? "--" : cat.LinkedEvent)</td>
+                                                <td>
+                                                    <a href="~/user/viewevent/@cat.Id">
+                                                        @if (@cat.Icon != null)
+                                                        {
+                                                            <img src="~/Upload/card/@cat.Icon" class="grid-icon" /> @cat.EventTitle
+                                                        }
+                                                        else
+                                                        { <img src="~/Upload/card/default.png" class="grid-icon" /> @cat.EventTitle
+                                                    }
+                                                    </a>
+                                                </td>
+                                                <td align="right">@Convert.ToDateTime(cat.EventFrom).ToString("dd-MMM-yyyy")</td>
+                                                <td align="right">@Convert.ToDateTime(cat.EventTo).ToString("dd-MMM-yyyy")</td>
+                                                <td>@cat.EventVenue</td>
+                                                <td align="right">@Convert.ToDateTime(cat.CreatedOn).ToLocalTime().ToString("dd-MMM-yyyy hh:mm")</td>
+                         
+                                                <td>
+                                                    @{ var eventType = string.Empty;}
+                                                    @if (@cat.EventTo < DateTime.Now.Date)
+                                                    {
+                                                        eventType = "past";
+                                                        <span>Past</span>
+                                                    }
+                                                    else if (@cat.EventFrom >= DateTime.Now.Date && @cat.EventTo <= DateTime.Now.Date)
+                                                    {
+                                                        eventType = "in-progress";
+                                                        <span>In Progress</span>
+                                                    }
+                                                    else if (@cat.EventFrom > DateTime.Now.Date)
+                                                    {
+                                                        eventType = "upcoming";
+
+
+                                                        <span>Upcoming</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        eventType = "in-progress";
+                                                        <span>In Progress</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            Action
+                                                        </button>
+                                                        <div class="dropdown-menu" style="font-size: small">
+                                                            @{ var fileName = cat.Id + ".pdf";
+                                                                bool fileExist = System.IO.File.Exists(ViewBag.FilePath + "/" + fileName);
+                                                            }
+                                                            <a href="~/user/viewevent/@cat.Id" class="dropdown-item"><i class="nav-icon fas fa-eye" style="color:cornflowerblue"></i>&nbsp; View Event</a>
+                                                            <a href="~/Upload/Invoice/@fileName" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Invoice</a>
+                                                        </div>
+                                                    </div>
+
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+

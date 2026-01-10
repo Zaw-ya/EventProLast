@@ -1,0 +1,37 @@
+@model EventPro.Web.Models.LoginModel
+@{
+    Layout = "~/Views/Shared/_Login.cshtml";
+}
+<body class="hold-transition login-page">
+    <div class="login-box">
+        <div class="login-logo">
+            <img src="~/assets/img/EventPro.jpg" width="125px" height="125px" />
+        </div>
+        <!-- /.login-logo -->
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">Complete your transaction (TEST)</p>
+                @if (TempData["message"] != null)
+                {
+                    <div class="alert alert-success" role="alert">
+                        <strong>Payment Status!</strong> @TempData["message"].
+                    </div>
+                }
+              
+            </div>
+            <!-- /.login-card-body -->
+        </div>
+
+        <p class="mb-0">
+            <a href="/" class="text-center">Back to Application</a>
+        </p>
+    </div>
+    <!-- /.login-box -->
+    <!-- jQuery -->
+    <script src="../../plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="../../dist/js/adminlte.min.js"></script>
+
+</body>

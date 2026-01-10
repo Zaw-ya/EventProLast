@@ -1,0 +1,154 @@
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+@using EventPro.Web.Common
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css" />
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @ViewBag.Error.
+            </div>
+        }
+        @if (ViewBag.succeed != null)
+        {
+            <div class="alert alert-primary" role="alert">
+                <strong>succeed!</strong> @ViewBag.succeed.
+            </div>
+        }
+    </div>
+    <div class="container-fluid">
+        @using (Html.BeginForm(null, null, FormMethod.Post))
+        {
+            <div class="card card-default color-palette-box">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-tag"></i>
+                        Search
+                    </h3>
+                    <div class="col-md-2" style="float:right; margin-bottom:0px;">
+                        <a href="~/admin/createuser" style="width:100%" class="btn btn-warning btn-sm">Add New Users</a>
+                    </div>
+                </div>
+                @if (User.IsInRole("Administrator") && !User.IsInRole("Operator"))
+                {
+                    <div class="card-body">
+                        <div class="col-md-3" style="float:left">
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select name="role" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="1" tabindex="-1" aria-hidden="true">
+                                    <option>All</option>
+                                    <option>Administrator</option>
+                                    <option>Client</option>
+                                    <option>Gatekeeper</option>
+                                    <option>Operator</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2" style="float:right; top:50px;">
+                            <button type="submit" class="btn btn-warning btn-sm">Search</button>
+                        </div>
+                    </div>
+                }
+
+                <!-- /.card-body -->
+            </div>
+        }
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-warning">
+
+                    <div class="card">
+                        <div class="container-fluid" style="padding:5px">
+                            <!-- /.card-header -->
+                            <div class="card-body p-0">
+                                <div class="table-title">
+
+                                </div>
+                                <table id="searchableTable" class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Id</th>
+                                            <th>Full Name</th>
+                                            <th>Role</th>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                            <th>Created On</th>
+                                            <th>Status</th>
+                                            <th>Approval</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var cat in ViewBag.Users)
+                                        {
+                                            <tr>
+                                                <td>@cat.UserId</td>
+                                                <td>@cat.FullName</td>
+                                                <td>@cat.RoleName</td>
+                                                <td>@cat.UserName</td>
+                                                <td>@cat.Email</td>
+                                                <td align="right">@cat.CreatedOn.ToLocalTime()</td>
+                                                <td>
+                                                    @if (cat.IsActive)
+                                                    {
+                                                        <span class="badge badge-success">active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-warning">inactive</span>
+                                                    }
+                                                </td>
+                                                 <td>
+                                                    @if(cat.Approved)
+                                                    {
+                                                        <span class="badge badge-success">Approved</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-warning">Not Approved</span>
+                                                    }
+                                                </td>
+
+                                                <td>
+                                                    <a href="~/admin/_Users/@cat.UserId"><i class="nav-icon fas fa-edit" style="color:blue;"></i></a>
+                                                    @if (cat.IsActive)
+                                                    {
+                                                        @if (ViewBag.CurrentUser == cat.UserId)
+                                                        {
+                                                            <a href="#"><i class="nav-icon fas fa-ban" style="color:gray;"></i></a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="~/admin/deactiveUser/@cat.UserId"><i class="nav-icon fas fa-ban" style="color:red;"></i></a>
+                                                        }
+
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="~/admin/activeUser/@cat.UserId"><i class="fa fa-check-circle" style="color:green;"></i></a>
+                                                    }
+                                                    <a href="/Admin/SendDetails?userId=@cat.UserId"><i class="fab fa-whatsapp" style="color: gold"></i></a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

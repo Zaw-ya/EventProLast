@@ -1,0 +1,11 @@
+﻿  
+ALTER view dbo.Vw_ScanHistoryLogs        
+as        
+select sh.*,u.FirstName +' '+u.LastName as ScannedBy,g.FirstName as GuestName ,g.NoOfMembers as Nos,  
+e.LinkedEvent,e.EventTitle,e.Icon,e.GmapCode as EventCode, g.AdditionalText,   
+e.Category,e.EventFrom,e.EventTo,e.CreatedFor from ScanHistory(nolock) sh        
+left join Users(nolock) u        
+on sh.ScanBy=u.UserId         left join guest(nolock) g        
+on g.GuestId=sh.GuestId      left join Vw_Events(nolock) e      
+on e.Id=g.EventId 
+

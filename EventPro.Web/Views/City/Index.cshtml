@@ -1,0 +1,42 @@
+@using EventPro.DAL.Models;
+@model List<City>
+
+@{
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<section class="content">
+    <div class="container-fluid">
+        <a class="btn btn-primary" href="~/City/Create">Add New City</a>
+        <br/>
+        <br/>
+        <table id="searchableTable" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Country</th>
+                    <th>City</th>
+                    <th>Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var city in Model)
+                {
+                    <tr>
+                        <td>@city.Id</td>
+                        <td>@city.Country.CountryName</td>
+                        <td>@city.CityName</td>
+                        <td>
+                            <a href="/City/Edit/@city.Id" class="btn btn-primary">Edit</a>
+                            <a href="javascript:;" class="btn btn-danger js-delete" data-id="@city.Id" data-name="@city.CityName">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts
+    {
+    <script src="~/lte/assets/js/city.js" asp-append-version="true"></script>
+ }

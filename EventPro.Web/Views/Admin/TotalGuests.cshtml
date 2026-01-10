@@ -1,0 +1,115 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery
+
+@{
+    ViewData["Title"] = "Total Guest";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<section class="content">
+    <div class="container-fluid">
+        @if(TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="card card-default color-palette-box">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="EventTitle">Event Title</label>
+                            @Html.TextBox("EventTitle", null, new { @class = "form-control" })
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="EventId">Event ID</label>
+                            @Html.TextBox("EventId",null,new { @class = "form-control",min = "1",max = "99999999",@type = "number" })
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="Address">Address</label>
+                            @Html.DropDownList("",ViewBag.Address as SelectList,"--Select--",new { id = "Address",@class = "form-control select2 ",@name = "Address" })
+
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+
+                            <label for="type">Type</label>
+                            <br>
+                            @Html.DropDownList("type",
+                                     new List<SelectListItem>()
+                            {
+                            new SelectListItem { Text="Active", Value = "active"},
+                            new SelectListItem { Text="Archived", Value = "archived"}
+                            },"--Select--",new { id = "type",@class = "form-control select2",@name = "type" })
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="startFrom">Start from</label>
+                        <input type="date" id="startFrom" name="startFrom" value="@ViewBag.startFrom" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label for="startTo">Start from To</label>
+                        <input type="date" id="startTo" name="startTo" value="@ViewBag.startTo" class="form-control" />
+                    </div>
+
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="col-md-3" style="float:right">
+                    <button style="width:100px" class="btn btn-primary btn-sm" id="SearchBtn">Search</button>
+                    <button style="width:100px" class="btn btn-warning btn-sm" id="RefreshPage">Reset</button>
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid">
+
+                        <div class="card-body p-0" style="margin-top:10px">
+                            <table id="ResultTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>ID</th>
+                                        <th>Event Title</th>
+                                        <th>Linked To</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+
+                                        <th>Venue</th>
+                                        <th>Location</th>
+                                        <th>Total Guests</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @* eVENTS will be rendered here *@
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+@section Scripts
+{
+    <script src="~/assets/js/TotalGuests.js"></script>
+}

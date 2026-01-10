@@ -1,0 +1,2125 @@
+@using System.Globalization;
+@model EventPro.DAL.Models.Events
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+
+}
+@if (TempData["entry-error"] != null)
+{
+    <blockquote class="quote-danger">
+        <h5>Error!</h5>
+        <p>@TempData["entry-error"]</p>
+    </blockquote>
+}
+<style>
+
+    textarea {
+        width: 100%;
+        height: 150px;
+        font-size: 16px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        resize: vertical;
+    }
+
+    button {
+        margin: 10px 5px 10px 0;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: none;
+        border-radius: 6px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+    }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+    .variables {
+        margin-top: 20px;
+    }
+
+    .var-item {
+        margin-bottom: 10px;
+    }
+
+        .var-item label {
+            display: inline-block;
+            width: 80px;
+            font-weight: bold;
+        }
+
+        .var-item input {
+            width: 300px;
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+    .preview {
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+        white-space: pre-wrap;
+        font-size: 16px;
+    }
+
+    h3 {
+        margin-top: 30px;
+    }
+    #map {
+        height: 100%;
+    }
+
+    /*
+                    * Optional: Makes the sample page fill the window.
+                    */
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .controls {
+        background-color: #F1F8E8;
+        border-radius: 2px;
+        border: 1px solid transparent;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        box-sizing: border-box;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        height: 29px;
+        margin-left: 17px;
+        margin-top: 10px;
+        outline: none;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+    }
+
+        .controls:focus {
+            border-color: #4d90fe;
+        }
+
+    .title {
+        font-weight: bold;
+    }
+
+    #infowindow-content {
+        display: none;
+    }
+
+    #map #infowindow-content {
+        display: inline;
+    }
+
+    .section-container {
+        margin-bottom: 30px; /* Margin for spacing */
+        margin-top: 20px;
+        position: relative; /* Ensure relative positioning for absolute children */
+    }
+
+    .section-title {
+        font-size: 12px; /* Adjust font size for the English title */
+        margin-top: 0; /* Remove default margin for h3 */
+        background-color: #f0f0f0; /* Light gray background */
+        padding: 8px 12px; /* Padding inside the title */
+        border-top-left-radius: 8px; /* Rounded corners for the top left of title */
+        border-top-right-radius: 8px; /* Rounded corners for the top right of title */
+        border-bottom: 2px solid #ccc; /* Bottom border for separation */
+        box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+    }
+
+    .section-title-arabic {
+        font-size: 12px; /* Adjust font size for the Arabic title */
+        margin: 0; /* Remove default margin for h3 */
+        background-color: #f0f0f0; /* Light gray background */
+        padding: 8px 12px; /* Padding inside the title */
+        border-top-left-radius: 8px; /* Rounded corners for the top left of title */
+        border-top-right-radius: 8px; /* Rounded corners for the top right of title */
+        border-bottom: 2px solid #ccc; /* Bottom border for separation */
+        position: absolute; /* Position the title absolutely */
+        top: 0; /* Align at the top of the container */
+        right: 0; /* Align at the right of the container */
+        z-index: 10; /* Ensure it appears above other content */
+        box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+    }
+
+    .custom-form-group {
+        border: 2px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        margin-bottom: 20px;
+    }
+
+    .textbox-container {
+        border: 2px solid #ccc;
+        padding: 20px;
+        border-radius: 0 0 5px 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        position: relative;
+    }
+
+    .custom-input-group {
+        border: 2px solid #ccc;
+        padding: 5px;
+        border-radius: 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        margin-bottom: 10px;
+    }
+
+
+    .custom-input-group-append {
+        background-color: #f0f0f0;
+        border-left: 2px solid #ccc;
+        border-radius: 0 5px 5px 0;
+        /*         padding: 6px 10px; */
+    }
+
+    .custom-input-group-text {
+        background-color: transparent;
+        border: none;
+    }
+
+    .card {
+        background-color: #F1F8E8;
+    }
+
+    .content {
+        background-color: white;
+    }
+
+    .reminder-section {
+        border: 2px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        margin-bottom: 20px;
+    }
+        .tokens{display:flex;flex-wrap:wrap;gap:10px}
+    .token{
+      border:1px solid var(--glass);
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .08s ease, box-shadow .12s ease, background .12s;
+      display:inline-flex;align-items:center;gap:10px;
+      box-shadow:0 2px 8px rgba(2,6,23,0.6);
+      z-index:20;
+    }
+    .token:active{transform:translateY(1px) scale(.998)}
+    .token:hover{box-shadow:0 6px 18px rgba(2,6,23,0.9);}
+    .token .name{font-weight:600}
+    .token .meta{font-size:12px;color:var(--muted)}
+
+    /* small toast */
+    .toast{
+      position:fixed;right:20px;bottom:20px;min-width:180px;padding:12px 14px;border-radius:10px;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.04);display:flex;gap:10px;align-items:center;box-shadow:0 8px 30px rgba(2,6,23,0.7);opacity:0;transform:translateY(10px);transition:opacity .18s, transform .18s;z-index:-1;}
+    .toast.show{opacity:1;transform:translateY(0);z-index:2;}
+    .toast .dot{width:10px;height:10px;border-radius:50%;background:var(--success)}
+
+    /* keyboard focus */
+    .token:focus{outline:3px solid rgba(6,182,212,0.12);box-shadow:0 6px 18px rgba(6,182,212,0.08)}
+
+    .chat-wrapper {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        width: 400px;
+        max-width: 100%;
+        margin-top: 20px;
+        padding: 10px;
+        background: #ece5dd;
+    }
+
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .whatsapp-bubble {
+        padding: 8px 12px 20px 12px;
+        max-width: 75%;
+        font-size: 15px;
+        line-height: 1.4;
+        border-radius: 8px;
+        position: relative;
+        white-space: pre-wrap;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+        /* Incoming bubble */
+        .whatsapp-bubble.incoming {
+            background: #ffffff;
+            align-self: flex-start;
+        }
+
+            .whatsapp-bubble.incoming::after {
+                content: "";
+                position: absolute;
+                left: -8px;
+                top: 10px;
+                border-width: 8px;
+                border-style: solid;
+                border-color: transparent #ffffff transparent transparent;
+                filter: drop-shadow(-1px 1px 1px rgba(0,0,0,0.05));
+            }
+
+        /* Meta info (time + ticks) */
+        .whatsapp-bubble .meta {
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .whatsapp-bubble .ticks {
+            font-size: 12px;
+            color: #34B7F1; /* WhatsApp blue ticks */
+        }
+
+    /* Highlight variables */
+    .variable-highlight {
+        font-weight: bold;
+        color: #128C7E; /* WhatsApp green */
+    }
+
+    .whatsapp-bubble {
+        position: relative;
+        padding: 8px 12px 18px 12px;
+        max-width: 75%;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        line-height: 1.4;
+        font-size: 15px;
+        white-space: pre-wrap;
+    }
+
+    .media-preview {
+        margin-bottom: 6px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+        .media-preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            display: block;
+        }
+
+    .media-caption {
+        font-size: 13px;
+        padding: 4px 6px;
+        color: #555;
+    }
+
+    .message-text {
+        margin-bottom: 4px;
+    }
+
+    .meta {
+        position: absolute;
+        bottom: 4px;
+        right: 8px;
+        font-size: 11px;
+        color: #999;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .ticks {
+        color: #34B7F1; /* WhatsApp blue ticks */
+        font-size: 12px;
+    }
+
+    /* responsive */
+    @@media (max-width:520px){
+      .token{padding:10px 12px;font-size:14px}
+    }
+
+    
+
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <!-- SELECT2 EXAMPLE -->
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">Edit Event</h3>
+
+            </div>
+            <!-- /.card-header -->
+            @using (Html.BeginForm("EditEvent", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                <div class="card-body">
+
+                    <div class="section-container">
+
+                        <h3 class="section-title">Event Details</h3>
+                        <h3 class="section-title-arabic">?????? ????????</h3>
+                        <div  class="textbox-container">
+                            <div class="row">
+                                <div class="col-lg-6 col-md-6 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Created For</label>
+                                        @Html.DropDownListFor(m => m.CreatedFor, Enumerable.Empty<SelectListItem>(), "--Select--", new { @required = "required", @class = "form-control select2 ajax-select2", @id = "CreatedFor" })
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-md-6 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Category</label>
+                                        @Html.DropDownListFor(Model => Model.Type, ViewBag.Type as SelectList, "--Select--", new { @required = "required", @class = "form-control select2" })
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>
+                                            Parents Welcoming<span class="required">*</span>
+                                        </label>
+                                        <div class="input-group mb-3">
+                                            @Html.TextBoxFor(model => model.ParentTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Parent Title" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Message Title</label>
+                                        <div class="input-group mb-3">
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.TextBoxFor(model => model.EventTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Message Title" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-comment"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>System Title</label>
+                                        <div class="input-group mb-3">
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.TextBoxFor(model => model.SystemEventTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "System Title" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-comment"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Start Date</label>
+                                        <div class="input-group mb-3">
+                                            <input asp-for="@Model.EventFrom" type="date" class="form-control " style="width=100%" required />
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-calendar"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <!-- /.form-group -->
+                                    <div class="form-group">
+                                        <label>End Date &nbsp; &nbsp; &nbsp;<span id="lbldateMsg" style="color:red; font-style:italic; font-size:small">@ViewBag.ErrorDate</span></label>
+                                        <div class="input-group mb-3">
+                                            <input asp-for="@Model.EventTo" type="date" class="form-control " style="width=100%" required />
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-calendar"></span>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label>Venue</label>
+                                    <div class="input-group mb-3">
+                                        @Html.TextBoxFor(model => model.EventVenue, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Venue" })
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">
+                                                <span class="fas fa-map-marker"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label>Google Map Location</label><div class="input-group mb-3">
+
+                                            @Html.TextBoxFor(model => model.GmapCode, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Google Location" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-map-marker" onclick="showMap()"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Event Location</label>
+                                        @* <div class="input-group mb-3">  *@
+                                        @Html.DropDownListFor(Model => Model.CityId, ViewBag.EventLocations as SelectList, "--Select--", new { @class = "form-control select2 ", @required = "required" })
+                                        @*  </div> *@
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div  class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="section-title">Additional Details</label>
+                                <label class="section-title-arabic">?????? ????????</label>
+                                <div class="custom-form-group row">
+                                    <!-- Linked To -->
+                                    <div class="col-md-12 col-lg-12">
+                                        <div class="form-group">
+                                            <label>Linked To</label>
+                                            <div class="input-group mb-3">
+                                                @Html.DropDownListFor(Model => Model.LinkedEvent, ViewBag.LinkedEvents as SelectList, "--Select--", new { @class = "form-control select2" })
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Attendance Time -->
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Attendance Time</label>
+                                            <div class="input-group mb-3">
+                                                <input type="time" name="AttendanceTime" value="@Model.AttendanceTime.GetValueOrDefault().ToString("HH:mm")" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Leave Time -->
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Leave Time</label>
+                                            <div class="input-group mb-3">
+                                                <input type="time" name="LeaveTime" value="@Model.LeaveTime.GetValueOrDefault().ToString("hh\\:mm")" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row col-md-6">
+                                        <!-- Show on application Calendar? -->
+                                        <div class="col-md-6 ">
+                                            <div class="form-group text-center">
+                                                <label>Show on application Calendar?</label>
+                                                <div class="input-group mb-3">
+                                                    <input style="cursor:pointer;" type="checkbox" name="ShowOnCalender" value="true" checked="@Model.ShowOnCalender.GetValueOrDefault()" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Send Invitation? -->
+                                        <div class="col-md-6">
+                                            <div class="form-group text-center">
+                                                <label asp-for="SendInvitation">Send Invitation?</label>
+                                                <div class="input-group mb-3">
+                                                    @Html.CheckBoxFor(model => model.SendInvitation, new { @checked = "checked", @class = "form-control", @style = "cursor:pointer;" })
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+
+                                        <!-- Whatsapp Confirmation ? -->
+                                        <div class="col-md-6">
+                                            <div class="form-group text-center">
+                                                <label asp-for="WhatsappConfirmation">Whatsapp Confirmation ?</label>
+                                                <div class="input-group mb-3">
+                                                    <input style="cursor:pointer;" type="checkbox" name="WhatsappConfirmation" value="true" checked="@Model.WhatsappConfirmation.GetValueOrDefault()" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Whatsapp Push ? -->
+                                        <div class="col-md-6">
+                                            <div class="form-group text-center">
+                                                <label asp-for="WhatsappPush">Whatsapp Push ?</label>
+                                                <div class="input-group mb-3">
+                                                    <input style="cursor:pointer;" type="checkbox" name="WhatsappPush" value="true" checked="@Model.WhatsappPush.GetValueOrDefault()" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Description -->
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Description<span id="lblDescMsg" style="color:red; font-style:italic; font-size:small">@ViewBag.ErrorDesc</span></label>
+                                            @Html.TextAreaFor(Model => Model.EventDescription, new { @class = "textarea form-control", @placeholder = Html.DisplayNameFor(m => m.EventDescription), @tabindex = 5 })
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Name -->
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="ContactName">Contact Name</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ContactName, new { @required = "required", @class = "form-control", @placeholder = "Contact Name", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Phone -->
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="ContactPhone">Contact Phone</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ContactPhone, new { pattern = "^[0-9]+$", @required = "required", @class = "form-control", @placeholder = "Contact Phone", @minlength = "3", @maxlength = "20", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+                    <div class="section-container">
+                        <h3 class="section-title">Sending Details</h3>
+                        <h3 class="section-title-arabic">?????? ???????</h3>
+
+                        <div class="custom-form-group">
+                            @if (!string.IsNullOrEmpty(Model.MessageHeaderImage))
+                            {
+                                <div class="row">
+                                    <div class="col-lg-6 col-md-6 ">
+                                        <div class="form-group">
+                                            <label>Message Header Media</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.MessageHeaderImage, new { @class = "form-control", @type = "file" })
+                         
+                                            </div>
+                                   
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 ">
+
+                                        <div>
+                                            <a asp-controller="admin" asp-action="DeleteHeaderMessageImage" asp-route-eventId="@Model.Id" class="btn btn-warning text-center " style="margin-left:25px ; margin-top: 30px">Delete Image</a>
+                                        </div>
+
+
+                                    </div>
+
+                                    <div class="col-lg-6 col-md-6 ">
+                                        <div class="form-group">
+                                            <label>Message Header Text</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.MessageHeaderText, new { @class = "form-control", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    <div class="col-lg-6 col-md-6 ">
+                                        <div class="form-group">
+                                            <label>Message Header Media</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.MessageHeaderImage, new { @class = "form-control", @type = "file" })
+                                            </div>
+                                            <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6 col-md-6 ">
+                                        <div class="form-group">
+                                            <label>Message Header Text</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.MessageHeaderText, new { @class = "form-control", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Parent Welcoming Gender<span class="required">*</span></label>
+                                        <select class="form-control" asp-items="ViewBag.GenderList" asp-for="@Model.ParentTitleGender"></select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Sending Type<span class="required">*</span></label>
+                                        <select class="form-control" asp-items="ViewBag.SendingType" asp-for="@Model.SendingType"></select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Message Language<span class="required">*</span></label>
+                                        <select id="messageLanguage" class="form-control" asp-items="ViewBag.MessageLanguage" asp-for="@Model.MessageLanguage"></select>
+                                    </div>
+                                </div>
+                                @if (User.IsInRole("Administrator") && !User.IsInRole("Operator"))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>WhatsApp Provider<span class="required">*</span></label>
+                                            <select class="form-control" asp-items="ViewBag.WhatsappProvider" asp-for="@Model.WhatsappProviderName"></select>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>WhatsApp choosen Profile<span class="required">*</span></label>
+                                            <select class="form-control" asp-items="ViewBag.choosenSendingWhatsappProfile" asp-for="@Model.choosenSendingWhatsappProfile"></select>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>WhatsApp choosen Country Number<span class="required">*</span></label>
+                                            <select class="form-control" asp-items="ViewBag.choosenSendingCountryNumber" asp-for="@Model.choosenSendingCountryNumber"></select>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>WhatsApp choosen Country Number<span class="required">*</span></label>
+                                            <select class="form-control" asp-items="ViewBag.ChoosenNumberWithinCountry" asp-for="@Model.ChoosenNumberWithinCountry"></select>
+                                        </div>
+
+                                    </div>
+                                }
+                                <div class="col-6 form-group ">
+                                    <label>Buttons Type</label>
+                                    <div class="form-control ">
+                                        <input type="radio" id="quickReplies" name="ConfirmationButtonsType" value="QuickReplies"
+                                        @(Model.ConfirmationButtonsType == "QuickReplies" ? "checked" : "") />
+                                        <label for="quickReplies">Quick Replies</label>
+                                    </div>
+                                    <div class="form-control mt-1">
+                                        <input type="radio" id="links" name="ConfirmationButtonsType" value="Links"
+                                        @(Model.ConfirmationButtonsType == "Links" ? "checked" : "") />
+                                        <label for="links">Links</label>
+                                    </div>
+                                </div>
+                                <div class="col-6 form-group">
+
+                                    <label>
+                                        Custom Invitation Message Template ID
+                                    </label>
+                                    <div class="row">
+                                        <div class="col-10">
+                                            @Html.TextBoxFor(model => model.CustomInvitationMessageTemplateName, new { @class = "form-control ", @type = "text" ,@id = "customConfirmationTemplateId" })
+                                        </div>
+                                        <div class="col-2">
+                                            <a id="customConfirmatiionTempFetchButton" class="btn btn-warning " onclick="FetchCustomTemplate(@Model.Id,1)">Fetch</a>
+                                        </div>
+                                    </div>
+
+                                  </div>
+
+                            </div>
+
+                            <div  class="row template-section" id="section1">
+                                <div class="col-8">
+                                    <h3>Template with Variables</h3>
+                                    <textarea readonly class="mt-2" id="templateText1"></textarea>
+
+                                    <div class="container">
+                                        <h4>Template Tokens — click to copy</h4>
+                                        <p class="lead">Click any token to copy it to the clipboard.</p>
+
+                                        <div id="ConfirmationTokens" class="tokens" role="list">
+                                            <!-- tokens will be inserted here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- accessible live region for screen readers -->
+                                    <div aria-live="polite" aria-atomic="true" id="sr-live" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                                    </div>
+
+                                    <div id="toast" class="toast" role="status" aria-hidden="true">
+                                        <div class="dot" aria-hidden="true"></div>
+                                        <div id="toast-text">Copied</div>
+                                    </div>
+                                    <div class="variables" id="variablesContainer1"></div>
+                                </div>
+                                <div class="col-4">
+
+                                    <h3>Preview:</h3>
+                                    <div class="chat-wrapper">
+                                        <div class="chat-container">
+                                            <div class="whatsapp-bubble incoming" id="previewArea1">
+                                                <span class="message-text"></span>
+                                                <span class="meta">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+
+
+
+                    <div class="section-container">
+                        <h3 class="section-title">Card Invitation Details</h3>
+                        <h3 class="section-title-arabic">?????? ????? ?????? </h3>
+                        <div class="custom-form-group">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Card Invitation Template<span class="required">*</span></label>
+                                        <select class="form-control custom-form-control" asp-items="ViewBag.CardMessageTemplates" asp-for="@Model.CardInvitationTemplateType" id="cardInvitaionTemplateType">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-6 form-group">
+
+                                    <label>Custom Card Invitation ID</label>
+                                    <div class="row">
+                                        <div class="col-10">
+                                            @Html.TextBoxFor(model => model.CustomCardInvitationTemplateName, new { @class = "form-control custom-form-control", @type = "text", @id = "customCardTemplateId" })
+                                        </div>
+                                        <div class="col-2">
+                                            <a id="customCardTempFetchButton"  class="btn btn-warning " onclick="FetchCustomTemplate(@Model.Id,2)">Fetch</a>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row template-section col-12" id="section2">
+                                    <div class="col-8">
+                                        <h3>Template with Variables</h3>
+                                        <textarea readonly class="mt-2" id="templateText2"></textarea>
+
+                                        <div class="container">
+                                            <h4>Template Tokens — click to copy</h4>
+                                            <p class="lead">Click any token to copy it to the clipboard.</p>
+
+                                            <div id="cardTokens" class="tokens" role="list">
+                                                <!-- tokens will be inserted here -->
+                                            </div>
+                                        </div>
+
+                                        <!-- accessible live region for screen readers -->
+                                        <div aria-live="polite" aria-atomic="true" id="sr-live" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                                        </div>
+
+                                        <div id="toast" class="toast" role="status" aria-hidden="true">
+                                            <div class="dot" aria-hidden="true"></div>
+                                            <div id="toast-text">Copied</div>
+                                        </div>
+                                        <div class="variables" id="variablesContainer2"></div>
+                                    </div>
+                                    <div class="col-4">
+
+                                        <h3>Preview:</h3>
+                                        <div class="chat-wrapper">
+                                            <div class="chat-container">
+                                                <div class="whatsapp-bubble incoming" id="previewArea2">
+                                                    <span class="message-text"></span>
+                                                    <span class="meta">
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reminder Message Template Section -->
+
+                    <div class="section-container">
+                        <h3 class="section-title">Reminder Details</h3>
+                        <h3 class="section-title-arabic">?????? ?????? ???????</h3>
+                        <div class="custom-form-group">
+                            <div class="row">
+                                @if ( string.IsNullOrEmpty(Model.ReminderMsgHeaderImg))
+                                {
+                                <div class="col-lg-4 col-md-4 ">
+                                    <div class="form-group">
+                                            <label>Reminder Message Header Media</label>
+                                        <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ReminderMsgHeaderImg, new { @class = "form-control", @type = "file" })
+                                        </div>
+                                            <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group ">
+                                        <label>Reminder Message Template</label>
+                                        @Html.DropDownListFor(Model => Model.ReminderMessageTempName, ViewBag.ReminderMessageTempName as SelectList, "--Select--", new { @class = "form-control select", @id = "reminderTemplateDropdown" })
+                                    </div>
+                                </div>
+                                    <div class="col-4 form-group">
+
+                                        <label>Reminder Message Template ID</label>
+                                        <div class="row">
+                                            <div class="col-9">
+                                                @Html.TextBoxFor(model => model.ReminderTempId, new { @class = "form-control custom-form-control", @type = "text", @id = "customReminderTemplateId" })
+                                            </div>
+                                            <div class="col-3">
+                                                <a id="customReminderTempFetchButton"  class="btn btn-warning " onclick="FetchCustomTemplate(@Model.Id,3)">Fetch</a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Message Example</label>
+                                            @Html.TextAreaFor(Model => Model.ReminderMessage, new { @id = "reminderMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ??????? ???? \n ?????? ????? ??? ..", @maxlength = "1500" })
+                                        </div>
+                                    </div>
+                                    <div class="row template-section col-12" id="section3">
+                                        <div class="col-8">
+                                            <h3>Template with Variables</h3>
+                                            <textarea readonly class="mt-2" id="templateText3"></textarea>
+
+                                            <div class="container">
+                                                <h4>Template Tokens — click to copy</h4>
+                                                <p class="lead">Click any token to copy it to the clipboard.</p>
+
+                                                <div id="reminderTokens" class="tokens" role="list">
+                                                    <!-- tokens will be inserted here -->
+                                                </div>
+                                            </div>
+
+                                            <!-- accessible live region for screen readers -->
+                                            <div aria-live="polite" aria-atomic="true" id="sr-live" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                                            </div>
+
+                                            <div id="toast" class="toast" role="status" aria-hidden="true">
+                                                <div class="dot" aria-hidden="true"></div>
+                                                <div id="toast-text">Copied</div>
+                                            </div>
+                                            <div class="variables" id="variablesContainer3"></div>
+                                        </div>
+                                        <div class="col-4">
+
+                                            <h3>Preview:</h3>
+                                            <div class="chat-wrapper">
+                                                <div class="chat-container">
+                                                    <div class="whatsapp-bubble incoming" id="previewArea3">
+                                                        <span class="message-text"></span>
+                                                        <span class="meta">
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-lg-6 col-md-6 ">
+                                        <div class="form-group">
+                                            <label>Reminder Message Header Media</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ReminderMsgHeaderImg, new { @class = "form-control", @type = "file" })
+                                            </div>
+                                          
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-3 ">
+
+                                        <div>
+                                            <a asp-controller="admin" asp-action="DeleteReminderMessageImage" asp-route-eventId="@Model.Id" class="btn btn-warning text-center " style="margin-left:25px ; margin-top: 30px">Delete Image</a>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group ">
+                                            <label>Reminder Message Template</label>
+                                            @Html.DropDownListFor(Model => Model.ReminderMessageTempName, ViewBag.ReminderMessageTempName as SelectList, "--Select--", new { @class = "form-control select", @id = "reminderTemplateDropdown" })
+                                        </div>
+                                    </div>
+                                    <div class="col-6 form-group">
+
+                                        <label>Reminder Message Template ID</label>
+                                        <div class="row">
+                                            <div class="col-9">
+                                                @Html.TextBoxFor(model => model.ReminderTempId, new { @class = "form-control custom-form-control", @type = "text", @id = "customReminderTemplateId" })
+                                            </div>
+                                            <div class="col-3">
+                                                <a id="customReminderTempFetchButton" class="btn btn-warning " onclick="FetchCustomTemplate(@Model.Id,3)">Fetch</a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Message Example</label>
+                                            @Html.TextAreaFor(Model => Model.ReminderMessage, new { @id = "reminderMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ??????? ???? \n ?????? ????? ??? ..", @maxlength = "1500" })
+                                        </div>
+                                    </div>
+                                    <div class="row template-section col-12" id="section3">
+                                        <div class="col-8">
+                                            <h3>Template with Variables</h3>
+                                            <textarea readonly class="mt-2" id="templateText3"></textarea>
+
+                                            <div class="container">
+                                                <h4>Template Tokens — click to copy</h4>
+                                                <p class="lead">Click any token to copy it to the clipboard.</p>
+
+                                                <div id="reminderTokens" class="tokens" role="list">
+                                                    <!-- tokens will be inserted here -->
+                                                </div>
+                                            </div>
+
+                                            <!-- accessible live region for screen readers -->
+                                            <div aria-live="polite" aria-atomic="true" id="sr-live" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                                            </div>
+
+                                            <div id="toast" class="toast" role="status" aria-hidden="true">
+                                                <div class="dot" aria-hidden="true"></div>
+                                                <div id="toast-text">Copied</div>
+                                            </div>
+                                            <div class="variables" id="variablesContainer3"></div>
+                                        </div>
+                                        <div class="col-4">
+
+                                            <h3>Preview:</h3>
+                                            <div class="chat-wrapper">
+                                                <div class="chat-container">
+                                                    <div class="whatsapp-bubble incoming" id="previewArea3">
+                                                        <span class="message-text"></span>
+                                                        <span class="meta">
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+
+                        <!-- Section: Thanks Card Details -->
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="section-title">Thanks Card Details</label>
+                                <label class="section-title-arabic">?????? ????? ?????</label>
+                                <div class="custom-form-group row">
+                                    <!-- Sent on Number -->
+                                    @if (string.IsNullOrEmpty(Model.CongratulationMsgHeaderImg)){
+
+                                        <div class="col-lg-6 col-md-6 ">
+                                            <div class="form-group">
+                                                <label>Thanks Message Header Media</label>
+                                                <div class="input-group mb-3">
+                                                    @Html.TextBoxFor(model => model.CongratulationMsgHeaderImg, new { @class = "form-control", @type = "file" })
+                                                </div>
+                                                <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                        <label>Sent on Number</label>
+                                        <div class="input-group mb-3">
+                                            @Html.TextBoxFor(model => model.ConguratulationsMsgSentOnNumber, new { @class = "form-control", @type = "text" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-arrows-h"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Template Type -->
+                                    <div class="col-lg-6">
+                                        <label>Template Type</label>
+                                        @Html.DropDownListFor(Model => Model.ConguratulationsMsgTemplateName, ViewBag.ConguratulationsMsgTemplateName as SelectList, "--Select--", new { @class = "form-control select", @id = "templateTypeDropdown" })
+
+                                    </div>
+                                        <div class="col-6 form-group">
+
+                                            <label>Thanks Message Template ID</label>
+                                            <div class="row">
+                                                <div class="col-10">
+                                                    @Html.TextBoxFor(model => model.ThanksTempId, new { @class = "form-control custom-form-control", @type = "text", @id = "customCongratulationTemplateId" })
+                                                </div>
+                                                <div class="col-2">
+                                                    <a id="customCongratulationTempFetchButton" class="btn btn-warning " onclick="FetchCustomTemplate(@Model.Id,4)">Fetch</a>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label>Custom Message</label>
+                                                @Html.TextAreaFor(Model => Model.ThanksMessage, new { @id = "customMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ????? ???? \n ????? ??? ????? ????? .. ", @tabindex = 5, @maxlength = "1500" })
+                                            </div>
+                                        </div>
+                                        <div class="row template-section col-12" id="section4">
+                                            <div class="col-8">
+                                                <h3>Template with Variables</h3>
+                                                <textarea readonly class="mt-2" id="templateText4"></textarea>
+
+                                                <div class="container">
+                                                    <h4>Template Tokens — click to copy</h4>
+                                                    <p class="lead">Click any token to copy it to the clipboard.</p>
+
+                                                    <div id="congTokens" class="tokens" role="list">
+                                                        <!-- tokens will be inserted here -->
+                                                    </div>
+                                                </div>
+
+                                                <!-- accessible live region for screen readers -->
+                                                <div aria-live="polite" aria-atomic="true" id="sr-live" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                                                </div>
+
+                                                <div id="toast" class="toast" role="status" aria-hidden="true">
+                                                    <div class="dot" aria-hidden="true"></div>
+                                                    <div id="toast-text">Copied</div>
+                                                </div>
+                                                <div class="variables" id="variablesContainer4"></div>
+                                            </div>
+                                            <div class="col-4">
+
+                                                <h3>Preview:</h3>
+                                                <div class="chat-wrapper">
+                                                    <div class="chat-container">
+                                                        <div class="whatsapp-bubble incoming" id="previewArea4">
+                                                            <span class="message-text"></span>
+                                                            <span class="meta">
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }else
+
+                                    {
+                                        <div class="col-lg-6 col-md-6 ">
+                                            <div class="form-group">
+                                                <label>Thanks Message Header Media</label>
+                                                <div class="input-group mb-3">
+                                                    @Html.TextBoxFor(model => model.CongratulationMsgHeaderImg, new { @class = "form-control", @type = "file" })
+                                                </div>
+                                              
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-3 ">
+
+                                            <div>
+                                                <a asp-controller="admin" asp-action="DeleteCongratulationMessageImage" asp-route-eventId="@Model.Id" class="btn btn-warning text-center " style="margin-left:25px ; margin-top: 30px">Delete Image</a>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-lg-12">
+                                            <label>Sent on Number</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ConguratulationsMsgSentOnNumber, new { @class = "form-control", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Template Type -->
+                                        <div class="col-lg-6">
+                                            <label>Template Type</label>
+                                            @Html.DropDownListFor(Model => Model.ConguratulationsMsgTemplateName, ViewBag.ConguratulationsMsgTemplateName as SelectList, "--Select--", new { @class = "form-control select", @id = "templateTypeDropdown" })
+
+                                        </div>
+                                        <div class="col-6 form-group">
+
+                                            <label>Thanks Message Template ID</label>
+                                            <div class="row">
+                                                <div class="col-10">
+                                                    @Html.TextBoxFor(model => model.ThanksTempId, new { @class = "form-control custom-form-control", @type = "text", @id = "customCongratulationTemplateId" })
+                                                </div>
+                                                <div class="col-2">
+                                                    <a id="customCongratulationTempFetchButton" class="btn btn-warning " onclick="FetchCustomTemplate(@Model.Id,4)">Fetch</a>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label>Custom Message</label>
+                                                @Html.TextAreaFor(Model => Model.ThanksMessage, new { @id = "customMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ????? ???? \n ????? ??? ????? ????? .. ", @tabindex = 5, @maxlength = "1500" })
+                                            </div>
+                                        </div>
+                                        <div class="row template-section col-12" id="section4">
+                                            <div class="col-8">
+                                                <h3>Template with Variables</h3>
+                                                <textarea readonly class="mt-2" id="templateText4"></textarea>
+
+                                                <div class="container">
+                                                    <h4>Template Tokens — click to copy</h4>
+                                                    <p class="lead">Click any token to copy it to the clipboard.</p>
+
+                                                    <div id="congTokens" class="tokens" role="list">
+                                                        <!-- tokens will be inserted here -->
+                                                    </div>
+                                                </div>
+
+                                                <!-- accessible live region for screen readers -->
+                                                <div aria-live="polite" aria-atomic="true" id="sr-live" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">
+                                                </div>
+
+                                                <div id="toast" class="toast" role="status" aria-hidden="true">
+                                                    <div class="dot" aria-hidden="true"></div>
+                                                    <div id="toast-text">Copied</div>
+                                                </div>
+                                                <div class="variables" id="variablesContainer4"></div>
+                                            </div>
+                                            <div class="col-4">
+
+                                                <h3>Preview:</h3>
+                                                <div class="chat-wrapper">
+                                                    <div class="chat-container">
+                                                        <div class="whatsapp-bubble incoming" id="previewArea4">
+                                                            <span class="message-text"></span>
+                                                            <span class="meta">
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row section-container">
+                        <h3 class="section-title">Decline Response Template ID</h3>
+                        <h3 class="section-title-arabic">??? ?????? ?????? ???? ??? ?????? ?????</h3>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="input-group mb-4 custom-input-group">
+                                    @Html.TextBoxFor(model => model.DeclineTempId, new { @class = "form-control custom-form-control", @type = "text" })
+                                    <div class="input-group-append custom-input-group-append">
+                                        <div class="input-group-text custom-input-group-text">
+                                            <span class="fas fa-arrows-h">ID</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-container">
+                        <h3 class="section-title">Sending confirmation using links Details</h3>
+                        <h3 class="section-title-arabic">?????? ????? ??????? ???????? ??????? </h3>
+                        <div class="custom-form-group">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Message language<span class="required">*</span></label>
+                                        <select class="form-control custom-form-control" asp-for="@Model.SendingConfiramtionMessagesLinksLanguage">
+                                            <option value="Arabic">Arabic</option>
+                                            <option value="English">English</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Card message text</label>
+                                        <div class="input-group  custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.LinkGuestsCardText, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            <div class="input-group-append custom-input-group-append">
+                                                <div class="input-group-text custom-input-group-text">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Event location url</label>
+                                        <div class="input-group  custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.LinkGuestsLocationEmbedSrc, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "???? ???? ???????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            <div class="input-group-append custom-input-group-append">
+                                                <div class="input-group-text custom-input-group-text">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div hidden class="section-container">
+                        <h3 class="section-title">Marketing Messages Responses Details</h3>
+                        <h3 class="section-title-arabic">?????? ?? ??????? ???????? </h3>
+                        <div class="custom-form-group">
+                            <div class="row">
+                                @if (string.IsNullOrEmpty(Model.ResponseInterestedOfMarketingMsgHeaderImage))
+                                {
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Answer of interested msg ID</label>
+                                        <div class="input-group  custom-input-group">
+                                            @Html.TextBoxFor(model => model.ResponseInterestedOfMarketingMsg, new { @class = "form-control custom-form-control", @type = "text" })
+                                            <div class="input-group-append custom-input-group-append">
+                                                <div class="input-group-text custom-input-group-text">
+                                                    <span class="fas fa-arrows-h">ID</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Marketing Message Interest Header Media</label>
+                                        <div class="input-group mb-3">
+                                            @Html.TextBoxFor(model => model.ResponseInterestedOfMarketingMsgHeaderImage, new { @class = "form-control", @type = "file" })
+                                        </div>
+                                        <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                    </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Answer of interested msg ID</label>
+                                            <div class="input-group  custom-input-group">
+                                                @Html.TextBoxFor(model => model.ResponseInterestedOfMarketingMsg, new { @class = "form-control custom-form-control", @type = "text" })
+                                                <div class="input-group-append custom-input-group-append">
+                                                    <div class="input-group-text custom-input-group-text">
+                                                        <span class="fas fa-arrows-h">ID</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Marketing Message Interest Header Media</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ResponseInterestedOfMarketingMsgHeaderImage, new { @class = "form-control", @type = "file" })
+                                            </div>
+                                            <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div>
+                                            <a asp-controller="admin" asp-action="DeleteInterestedMessageImage" asp-route-eventId="@Model.Id" class="btn btn-warning text-center " style="margin-left:25px ; margin-top: 30px">Delete Image</a>
+                                        </div>
+
+                                    </div>
+                                }
+
+                                @if (string.IsNullOrEmpty(Model.ResponseNotInterestedOfMarketingMsgHeaderImage))
+                                {
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Answer of not interested msg ID</label>
+                                        <div class="input-group  custom-input-group">
+                                            @Html.TextBoxFor(model => model.ResponseNotInterestedOfMarketingMsg, new { @class = "form-control custom-form-control", @type = "text" })
+                                            <div class="input-group-append custom-input-group-append">
+                                                <div class="input-group-text custom-input-group-text">
+                                                    <span class="fas fa-arrows-h">ID</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Marketing Message Not Interest Header Media</label>
+                                        <div class="input-group mb-3">
+                                            @Html.TextBoxFor(model => model.ResponseNotInterestedOfMarketingMsgHeaderImage, new { @class = "form-control", @type = "file" })
+                                        </div>
+                                        <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                    </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Answer of not interested msg ID</label>
+                                            <div class="input-group  custom-input-group">
+                                                @Html.TextBoxFor(model => model.ResponseNotInterestedOfMarketingMsg, new { @class = "form-control custom-form-control", @type = "text" })
+                                                <div class="input-group-append custom-input-group-append">
+                                                    <div class="input-group-text custom-input-group-text">
+                                                        <span class="fas fa-arrows-h">ID</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Marketing Message Interest Header Media</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ResponseNotInterestedOfMarketingMsgHeaderImage, new { @class = "form-control", @type = "file" })
+                                            </div>
+                                            <span style="color:orangered">(Image: .jpeg, .png  (max 5 MB) , Video: .mp4    (max 15 MB) , doc: .pdf    (max 5 MB))  </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div>
+                                            <a asp-controller="admin" asp-action="DeleteNotInterestedMessageImage" asp-route-eventId="@Model.Id" class="btn btn-warning text-center " style="margin-left:25px ; margin-top: 30px">Delete Image</a>
+                                        </div>
+
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="section-container">
+                    <h3 class="section-title">Failed Sending Details</h3>
+                    <h3 class="section-title-arabic">?????? ????? ??????</h3>
+                    <div class="custom-form-group">
+                        <div class="row">
+                                <div class="col-md-6">
+                                    <label>Confirmation message links language</label>
+                                    @Html.DropDownListFor(Model => Model.FailedSendingConfiramtionMessagesLinksLanguage, ViewBag.FailedSendingConfiramtionMessagesLinksLanguage as SelectList, "--Select--", new { @class = "form-control select", @id = "templateTypeDropdown" })
+
+                                </div>
+                                <div class="col-md-3 ">
+                                    <div class="form-group text-center">
+                                        <label>Show Event Location Link ?</label>
+                                        <div class="input-group mb-3">
+                                            <input style="cursor:pointer;" type="checkbox" name="ShowFailedSendingEventLocationLink" value="true" checked="@Model.ShowFailedSendingEventLocationLink.GetValueOrDefault()" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 ">
+                                    <div class="form-group text-center">
+                                        <label>Show congratulaion Link ?</label>
+                                        <div class="input-group mb-3">
+                                            <input style="cursor:pointer;" type="checkbox" name="ShowFailedSendingCongratulationLink" value="true" checked="@Model.ShowFailedSendingCongratulationLink.GetValueOrDefault()" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="row" style="margin-top:25px;" >
+                            <div class="col-md-4">
+                                <div class=" section-container">
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">???? ???? ???????? ????? ????? ??????</h3>
+                                    <div class="form-group">
+                                        <div class="input-group mb-4 custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsLocationEmbedSrc, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "???? ???? ???????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class=" section-container">
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">??  ????? ?????? ????? ????? ??????</h3>
+
+                                    <div class="form-group">
+                                        <div class="input-group mb-4 custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsCardText, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ?????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class=" section-container">
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">?? ??????? ?????? ?????? ?????? ? ???????? ????? ??????</h3>
+                                    <div class="form-group">
+                                        <div class="input-group mb-4 custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsMessag, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ????? ?????? ? ???????? ????? ?????? ", @tabindex = 5, @maxlength = "1500" })
+                                       </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="row">
+                            <div class=" col-md-6">
+                                <div class=" section-container">
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title section-title-arabic">?? ????? ??????? ????? ????? ??????</h3>
+                                    <div class=" form-group">
+                                        <div class="input-group mb-4 custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsCongratulationMsg, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ??????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="section-container">
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">?? ????? ??????? ?????? ????? ??????</h3>
+                                    <div class="form-group">
+                                        <div class="input-group mb-4 custom-input-group">
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsReminderMessage, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ??????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                        <input type="hidden" asp-for="CustomConfirmationTemplateWithVariables" name="CustomConfirmationTemplateWithVariables" id="CustomTemplateWithVariables1" />
+                        <input type="hidden" asp-for="CustomCardTemplateWithVariables" name="CustomCardTemplateWithVariables" id="CustomTemplateWithVariables2" />
+                        <input type="hidden" asp-for="CustomReminderTemplateWithVariables" name="CustomReminderTemplateWithVariables" id="CustomTemplateWithVariables3" />
+                        <input type="hidden" asp-for="CustomCongratulationTemplateWithVariables" name="CustomCongratulationTemplateWithVariables" id="CustomTemplateWithVariables4" />
+                        <input type="hidden" id="RoleId" value="@ViewBag.userRole" />
+                    </div>
+
+                    <!-- /.row -->
+
+
+                    <div class="modal-footer justify-content-between">
+                        <a href="@Url.Content("~")/admin/events" class="btn btn btn-danger">Back</a>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.card -->
+        </div><!-- /.container-fluid -->
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            var thanksTexts = {
+                'Template (1)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (2)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n????? ?????? / ????? ?????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (3)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n????? ?????? / ????? ?????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (4)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n???? ?????? / ???? ????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (5)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n???? ?????? / ???? ????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (6)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (7)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n????? ?????? / ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (8)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n????? ?????? / ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (9)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n???? ?????? / ???? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (10)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n???? ?????? / ???? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..'
+            };
+
+            var reminderTexts = {
+                'Template (1)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..',
+                'Template (2)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n?????????? / ????? ?????????',
+                'Template (3)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n??????? / ???? ????????',
+                'Template (1) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..',
+                'Template (2) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n?????????? / ????? ?????????',
+                'Template (3) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n??????? / ???? ????????',
+            };
+
+            $('#templateTypeDropdown').on('change', function () {
+                var selectedValue = $(this).val();
+
+
+                if (selectedValue === 'Custom') {
+                    $('#customMessageTextarea').prop('disabled', false);
+                }
+                else if (selectedValue === 'Custom With Guest name | wati') {
+                    $('#customMessageTextarea').prop('disabled', false);
+                }
+                else {
+                    $('#customMessageTextarea').prop('disabled', true).val(thanksTexts[selectedValue] || '');
+                }
+            });
+
+            $('#reminderTemplateDropdown').on('change', function () {
+                var selectedValue = $(this).val();
+                console.log('Selected Reminder Value:', selectedValue);
+
+                if (selectedValue === 'Custom') {
+                    $('#reminderMessageTextarea').prop('disabled', false);
+
+                } else if (selectedValue === 'Custom With Guest name | wati') {
+                    $('#reminderMessageTextarea').prop('disabled', false);
+                }
+                else {
+                    $('#reminderMessageTextarea').prop('disabled', true).val(reminderTexts[selectedValue] || '');
+                }
+            });
+
+            $('#customMessageTextarea, #reminderMessageTextarea').on('input', function () {
+                var maxLength = 1500;
+                if (this.value.length > maxLength) {
+                    this.value = this.value.substring(0, maxLength);
+                }
+                $(this).next('span').text(this.value.length + '/' + maxLength);
+            });
+
+            $('#messageLanguage').on('change',function(){
+             var selectedValue = $(this).val();
+             var section1 = document.getElementById('section1');
+             var customConfirmatiionTempFetchButton = document.getElementById('customConfirmatiionTempFetchButton');
+             console.log(selectedValue);
+             if(selectedValue == 'Twilio | TemplateWithVariables')
+             {
+                section1.hidden = false;
+                customConfirmatiionTempFetchButton.hidden = false;
+             }else{
+                section1.hidden = true;
+                customConfirmatiionTempFetchButton.hidden = true;
+              }
+
+             });
+
+              $('#cardInvitaionTemplateType').on('change',function(){
+             var selectedValue = $(this).val();
+             var section2 = document.getElementById('section2');
+             var customCardTempFetchButton = document.getElementById('customCardTempFetchButton');
+
+             if(selectedValue == 'Twilio | TemplateWithVariables')
+             {
+                section2.hidden = false;
+                customCardTempFetchButton.hidden = false;
+             }else{
+                section2.hidden = true;
+                customCardTempFetchButton.hidden = true;
+              }
+
+             });
+
+              $('#reminderTemplateDropdown').on('change',function(){
+             var selectedValue = $(this).val();
+             var section3 = document.getElementById('section3');
+             var reminderMessageTextarea = document.getElementById('reminderMessageTextarea');
+             var customReminderTempFetchButton = document.getElementById('customReminderTempFetchButton');
+
+             if(selectedValue == 'TemplateWithVariables')
+             {
+                section3.hidden = false;
+                customReminderTempFetchButton.hidden = false;
+                reminderMessageTextarea.hidden = true;
+             }else{
+                section3.hidden = true;
+                customReminderTempFetchButton.hidden = true;
+                reminderMessageTextarea.hidden = false;
+              }
+
+             });
+
+              $('#templateTypeDropdown').on('change',function(){
+             var selectedValue = $(this).val();
+             var section4 = document.getElementById('section4');
+             var congratulationMessageTextarea = document.getElementById('customMessageTextarea');
+             var customCongratulationTempFetchButton = document.getElementById('customCongratulationTempFetchButton');
+
+             if(selectedValue == 'TemplateWithVariables')
+             {
+                section4.hidden = false;
+                customCongratulationTempFetchButton.hidden = false;
+                congratulationMessageTextarea.hidden = true;
+             }else{
+                section4.hidden = true;
+                customCongratulationTempFetchButton.hidden = true;
+                congratulationMessageTextarea.hidden = false;
+              }
+
+             });
+
+              function setTemplateWithVariablesDisplay(){
+                var section1 = document.getElementById('section1');
+                var section2 = document.getElementById('section2');
+                var section3 = document.getElementById('section3');
+                var section4 = document.getElementById('section4');
+                var messageLanguage = document.getElementById('messageLanguage').value
+                var cardInvitaionTemplateType = document.getElementById('cardInvitaionTemplateType').value
+                var reminderTemplateDropdown = document.getElementById('reminderTemplateDropdown').value
+                var congratulationTemplateDropdown = document.getElementById('templateTypeDropdown').value
+                var reminderMessageTextarea = document.getElementById('reminderMessageTextarea');
+                var congratulationTextarea  = document.getElementById('customMessageTextarea');
+                var customConfirmatiionTempFetchButton = document.getElementById('customConfirmatiionTempFetchButton');
+                var customCardTempFetchButton = document.getElementById('customCardTempFetchButton');
+                var customReminderTempFetchButton = document.getElementById('customReminderTempFetchButton');
+                var customCongratulationTempFetchButton = document.getElementById('customCongratulationTempFetchButton');
+             if(messageLanguage == 'Twilio | TemplateWithVariables')
+             {
+                section1.hidden = false;
+                customConfirmatiionTempFetchButton.hidden = false;
+             }else{
+                section1.hidden = true;
+                customConfirmatiionTempFetchButton.hidden = true;
+             }
+
+            if(cardInvitaionTemplateType == 'Twilio | TemplateWithVariables')
+             {
+                section2.hidden = false;
+                customCardTempFetchButton.hidden = false;
+             }else{
+                section2.hidden = true;
+                customCardTempFetchButton.hidden = true;
+             }
+
+             if(reminderTemplateDropdown == 'TemplateWithVariables')
+             {
+                section3.hidden = false;
+                customReminderTempFetchButton.hidden = false;
+                reminderMessageTextarea.hidden = true;
+             }else{
+                section3.hidden = true;
+                customReminderTempFetchButton.hidden = true;
+                reminderMessageTextarea.hidden = false;
+             }
+
+              if(congratulationTemplateDropdown == 'TemplateWithVariables')
+             {
+                section4.hidden = false;
+                customCongratulationTempFetchButton.hidden = false;
+                congratulationTextarea.hidden = true;
+             }else{
+                section4.hidden = true;
+                customCongratulationTempFetchButton.hidden = true;
+                congratulationTextarea.hidden = false;
+             }
+
+        }
+
+        setTemplateWithVariablesDisplay();
+
+
+        });
+       
+
+        function showMap() {
+            window.open("https://maps.app.goo.gl/" + $('#GmapCode').val(), '_blank');
+        }
+
+    </script>
+
+    <script>
+        const submitButton = document.getElementById("submit");
+        submitButton.addEventListener("click", function () {
+            saveTemplateWithVariable(1);
+            saveTemplateWithVariable(2);
+            saveTemplateWithVariable(3);
+            saveTemplateWithVariable(4);
+
+            const form = document.querySelector("form");
+            form.addEventListener("submit", function () {
+                submitButton.disabled = true;
+                submitButton.innerText = "Processing...";
+            });
+        });
+    </script>
+
+    <script>
+        // Extract variable numbers {{number}}
+        function extractVariables(text) {
+            const regex = /\{\{(\d+)\}\}/g;
+            let match;
+            const vars = [];
+            while ((match = regex.exec(text)) !== null) {
+                vars.push(parseInt(match[1]));
+            }
+            return vars;
+        }
+
+        // Render variable inputs
+        function renderVariables(sectionId, vars, values = {}) {
+            const variablesContainer = document.getElementById(`variablesContainer${sectionId}`);
+            const textArea = document.getElementById(`templateText${sectionId}`);
+            const previewArea = document.getElementById(`previewArea${sectionId}`);
+
+            variablesContainer.innerHTML = "";
+            vars.forEach(num => {
+                const div = document.createElement("div");
+                div.className = "var-item";
+                div.innerHTML = `
+                  <label>{{${num}}}:</label>
+                  <input type="text" data-var="${num}" value="${values[num] || ""}"
+                         placeholder="Enter value for {{${num}}}">
+                `;
+                variablesContainer.appendChild(div);
+            });
+
+            // Add event listener for each input
+            variablesContainer.querySelectorAll("input").forEach(input => {
+                input.addEventListener("input", () => updatePreview(sectionId));
+            });
+
+            updatePreview(sectionId);
+        }
+
+        // Update preview (without {{}})
+        function updatePreview(sectionId) {
+            const textArea = document.getElementById(`templateText${sectionId}`);
+            const previewArea = document.getElementById(`previewArea${sectionId}`);
+            let previewText = textArea.value;
+
+            document.querySelectorAll(`#variablesContainer${sectionId} input`).forEach(input => {
+                const num = input.getAttribute("data-var");
+                const value = input.value;
+                const regex = new RegExp("\\{\\{" + num + "\\}\\}", "g");
+                previewText = previewText.replace(regex, value);
+            });
+
+            previewArea.textContent = previewText;
+        }
+
+        // Save template with variables
+        function saveTemplateWithVariable(sectionId) {
+            const textArea = document.getElementById(`templateText${sectionId}`);
+            let copiedText = textArea.value;
+
+            document.querySelectorAll(`#variablesContainer${sectionId} input`).forEach(input => {
+                const num = input.getAttribute("data-var");
+                const value = input.value;
+                const regex = new RegExp("\\{\\{" + num + "\\}\\}", "g");
+                copiedText = copiedText.replace(regex, `{{${value}}}`);
+            });
+
+            document.getElementById(`CustomTemplateWithVariables${sectionId}`).value = copiedText;
+        }
+
+        // Load template into section
+        function loadTemplate(sectionId, copiedText) {
+            const textArea = document.getElementById(`templateText${sectionId}`);
+            const regex = /\{\{([^{}]+)\}\}/g;
+            let match;
+            let values = {};
+            let index = 1;
+            let newTemplate = copiedText;
+
+            // Replace {{value}} with numbered placeholders {{1}}, {{2}}, ...
+            while ((match = regex.exec(copiedText)) !== null) {
+                values[index] = match[1]; // save actual variable name (e.g., FirstName)
+                newTemplate = newTemplate.replace(match[0], `{{${index}}}`);
+                index++;
+            }
+
+            // Put placeholder template in textarea
+            textArea.value = newTemplate;
+
+            // Extract numbered variables ({{1}}, {{2}}, ...)
+            const vars = extractVariables(newTemplate);
+
+            // Render input fields + preview using actual variable names
+            renderVariables(sectionId, vars, values);
+        }
+
+
+        class CustomTemplates {
+            constructor(ConfirmationTemplate, CardTemplate, ReminderTemplate, CongratulationTemplate) {
+                this.ConfirmationTemplate = ConfirmationTemplate;
+                this.CardTemplate = CardTemplate;
+                this.ReminderTemplate = ReminderTemplate;
+                this.CongratulationTemplate = CongratulationTemplate;
+            }
+        }
+
+
+
+
+        async function FetchCustomTemplate(eventId,typeId) {
+            var customConfirmationTemplate = document.getElementById('customConfirmationTemplateId').value;
+            var customCardTemplate = document.getElementById('customCardTemplateId').value;
+            var customReminderTemplate = document.getElementById('customReminderTemplateId').value;
+            var customCongratulationTemplate = document.getElementById('customCongratulationTemplateId').value;
+
+
+            const body = new CustomTemplates(
+                customConfirmationTemplate,
+                customCardTemplate,
+                customReminderTemplate,
+                customCongratulationTemplate
+            );
+
+            try {
+                const response = await fetch(`/admin/FetchCustomTemplates?eventId=${eventId}&&typeId=${typeId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    loadTemplate(result.typeId, result.message);
+                } else {
+                    loadTemplate(result.typeId, "");
+                    Swal.fire("??? ??? ?? !");
+                }
+            } catch (error) {
+                loadTemplate(result.typeId,"");
+                Swal.fire("??? ??? ?? !");
+            }
+        }
+    </script>
+    <script>
+        // tokens list - edit to add/remove keywords
+        const ConfirmationTOKENS = [
+            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
+            { role: '??? ?????', keyword: 'FirstName' },
+            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
+            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
+            { role: '???? ?????', keyword: 'GuestCard' },
+            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' }
+        ];
+
+        const cardTOKENS = [
+            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
+            { role: '??? ?????', keyword: 'FirstName' },
+            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
+            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
+            { role: '???? ?????', keyword: 'GuestCard' },
+            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' }
+        ];
+
+        const reminderTOKENS = [
+            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
+            { role: '??? ?????', keyword: 'FirstName' },
+            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
+            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
+            { role: '???? ?????', keyword: 'GuestCard' },
+            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' },
+            { role: '???? ????? ???????', keyword: 'ReminderHeaderImage' }
+        ];
+
+        const congratulationTOKENS = [
+            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
+            { role: '??? ?????', keyword: 'FirstName' },
+            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
+            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
+            { role: '???? ?????', keyword: 'GuestCard' },
+            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' },
+            { role: '???? ????? ?????', keyword: 'CongratulationHeaderImage' }
+        ];
+
+        const confirmationContainer = document.getElementById('ConfirmationTokens');
+        const cardContainer = document.getElementById('cardTokens');
+        const reminderContainer = document.getElementById('reminderTokens');
+        const congContainer = document.getElementById('congTokens');
+        const srLive = document.getElementById('sr-live');
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toast-text');
+        let toastTimer = null;
+
+        // Create token elements
+        ConfirmationTOKENS.forEach(token => {
+            const span = document.createElement("span");
+            span.className = "token";
+            span.textContent = token.role; // show Arabic label
+            span.dataset.keyword = token.keyword; // keep keyword for copy
+            span.addEventListener("click", () => {
+                const textToCopy = `${token.keyword}`;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast(`${token.role} ({{${token.keyword}}}) copied`);
+                });
+            });
+
+            confirmationContainer.appendChild(span);
+         });
+
+        cardTOKENS.forEach(token => {
+            const span = document.createElement("span");
+            span.className = "token";
+            span.textContent = token.role; // show Arabic label
+            span.dataset.keyword = token.keyword; // keep keyword for copy
+            span.addEventListener("click", () => {
+                const textToCopy = `${token.keyword}`;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast(`${token.role} ({{${token.keyword}}}) copied`);
+                });
+            });
+
+            cardContainer.appendChild(span);
+        });
+
+        reminderTOKENS.forEach(token => {
+            const span = document.createElement("span");
+            span.className = "token";
+            span.textContent = token.role; // show Arabic label
+            span.dataset.keyword = token.keyword; // keep keyword for copy
+            span.addEventListener("click", () => {
+                const textToCopy = `${token.keyword}`;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast(`${token.role} ({{${token.keyword}}}) copied`);
+                });
+            });
+
+            reminderContainer.appendChild(span);
+        });
+
+        congratulationTOKENS.forEach(token => {
+            const span = document.createElement("span");
+            span.className = "token";
+            span.textContent = token.role; // show Arabic label
+            span.dataset.keyword = token.keyword; // keep keyword for copy
+            span.addEventListener("click", () => {
+                const textToCopy = `${token.keyword}`;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast(`${token.role} ({{${token.keyword}}}) copied`);
+                });
+            });
+
+            congContainer.appendChild(span);
+        });
+
+        async function copyToken(name) {
+            const textToCopy = `{{${name}}}`;
+
+            // try Clipboard API
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(textToCopy);
+                } else {
+                    // fallback
+                    const txt = document.createElement('textarea');
+                    txt.value = textToCopy;
+                    txt.style.position = 'fixed'; txt.style.left = '-9999px';
+                    document.body.appendChild(txt);
+                    txt.focus(); txt.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(txt);
+                }
+
+                showToast(`${name} copied`);
+                // update screen reader live region
+                srLive.textContent = `${name} copied to clipboard`;
+            } catch (err) {
+                showToast('Copy failed');
+                srLive.textContent = `Failed to copy ${name}`;
+                console.error('copy failed', err);
+            }
+        }
+
+        function showToast(message) {
+            toastText.textContent = message;
+            toast.classList.add('show');
+            toast.setAttribute('aria-hidden', 'false');
+
+            if (toastTimer) { clearTimeout(toastTimer); }
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+                toast.setAttribute('aria-hidden', 'true');
+            }, 1800);
+        }
+
+        $(document).ready(function () {
+            var confirmationTemplateText = document.getElementById("CustomTemplateWithVariables1").value;
+            var cardTemplateText = document.getElementById("CustomTemplateWithVariables2").value;
+            var reminderTemplateText = document.getElementById("CustomTemplateWithVariables3").value;
+            var congratulationTemplateText = document.getElementById("CustomTemplateWithVariables4").value;
+            loadTemplate(1,confirmationTemplateText);
+            loadTemplate(2, cardTemplateText);
+            loadTemplate(3, reminderTemplateText);
+            loadTemplate(4, congratulationTemplateText);
+        })
+
+        $(document).ready(function () {
+            setTimeout(function () {
+                var $createdFor = $('#CreatedFor');
+
+                if ($createdFor.data('select2')) {
+                    $createdFor.select2('destroy');
+                }
+
+                var selectedUserId = '@Model.CreatedFor';
+                var selectedUserName = '@ViewBag.CreatedForUserName'; 
+
+                $createdFor.select2({
+                    placeholder: "--Select--",
+                    minimumInputLength: 0, 
+                    allowClear: true,
+                    ajax: {
+                        url: '@Url.Action("GetUsersForSelect2", "Admin")',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                           
+                            var search = params.term || (selectedUserName && !params.page ? selectedUserName : '');
+                            return {
+                                searchTerm: search,
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function (data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: Array.isArray(data) ? data : (data.results || []),
+                                pagination: {
+                                    more: data.pagination && data.pagination.more
+                                }
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+                if (selectedUserId && selectedUserName) {
+                    var option = new Option(selectedUserName, selectedUserId, true, true);
+                    $createdFor.append(option).trigger('change');
+                }
+
+                $createdFor.on('select2:open', function () {
+                    var select2 = $createdFor.data('select2');
+                    var initialTerm = selectedUserName || ''; 
+                    if (!select2.results.lastParams) {
+                        select2.trigger('query', { term: initialTerm, page: 1 });
+                    }
+                });
+
+                $createdFor.on('select2:clear', function () {
+                    selectedUserId = null;
+                    selectedUserName = null;
+
+                    var select2 = $createdFor.data('select2');
+                    select2.results.lastParams = null; 
+                    select2.trigger('query', { term: '', page: 1 });
+                });
+
+            }, 300);
+        });
+    </script>
+}

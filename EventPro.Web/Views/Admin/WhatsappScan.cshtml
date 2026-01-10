@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        <blockquote class="quote-warning">
+            <h5>Whatsapp!</h5>
+            <p>Activate your whatsapp</p>
+        </blockquote>
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-warning">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="col-md-2" style="float:right">
+                                <a href="~/admin/WhatsappScan" class="btn btn-warning btn-sm" style="float:right">
+                                    Resfresh
+                                </a>
+                            </div>
+                        </div>
+                        <div class="container-fluid">
+
+                            <!-- /.card-header -->
+                            <div class="card-body p-0" style="margin-top:10px;">
+                                <img src="~/Upload/barcode/Whatsapp.png?v=@DateTime.Now.ToString("yyyyMMddhhmmss")" class="border border-secondary" style="border-style:dotted; border:1px; width:250px;height:250px;" />
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+

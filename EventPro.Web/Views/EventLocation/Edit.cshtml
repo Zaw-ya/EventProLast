@@ -1,0 +1,15 @@
+@using EventPro.DAL.Models;
+@model EventLocation
+@{
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+
+<div class="container row p-5">
+    @using (Html.BeginForm("Edit", "EventLocation", FormMethod.Post))
+    {
+        <span>City:</span> @Html.TextBoxFor(m => m.City) <br />
+        <span>Governorate:</span> @Html.TextBoxFor(m => m.Governorate) <br />
+        <span>Country:</span> @Html.TextBoxFor(m => m.Country) <br />
+        <input type="submit" value="Save Location" class="btn btn-primary">
+    }
+</div>

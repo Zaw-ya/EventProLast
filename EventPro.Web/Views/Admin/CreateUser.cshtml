@@ -1,0 +1,161 @@
+@model EventPro.DAL.Models.Users
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+@if (TempData["entry-error"] != null)
+{
+<blockquote class="quote-warning">
+    <h5>Error!</h5>
+    <p>@TempData["Validation"]</p>
+</blockquote>
+}
+<section class="content">
+    <div class="container-fluid">
+        <!-- SELECT2 EXAMPLE -->
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">Add User</h3>
+
+            </div>
+            <!-- /.card-header -->
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+            @Html.ValidationSummary(true)
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Username <small style="color:red">@TempData["Validation"]</small></label>
+                            <div class="input-group mb-3">
+                                @Html.TextBoxFor(model => model.UserName, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "User Name", @tabindex = 1, @pattern = "^[a-zA-Z0-9 ]+$" })
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-user danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.form-group -->
+                        <!-- /.form-group -->
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Password</label>
+                            <div class="input-group mb-3">
+                                @Html.TextBoxFor(model => model.Password, new { @required = "required", @class = "form-control", @type = "password",  @placeholder = "Password", @tabindex = 2 })
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-user danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <div class="input-group mb-3">
+                                @Html.TextBoxFor(model => model.FirstName, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "First Name", @tabindex = 3 })
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-user danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.form-group -->
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <div class="input-group mb-3">
+                                @Html.TextBoxFor(model => model.Email, new { @required = "required", @class = "form-control", @type = "email", @placeholder = "Email", @tabindex = 5 })
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-envelope danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.form-group -->
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Last Name</label><div class="input-group mb-3">
+                                @Html.TextBoxFor(model => model.LastName, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Last Name", @tabindex = 4})
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-user danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            @*@Html.DropDownList("ProductType", ViewBag.ProductTypeList as SelectList, "--Select--", new { @class = "form-control select2", @style = "width:100%" })*@
+                        </div>
+                        <div class="form-group">
+                            <label>Phone No</label>
+                            <div class="input-group mb-3">
+                                    @Html.TextBoxFor(model => model.PrimaryContactNo, new {@required = "required",@class = "form-control", @type = "phone", @placeholder = "Phone No", @tabindex = 6 })
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-mobile danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.form-group -->
+                        <!-- /.form-group -->
+                    </div>
+                    <!-- /.col -->
+                    <!-- /.col -->
+                </div>
+
+                <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Address</label>
+                                <div class="input-group mb-3">
+                                    @Html.DropDownListFor(Model => Model.CityId, ViewBag.EventLocations as SelectList, "--Select--", new { @class = "form-control select2", @required = "required"})
+                                </div>
+                            </div>
+                        </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Secondary Contact</label>
+                            <div class="input-group mb-3">
+                                @Html.TextBoxFor(model => model.SecondaryContantNo, new { @class = "form-control", @type = "phone", @placeholder = "Phone No", @tabindex = 7 })
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span class="fas fa-mobile danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Role</label>                                
+                                @Html.DropDownListFor(Model => Model.Role, ViewBag.UserRole as SelectList, "--Select--", new { @class = "form-control ",required = "required" })
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Gender</label>
+                                @Html.DropDownListFor(Model => Model.Gender, ViewBag.UserGender as SelectList, "--Select--", new { @class = "form-control " ,required = "required"})
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <a href="~/admin/users" class="btn btn btn-danger">Back</a>
+                    <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                </div>
+            </div>
+            }
+            <!-- /.card -->
+        </div><!-- /.container-fluid -->
+    </div>
+</section>

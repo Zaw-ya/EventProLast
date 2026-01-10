@@ -1,0 +1,143 @@
+﻿ALTER TABLE TwilioProfileSettings
+ADD ReminderTemp1WithCalenderIcs NVARCHAR(60),
+ ReminderTemp2WithCalenderIcs NVARCHAR(60),
+ ReminderTemp3WithCalenderIcs NVARCHAR(60),
+ ReminderTemp1WithHeaderImageWithCalenderIcs NVARCHAR(60),
+ ReminderTemp2WithHeaderImageWithCalenderIcs NVARCHAR(60),
+ ReminderTemp3WithHeaderImageWithCalenderIcs NVARCHAR(60)
+ ----------------------------------------------------------------------
+CREATE TABLE EventOperator (
+    OperatorId INT NOT NULL,
+    EventId INT NOT NULL,
+	EventStart dateTIME NULL,
+	EventEnd datetime null,
+    PRIMARY KEY (OperatorId, EventId),
+    FOREIGN KEY (OperatorId) REFERENCES Users(UserId) ON DELETE CASCADE,
+    FOREIGN KEY (EventId) REFERENCES Events(Id) ON DELETE CASCADE
+);
+-----------------------------------------------------------------------
+INSERT INTO EventOperator (OperatorId, EventId,EventStart,EventEnd)
+SELECT CreatedBy, Id ,EventFrom,EventTo
+FROM Events
+WHERE CreatedBy IS NOT NULL;
+-----------------------------------------------------------------------
+-- Reverse lookup index (recommended)
+CREATE NONCLUSTERED INDEX IX_EventOperator_UserId
+ON EventOperator (operatorId);
+-----------------------------------------------------------------------
+CREATE TABLE ReportDeletedEventsByGk( 
+	Id INT PRIMARY KEY IDENTITY,
+    EventId INT NOT NULL,
+    GatekeeperId INT NOT NULL,
+    UnassignedOn DATETIME NOT NULL,
+    UnassignedById INT NOT NULL,        
+    UnassignedByName NVARCHAR(200) NULL, 
+);
+------------------------------------------------------------------------
+ALTER TABLE Events
+ADD DeletedOn DATETIME NULL; 
+------------------------------------------------------------------------
+ALTER TABLE Events
+ADD IsDeleted BIT NOT NULL DEFAULT 0;  
+------------------------------------------------------------------------
+ALTER TABLE Events
+ADD DeletedBy INT NULL; 
+------------------------------------------------------------------------
+ALTER VIEW [dbo].[Vw_Events]                
+AS                
+SELECT 
+    e.Id,            
+    e.EventCode,            
+    e.EventTitle,            
+    e.Type,            
+    e.EventFrom,            
+    e.EventTo,            
+    e.EventVenue,            
+    CONCAT('E', REPLACE(STR(e.Id, 5), SPACE(1), '0')) AS GmapCode,            
+    e.GmapCode AS GLocation,            
+    e.EventDescription,            
+    e.CreatedBy,            
+    e.CreatedFor,            
+    e.CreatedOn,            
+    e.ModifiedBy,            
+    e.ModifiedOn,            
+    e.IsArchived,   
+    e.LinkedEvent,
+    e.SystemEventTitle,
+    e.Status,
+    'https://www.myinvite.cc/Upload/card/' + ec.Icon AS IconUrl,
+    ec.Icon,
+	u.FirstName,
+	u.LastName,
+	du.FirstName AS DeletedBy_FirstName,
+	du.LastName AS DeletedBy_LastName,
+    ec.Category,
+    e.DeletedOn,
+    e.IsDeleted,
+    e.DeletedBy
+FROM Events (NOLOCK) e                
+INNER JOIN EventCategory (NOLOCK) ec                
+    ON e.Type = ec.EventId                
+INNER JOIN Users (NOLOCK) u                
+    ON e.CreatedBy = u.UserId
+LEFT JOIN Users (NOLOCK) du
+    ON e.DeletedBy = du.UserId;
+
+GO
+
+-----------------------------------------------------------------------------
+
+ ALTER view [dbo].[vw_ConfirmationReport]
+ as    
+ select Id,linkedEvent,eventTitle,ge.SystemEventTitle,ge.IsDeleted,
+ (select count(*) from Guest(nolock)  
+ where Eventid=ge.Id and
+ (Response = N'ÊÃßíÏ' or Response = N'ÞÈæá ÇáÏÚæÉ' or  Response = N'Confirm'     or Response = 'ÊÃßíÏ' or Response = 'ÞÈæá ÇáÏÚæÉ' or  Response = 'Confirm' )) as YesResponse, 
+ (select sum(NoOfMembers) from Guest(nolock)    where Eventid=ge.Id and (Response = N'ÊÃßíÏ' or Response = N'ÞÈæá ÇáÏÚæÉ' or  Response = N'Confirm'     or Response = 'ÊÃßíÏ' or Response = 'ÞÈæá ÇáÏÚæÉ' or  Response = 'Confirm' )) as TotalConfirmedGuests, 
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response = N'ÇÚÊÐÇÑ' or Response = N'ÇáÇÚÊÐÇÑ Úä ÇáÏÚæÉ' or Response = N'Decline'   or Response = 'ÇÚÊÐÇÑ' or Response = 'ÇáÇÚÊÐÇÑ Úä ÇáÏÚæÉ' or Response = 'Decline'    )) as NoResponse,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,    
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.Id  and ResponseCode='Declined' ) as Declined,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and TextDelivered = 1) as TextDelivered,   
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and MessageId is not null) as TextSent
+ from Events ge
+ where WhatsappConfirmation = 1  
+GO
+
+--------------------------------------------------------------------------
+ALTER PROCEDURE [dbo].[ProcScanSummary]      
+AS      
+BEGIN  
+    SELECT TOP 200  
+        e.id,
+        e.LinkedEvent,
+        e.EventTitle,
+        e.SystemEventTitle,
+        (SELECT ISNULL(SUM(g.NoOfMembers), 0) FROM Guest g WHERE g.EventId = e.id) AS TotalGuests,
+        COUNT(CASE WHEN sch.ResponseCode = 'Allowed' THEN 1 END) AS Allowed,
+        COUNT(CASE WHEN sch.ResponseCode = 'Declined' THEN 1 END) AS Declined
+    FROM events e     
+    LEFT JOIN Guest g ON e.Id = g.EventId   
+    LEFT JOIN ScanHistory sch ON sch.GuestId = g.GuestId   
+    WHERE e.EventFrom <= GETDATE() + 1  AND
+	 e.IsDeleted = 0
+    GROUP BY 
+        e.id, 
+        e.LinkedEvent, 
+        e.EventTitle,
+        e.SystemEventTitle 
+    ORDER BY e.id DESC  
+END
+---------------------------------------------------------------------------
+
+ALTER view [dbo].[VwScanLogs]    
+as     
+select sh.*,u.FirstName +' '+u.LastName as ScannedBy,g.FirstName as GuestName 
+,g.NoOfMembers as Nos,    e.LinkedEvent,e.SystemEventTitle,e.EventTitle,e.GmapCode as EventCode
+,e.CreatedFor ,e.Id as EventId
+from ScanHistory(nolock) sh    left join Users(nolock) u    
+on sh.ScanBy=u.UserId   left join guest(nolock) g        
+on g.GuestId=sh.GuestId left join Events (nolock) e       
+on e.Id=g.EventId 
+WHERE e.IsDeleted = 0 
+GO
+---------------------------------------------------------------------------

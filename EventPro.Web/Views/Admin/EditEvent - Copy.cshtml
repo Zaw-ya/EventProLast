@@ -1,0 +1,573 @@
+@using System.Globalization;
+@model EventPro.DAL.Models.Events
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+
+}
+@if (TempData["entry-error"] != null)
+{
+    <blockquote class="quote-danger">
+        <h5>Error!</h5>
+        <p>@TempData["entry-error"]</p>
+    </blockquote>
+}
+<style>
+    #map {
+        height: 100%;
+    }
+
+    /*
+                    * Optional: Makes the sample page fill the window.
+                    */
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .controls {
+        background-color: #F1F8E8;
+        border-radius: 2px;
+        border: 1px solid transparent;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        box-sizing: border-box;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        height: 29px;
+        margin-left: 17px;
+        margin-top: 10px;
+        outline: none;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+    }
+
+        .controls:focus {
+            border-color: #4d90fe;
+        }
+
+    .title {
+        font-weight: bold;
+    }
+
+    #infowindow-content {
+        display: none;
+    }
+
+    #map #infowindow-content {
+        display: inline;
+    }
+
+    .section-container {
+        margin-bottom: 30px; /* Margin for spacing */
+        margin-top: 20px;
+        position: relative; /* Ensure relative positioning for absolute children */
+    }
+
+    .section-title {
+        font-size: 12px; /* Adjust font size for the English title */
+        margin-top: 0; /* Remove default margin for h3 */
+        background-color: #f0f0f0; /* Light gray background */
+        padding: 8px 12px; /* Padding inside the title */
+        border-top-left-radius: 8px; /* Rounded corners for the top left of title */
+        border-top-right-radius: 8px; /* Rounded corners for the top right of title */
+        border-bottom: 2px solid #ccc; /* Bottom border for separation */
+        box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+    }
+
+    .section-title-arabic {
+        font-size: 12px; /* Adjust font size for the Arabic title */
+        margin: 0; /* Remove default margin for h3 */
+        background-color: #f0f0f0; /* Light gray background */
+        padding: 8px 12px; /* Padding inside the title */
+        border-top-left-radius: 8px; /* Rounded corners for the top left of title */
+        border-top-right-radius: 8px; /* Rounded corners for the top right of title */
+        border-bottom: 2px solid #ccc; /* Bottom border for separation */
+        position: absolute; /* Position the title absolutely */
+        top: 0; /* Align at the top of the container */
+        right: 0; /* Align at the right of the container */
+        z-index: 10; /* Ensure it appears above other content */
+        box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+    }
+
+    .custom-form-group {
+        border: 2px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        margin-bottom: 20px;
+    }
+
+    .textbox-container {
+        border: 2px solid #ccc;
+        padding: 20px;
+        border-radius: 0 0 5px 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        position: relative;
+    }
+
+    .custom-input-group {
+        border: 2px solid #ccc;
+        padding: 5px;
+        border-radius: 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        margin-bottom: 10px;
+    }
+
+
+    .custom-input-group-append {
+        background-color: #f0f0f0;
+        border-left: 2px solid #ccc;
+        border-radius: 0 5px 5px 0;
+        /*         padding: 6px 10px; */
+    }
+
+    .custom-input-group-text {
+        background-color: transparent;
+        border: none;
+    }
+
+    .card {
+        background-color: #F1F8E8;
+    }
+
+    .content {
+        background-color: white;
+    }
+
+    .reminder-section {
+        border: 2px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: White 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+        margin-bottom: 20px;
+    }
+
+</style>
+<section class="content">
+    <div class="container-fluid">
+        <!-- SELECT2 EXAMPLE -->
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">Create Event</h3>
+
+            </div>
+            <!-- /.card-header -->
+            @using (Html.BeginForm("_Events", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.ValidationSummary(true)
+                <div class="card-body">
+
+                    <div class="section-container">
+                        <h3 class="section-title">Event Details</h3>
+                        <h3 class="section-title-arabic">?????? ????????</h3>
+                        <div class="textbox-container">
+                            <div class="row">
+                                <div class="col-lg-6 col-md-6 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Created For</label>
+                                        @Html.DropDownListFor(m => m.CreatedFor, Enumerable.Empty<SelectListItem>(), "--Select--", new { @required = "required", @class = "form-control select2 ajax-select2", @id = "CreatedFor" })
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-md-6 col-sm-6">
+                                    <div class="form-group">
+                                        <label>Category</label>
+                                        @Html.DropDownListFor(Model => Model.Type, ViewBag.Type as SelectList, "--Select--", new { @required = "required", @class = "form-control select2" })
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>
+                                            Parents Welcoming<span class="required">*</span>
+                                        </label>
+                                        <div class="input-group mb-3">
+                                            @Html.TextBoxFor(model => model.ParentTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Parent Title" })
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Message Title</label>
+                                        <div class="input-group mb-3">
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.TextBoxFor(model => model.EventTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Message Title" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-comment"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>System Title</label>
+                                        <div class="input-group mb-3">
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.TextBoxFor(model => model.SystemEventTitle, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "System Title" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-comment"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Start Date</label>
+                                        <div class="input-group mb-3">
+                                            <input asp-for="@Model.EventFrom" type="date" class="form-control " style="width=100%" required />
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-calendar"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <!-- /.form-group -->
+                                    <div class="form-group">
+                                        <label>End Date &nbsp; &nbsp; &nbsp;<span id="lbldateMsg" style="color:red; font-style:italic; font-size:small">@ViewBag.ErrorDate</span></label>
+                                        <div class="input-group mb-3">
+                                            <input asp-for="@Model.EventTo" type="date" class="form-control " style="width=100%" required />
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-calendar"></span>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label>Venue</label>
+                                    <div class="input-group mb-3">
+                                        @Html.TextBoxFor(model => model.EventVenue, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Venue" })
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">
+                                                <span class="fas fa-map-marker"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label>Google Map Location</label><div class="input-group mb-3">
+
+                                            @Html.TextBoxFor(model => model.GmapCode, new { @required = "required", @class = "form-control", @type = "text", @placeholder = "Google Location" })
+                                            <div class="input-group-append">
+                                                <div class="input-group-text">
+                                                    <span class="fas fa-map-marker" onclick="showMap()"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Event Location</label>
+                                        @* <div class="input-group mb-3">  *@
+                                        @Html.DropDownListFor(Model => Model.CityId, ViewBag.EventLocations as SelectList, "--Select--", new { @class = "form-control select2 ", @required = "required" })
+                                        @*  </div> *@
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="section-title">Additional Details</label>
+                                <label class="section-title-arabic">?????? ????????</label>
+                                <div class="custom-form-group row">
+                                    <!-- Linked To -->
+                                    <div class="col-md-12 col-lg-12">
+                                        <div class="form-group">
+                                            <label>Linked To</label>
+                                            <div class="input-group mb-3">
+                                                @Html.DropDownListFor(Model => Model.LinkedEvent, ViewBag.LinkedEvents as SelectList, "--Select--", new { @class = "form-control select2" })
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Attendance Time -->
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Attendance Time</label>
+                                            <div class="input-group mb-3">
+                                                <input type="time" name="AttendanceTime" value="@Model.AttendanceTime.GetValueOrDefault().ToString("HH:mm")" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Leave Time -->
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Leave Time</label>
+                                            <div class="input-group mb-3">
+                                                <input type="time" name="LeaveTime" value="@Model.LeaveTime.GetValueOrDefault().ToString("hh\\:mm")" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row col-md-6">
+                                        <!-- Show on application Calendar? -->
+                                        <div class="col-md-6 ">
+                                            <div class="form-group text-center">
+                                                <label>Show on application Calendar?</label>
+                                                <div class="input-group mb-3">
+                                                    <input style="cursor:pointer;" type="checkbox" name="ShowOnCalender" value="true" checked="@Model.ShowOnCalender.GetValueOrDefault()" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Send Invitation? -->
+                                        <div class="col-md-6">
+                                            <div class="form-group text-center">
+                                                <label asp-for="SendInvitation">Send Invitation?</label>
+                                                <div class="input-group mb-3">
+                                                    @Html.CheckBoxFor(model => model.SendInvitation, new { @checked = "checked", @class = "form-control", @style = "cursor:pointer;" })
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+
+                                        <!-- Whatsapp Confirmation ? -->
+                                        <div class="col-md-6">
+                                            <div class="form-group text-center">
+                                                <label asp-for="WhatsappConfirmation">Whatsapp Confirmation ?</label>
+                                                <div class="input-group mb-3">
+                                                    <input style="cursor:pointer;" type="checkbox" name="WhatsappConfirmation" value="true" checked="@Model.WhatsappConfirmation.GetValueOrDefault()" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Whatsapp Push ? -->
+                                        <div class="col-md-6">
+                                            <div class="form-group text-center">
+                                                <label asp-for="WhatsappPush">Whatsapp Push ?</label>
+                                                <div class="input-group mb-3">
+                                                    <input style="cursor:pointer;" type="checkbox" name="WhatsappPush" value="true" checked="@Model.WhatsappPush.GetValueOrDefault()" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Description -->
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Description<span id="lblDescMsg" style="color:red; font-style:italic; font-size:small">@ViewBag.ErrorDesc</span></label>
+                                            @Html.TextAreaFor(Model => Model.EventDescription, new { @class = "textarea form-control", @placeholder = Html.DisplayNameFor(m => m.EventDescription), @tabindex = 5 })
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Name -->
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="ContactName">Contact Name</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ContactName, new { @required = "required", @class = "form-control", @placeholder = "Contact Name", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Phone -->
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="ContactPhone">Contact Phone</label>
+                                            <div class="input-group mb-3">
+                                                @Html.TextBoxFor(model => model.ContactPhone, new { pattern = "^[0-9]+$", @required = "required", @class = "form-control", @placeholder = "Contact Phone", @minlength = "3", @maxlength = "20", @type = "text" })
+                                                <div class="input-group-append">
+                                                    <div class="input-group-text">
+                                                        <span class="fas fa-arrows-h"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+                   
+
+                    <!-- /.row -->
+
+
+                    <div class="modal-footer justify-content-between">
+                        <a href="@Url.Content("~")/admin/events" class="btn btn btn-danger">Back</a>
+                        <button type="submit" class="btn btn-primary" id="submit">Create</button>
+                    </div>
+                </div>
+            }
+            <!-- /.card -->
+        </div><!-- /.container-fluid -->
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            var thanksTexts = {
+                'Template (1)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (2)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n????? ?????? / ????? ?????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (3)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n????? ?????? / ????? ?????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (4)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n???? ?????? / ???? ????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (5)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n???? ?????? / ???? ????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (6)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (7)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n????? ?????? / ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (8)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n????? ?????? / ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (9)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n???? ?????? / ???? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
+                'Template (10)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n???? ?????? / ???? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..'
+            };
+
+            var reminderTexts = {
+                'Template (1)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..',
+                'Template (2)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n?????????? / ????? ?????????',
+                'Template (3)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n??????? / ???? ????????',
+                'Template (1) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..',
+                'Template (2) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n?????????? / ????? ?????????',
+                'Template (3) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n??????? / ???? ????????',
+            };
+
+            $('#templateTypeDropdown').on('change', function () {
+                var selectedValue = $(this).val();
+                console.log('Selected Value:', selectedValue);
+
+                if (selectedValue === 'Custom') {
+                    $('#customMessageTextarea').prop('disabled', false);
+                }
+                else if (selectedValue === 'Custom With Guest name | wati') {
+                    $('#customMessageTextarea').prop('disabled', false);
+                }
+                else {
+                    $('#customMessageTextarea').prop('disabled', true).val(thanksTexts[selectedValue] || '');
+                }
+
+            });
+
+            $('#reminderTemplateDropdown').on('change', function () {
+                var selectedValue = $(this).val();
+                console.log('Selected Reminder Value:', selectedValue);
+
+                if (selectedValue === 'Custom') {
+                    $('#reminderMessageTextarea').prop('disabled', false);
+
+                } else if (selectedValue === 'Custom With Guest name | wati') {
+                    $('#reminderMessageTextarea').prop('disabled', false);
+                }
+                else {
+                    $('#reminderMessageTextarea').prop('disabled', true).val(reminderTexts[selectedValue] || '');
+                }
+
+                console.log(reminderTexts[selectedValue])
+            });
+
+            $('#customMessageTextarea, #reminderMessageTextarea').on('input', function () {
+                var maxLength = 1500;
+                if (this.value.length > maxLength) {
+                    this.value = this.value.substring(0, maxLength);
+                }
+                $(this).next('span').text(this.value.length + '/' + maxLength);
+            });
+
+
+        });
+
+        function showMap() {
+            window.open("https://maps.app.goo.gl/" + $('#GmapCode').val(), '_blank');
+        }
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+        form.addEventListener("submit", function () {
+            const submitButton = form.querySelector("button[type=submit]");
+            submitButton.disabled = true;
+            submitButton.innerText = "Processing...";
+        });
+    });
+
+        $(document).ready(function () {
+            setTimeout(function () {
+                var $createdFor = $('#CreatedFor');
+
+                if ($createdFor.data('select2')) {
+                    $createdFor.select2('destroy');
+                }
+
+                var selectedUserId = '@Model.CreatedFor';
+                var selectedUserName = '@ViewBag.CreatedForUserName'; 
+
+                $createdFor.select2({
+                    placeholder: "--Select--",
+                    minimumInputLength: 0, 
+                    allowClear: true,
+                    ajax: {
+                        url: '@Url.Action("GetUsersForSelect2", "Admin")',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                          
+                            var search = params.term || (selectedUserName && !params.page ? selectedUserName : '');
+                            return {
+                                searchTerm: search,
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function (data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: Array.isArray(data) ? data : (data.results || []),
+                                pagination: {
+                                    more: data.pagination && data.pagination.more
+                                }
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+                if (selectedUserId && selectedUserName) {
+                    var option = new Option(selectedUserName, selectedUserId, true, true);
+                    $createdFor.append(option).trigger('change');
+                }
+
+                $createdFor.on('select2:open', function () {
+                    var select2 = $createdFor.data('select2');
+                    var initialTerm = selectedUserName || ''; 
+                    if (!select2.results.lastParams) {
+                        select2.trigger('query', { term: initialTerm, page: 1 });
+                    }
+                });
+
+                $createdFor.on('select2:clear', function () {
+                    selectedUserId = null;
+                    selectedUserName = null;
+
+                    var select2 = $createdFor.data('select2');
+                    select2.results.lastParams = null; 
+                    select2.trigger('query', { term: '', page: 1 });
+                });
+
+            }, 300);
+        });
+   </script>
+}

@@ -1,0 +1,26 @@
+﻿ ALTER view vw_MIAgregationReport    
+ as  
+
+ select UserId,EventId,linkedEvent,eventTitle,  
+ (select count(*) from Guest(nolock) 
+ where Eventid=ge.eventId and (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'  
+ or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as YesResponse,
+ 
+
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and (Response = N'اعتذار' or Response = N'الاعتذار عن الدعوة' or Response = N'Decline'
+ or Response = 'اعتذار' or Response = 'الاعتذار عن الدعوة' or Response = 'Decline' 
+ )) as NoResponse,  
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,   
+ count(guestid) as TotalFamily,    (select sum(NoOfMembers) from Guest(nolock) where Eventid=ge.eventId ) as TotalGuest,  
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.eventId  and ResponseCode='Allowed' ) as Allowed,    
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.eventId  and ResponseCode='Declined' ) as Declined,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and TextDelivered = 1) as TextDelivered,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and TextSent = 1) as TextSent,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and TextRead = 1) as TextRead,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and TextFailed = 1) as TextFailed,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgDelivered = 1) as ImgDelivered,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgSent = 1) as ImgSent,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgRead = 1) as ImgRead,   
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgFailed = 1) as ImgFailed,   
+ (select count(*) from Guest(nolock) where Response = 'Whatsapp Not exists' and Eventid=ge.eventId) as WhatsappNotExists  
+ from vw_GuestReportWA ge    group by  EventId,eventTitle,UserId ,linkedEvent 

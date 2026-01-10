@@ -1,0 +1,4 @@
+﻿-------------Approve Gatekkeper
+ALTER TABLE Users ADD Approved BIT default 'FALSE';
+Update  Users SET Approved='True'
+--------------------

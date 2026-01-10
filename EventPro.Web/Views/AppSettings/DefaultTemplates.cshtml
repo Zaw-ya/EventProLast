@@ -1,0 +1,1507 @@
+@model EventPro.DAL.Models.TwilioProfileSettings
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "MessageTemplates";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+@using EventPro.Web.Common
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css" />
+<section id="content" class="content">
+    <div class="container-fluid">
+    </div>
+    <div class="container-fluid">
+        @using (Html.BeginForm(null, null, FormMethod.Post))
+        {
+
+            <div class="card card-default color-palette-box">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-tag"></i>
+                        Profile 
+                    </h3>
+                    @if (ViewBag.Update == 1)
+                    {
+                        <div class="col-md-2" style="float:right; margin-bottom:0px;">
+                            <a href="~/appsettings/DefaultTemplates?id=-1" style="width:100%" class="btn btn-warning btn-sm">Add New Profile</a>
+                        </div>
+                        <div class="col-md-2" style="float:right; margin-bottom:0px;">
+                            <a onclick="Delete()" style="width:100%" class="btn btn-danger btn-sm">Delete selected profile</a>
+                        </div>
+                    }
+                </div>
+
+                    <div class="card-body">
+                    @if (ViewBag.Update == 1)
+                    {
+                        <div class="col-md-3" style="float:left">
+                            <div class="form-group">
+                                <label>Selected Profile</label>
+                                <select onchange="selectProfile()" id="roleSelection" asp-for="@Model.Id" asp-items="ViewBag.Profiles" name="role" class="form-control " style="width: 100%;" data-select2-id="1" tabindex="-1" aria-hidden="true">
+                                </select>
+                            </div>
+                        </div>
+                    }
+                    <div class="row" style="float:right; ">
+                            <div class="col">
+                                <a id="configurationButton" onclick="showConfiguration()" class="btn btn-primary"> Configuration</a>
+                            </div>
+                            <div class="col">
+                                <a id="confirmationButton" onclick="showConfirmation()" class="btn btn-primary"> Confirmation</a>
+                            </div>
+                            <div class="col">
+                                <a id="cardButton" onclick="showCard()" class="btn btn-primary"> Card</a>
+                            </div>
+                            <div class="col">
+                                <a id="thanksButton" onclick="showThanks()" class="btn btn-primary"> Thanks</a>
+                            </div>
+                            <div class="col">
+                                <a id="reminderButton" onclick="showReminder()" class="btn btn-primary"> Reminder</a>
+                            </div>
+                            <div class="col">
+                                <a id="duplicationButton" onclick="showDuplication()" class="btn btn-primary"> Duplicate</a>
+                            </div>
+                            <div class="col">
+                                <a id="declineButton" onclick="showDecline()" class="btn btn-primary"> Decline</a>
+                            </div>
+                            <div class="col">
+                                <a id="eventLocationButton" onclick="showEventLocation()" class="btn btn-primary"> Location</a>
+                            </div>
+                        </div>
+                    </div>
+
+                   
+               
+                <!-- /.card-body -->
+            </div>
+               
+        }
+
+        <div class="card">
+            <div class="m-4 p-2 pt-0 mt-2">
+                <form method="post" id="SaveChanges">
+                    @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                    <input asp-for="@Model.Id" hidden />
+                    <div>
+                        <div class="pb-2">
+                          @if (ViewBag.Update == 1)
+                          {
+                            <h2 class="text-primary">Profile settings</h2>
+                          }
+                            @if (ViewBag.Update == 0)
+                            {
+                                <h2 class="text-primary">Create Profile</h2>
+                            }
+
+                            <hr />
+                        </div>
+                        <div id="configuration" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                        <h3 style="color:red">Basic Configurations</h3>
+                        <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Balance</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input class="form-control text-center" value="@ViewBag.Balance" readonly />
+                                </div>
+
+                            </div>
+
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>Name</h4>
+
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.Name"  class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>Authentication token</h4>
+   
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.AuthToken" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>Account Sid</h4>
+
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.AccountSid" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>Messaging Service Sid</h4>
+        
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.MessagingServiceSid" class="form-control text-center" />
+                            </div>
+
+                        </div>
+
+
+                        <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Saudi Number 1</h4>
+        
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberSaudi1" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Saudi Number 2</h4>
+
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberSaudi2" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Kuwait Number 1</h4>
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberKuwait1" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Kuwait Number 2</h4>
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberKuwait2" class="form-control text-center" />
+                            </div>
+
+                        </div>
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Bahrain Number 1</h4>
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberBahrain1" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Bahrain Number 2</h4>
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberBahrain2" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                        </div>
+                        <div hidden id="confirmation" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Confirmation Message Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female Without Guest Name with link</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Text And Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderTextAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Text And Without Guest Name with link</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderTextAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And Without Guest Name with link</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Confirm Arabic Female With Header Video And Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderVideoAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Confirm Arabic Female With Header Video And Without Guest Name with link</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderVideoAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And Header Text And Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And Header Text And Without Guest Name with link</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Guest Name with link</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Text And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderTextAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Text And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderTextAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Video And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderVideoAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Video And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderVideoAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And Header Text And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Female With Header Image And Header Text And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Text And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderTextAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Text And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderTextAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Video And Without Guest Name</h4>
+                                </div> 
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderVideoAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Video And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderVideoAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And Header Text And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And Header Text And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Text And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderTextAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Text And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderTextAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Confirm Arabic Male With Header Video And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderVideoAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Confirm Arabic Male With Header Video And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderVideoAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And Header Text And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Arabic Male With Header Image And Header Text And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Text And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderTextAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Text And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderTextAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Image And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Image And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Englis hWith Header Video And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderVideoAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Englis hWith Header Video And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderVideoAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Image And Header Text And Without Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndHeaderTextAndWithoutGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Image And Header Text And Without Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndHeaderTextAndWithoutGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Englis hWith Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>Englis hWith Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Text And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderTextAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Text And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderTextAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Image And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Image And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Video And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderVideoAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Video And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderVideoAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English With Header Image And Header Text And With Guest Name</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndHeaderTextAndWithGuestName" class="form-control text-center" />
+                                </div>
+                                <div class="col-10">
+                                    <h4>English With Header Image And Header Text And With Guest Name with link</h4>
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ConfirmEnglishWithHeaderImageAndHeaderTextAndWithGuestNameWithLink" class="form-control text-center" />
+                                </div>
+                            </div>
+                        </div>
+                        <div hidden id="card" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Card Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Card Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ArabicCardWithoutGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Card With Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ArabicCardWithGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Englihs Card Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.EnglihsCardWithoutGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English Card With Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.EnglishCardWithGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                           
+                        </div>
+                        <div hidden id="thanks" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Thanks Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Thanks Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomThanksWithoutGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Thanks With Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomThanksWithGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 1</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp1" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 2</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp2" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 3</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp3" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 4</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp4" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 5</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp5" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 6</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp6" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 7</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp7" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                                 <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 8</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp8" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                                <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 9</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp9" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 10</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp10" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Thanks Without Guest Name and With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomThanksWithoutGuestNameWithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Thanks With Guest Name and With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomThanksWithGuestNameWithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 1 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp1WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 2 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp2WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 3 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp3WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 4 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp4WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 5 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp5WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 6 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp6WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 7 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp7WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 8 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp8WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 9 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp9WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Thanks Template 10 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ThanksTemp10WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Congratulation Message To Event Owner</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ArabicCongratulationMessageToEventOwner" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English Congratulation Message To Event Owner</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.EnglishCongratulationMessageToEventOwner" class="form-control text-center" />
+                                </div>
+
+                            </div>
+
+                        </div>
+                        <div hidden id="duplication" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Duplication Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Duplicate Answer</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ArabicDuplicateAnswer" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English Duplicate Answer</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.EnglishDuplicateAnswer" class="form-control text-center" />
+                                </div>
+
+                            </div>                           
+
+                        </div>
+                        <div hidden id="eventLocation" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Event location Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Event Location</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ArabicEventLocation" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>English Event Location</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.EnglishEventLocation" class="form-control text-center" />
+                                </div>
+
+                            </div>
+
+                        </div>
+                        <div hidden id="decline" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Decline Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Arabic Decline</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ArabicDecline" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            
+
+                        </div>
+                        <div hidden id="reminder" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
+                            <h3 style="color:red">Reminder Templates</h3>
+                            <br />
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Reminder Without Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomReminderWithoutGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div  style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Reminder With Guest Name</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomReminderWithGuestName" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                                                        <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 1</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp1" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                                                        <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 2</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp2" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 3</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp3" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 1 With calender ICS</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp1WithCalenderIcs" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 2 With calender ICS</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp2WithCalenderIcs" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 3 With calender ICS</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp3WithCalenderIcs" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Reminder Without Guest Name With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomReminderWithoutGuestNameWithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                              <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Custom Reminder With Guest Name With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.CustomReminderWithGuestNameWithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                              <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 1 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp1WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                              <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 2 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp2WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 3 With Header Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp3WithHeaderImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 1 With Header Image With calender ICS</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp1WithHeaderImageWithCalenderIcs" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 2 With Header Image With calender ICS</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp2WithHeaderImageWithCalenderIcs" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Reminder Template 3 With Header Image With calender ICS</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.ReminderTemp3WithHeaderImageWithCalenderIcs" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Marketing Interest Msg</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.MarketingInterestMsg" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Marketing Interest Msg With Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.MarketingInterestMsgWithImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Marketing Not Interest Msg</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.MarketingNotInterestMsg" class="form-control text-center" />
+                                </div>
+
+                            </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                                <div class="col-10">
+                                    <h4>Marketing Not Interest Msg With Image</h4>
+
+                                </div>
+                                <div class="col-2">
+                                    <input asp-for="@Model.MarketingNotInterestMsgWithImage" class="form-control text-center" />
+                                </div>
+
+                            </div>
+
+                        </div>
+                        <br />
+                        <br />
+                        <div>
+                          @if (ViewBag.Update == 1)
+                          {
+                                <a  class="btn btn-secondary" asp-controller="Admin" asp-action="Index">Back to Dashboard</a>
+                            <a onclick="SaveChanges()" class="btn btn-primary" style="width:220px;float:right; ">Update</a>
+                          }
+
+                            @if (ViewBag.Update == 0)
+                            {
+                                <a class="btn btn-secondary" asp-controller="AppSettings" asp-action="DefaultTemplates">Back to Profile Templates</a>
+                                <a onclick="Create()" class="btn btn-primary" style="width:220px;float:right; ">Create</a>
+                            }
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section scripts {
+    <script>
+       var configuration = document.getElementById('configuration');
+        var configurationButton = document.getElementById('configurationButton');
+
+        var confirmation = document.getElementById('confirmation');
+        var confirmationButton = document.getElementById('confirmationButton');
+
+        var eventLocation = document.getElementById('eventLocation');
+        var eventLocationButton = document.getElementById('eventLocationButton');
+
+        var thanks = document.getElementById('thanks');
+        var thanksButton = document.getElementById('thanksButton');
+
+        var reminder = document.getElementById('reminder');
+        var reminderButton = document.getElementById('reminderButton');
+
+        var declineButton = document.getElementById('declineButton');
+
+        var duplication = document.getElementById('duplication');
+        var duplicationButton = document.getElementById('duplicationButton');
+
+        var card = document.getElementById('card');
+        var cardButton = document.getElementById('cardButton');
+
+        configurationButton.classList.add('text-white');
+
+        function showConfiguration() {
+
+            configuration.hidden = false;
+            confirmation.hidden = true;
+            eventLocation.hidden = true;
+            thanks.hidden = true;
+            reminder.hidden = true;
+            decline.hidden = true;
+            duplication.hidden = true;
+            card.hidden = true;
+            configurationButton.classList.add('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.remove('text-white');
+        }
+        function showConfirmation() {
+            configuration.hidden = true;
+            confirmation.hidden = false;
+            eventLocation.hidden = true;
+            thanks.hidden = true;
+            reminder.hidden = true;
+            decline.hidden = true;
+            duplication.hidden = true;
+            card.hidden = true;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.add('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.remove('text-white');
+
+        }
+        function showEventLocation() {
+            configuration.hidden = true;
+            confirmation.hidden = true;
+            eventLocation.hidden = false;
+            thanks.hidden = true;
+            reminder.hidden = true;
+            decline.hidden = true;
+            duplication.hidden = true;
+            card.hidden = true;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.add('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.remove('text-white');
+
+        }
+        function showThanks() {
+
+            configuration.hidden = true;
+            confirmation.hidden = true;
+            eventLocation.hidden = true;
+            thanks.hidden = false;
+            reminder.hidden = true;
+            decline.hidden = true;
+            duplication.hidden = true;
+            card.hidden = true;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.add('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.remove('text-white');
+        }
+
+        function showReminder() {
+            configuration.hidden = true;
+            confirmation.hidden = true;
+            eventLocation.hidden = true;
+            thanks.hidden = true;
+            reminder.hidden = false;
+            decline.hidden = true;
+            duplication.hidden = true;
+            card.hidden = true;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.add('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.remove('text-white');
+
+        }
+        function showDecline() {
+            configuration.hidden = true;
+            confirmation.hidden = true;
+            eventLocation.hidden = true;
+            thanks.hidden = true;
+            reminder.hidden = true;
+            decline.hidden = false;
+            duplication.hidden = true;
+            card.hidden = true;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.add('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.remove('text-white');
+
+        }
+        function showDuplication() {
+            configuration.hidden = true;
+            confirmation.hidden = true;
+            eventLocation.hidden = true;
+            thanks.hidden = true;
+            reminder.hidden = true;
+            decline.hidden = true;
+            duplication.hidden = false;
+            card.hidden = true;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.add('text-white');
+            cardButton.classList.remove('text-white');
+
+        }
+        function showCard() {
+            configuration.hidden = true;
+            confirmation.hidden = true;
+            eventLocation.hidden = true;
+            thanks.hidden = true;
+            reminder.hidden = true;
+            decline.hidden = true;
+            duplication.hidden = true;
+            card.hidden = false;
+            configurationButton.classList.remove('text-white');
+            confirmationButton.classList.remove('text-white');
+            eventLocationButton.classList.remove('text-white');
+            thanksButton.classList.remove('text-white');
+            reminderButton.classList.remove('text-white');
+            declineButton.classList.remove('text-white');
+            duplicationButton.classList.remove('text-white');
+            cardButton.classList.add('text-white');
+
+        }
+
+        async function SaveChanges() {
+
+            var posting = $.post("/AppSettings/DefaultTemplates", $("#SaveChanges").serialize());
+            posting.done(function (data) {
+                if (data.success) {
+                    Swal.fire(` ?? ????? ????????? `);
+
+                } else {
+                    Swal.fire(` !??? ??? ?? `);
+                }
+            });
+        }
+
+        async function Create() {
+
+            var posting = $.post("/AppSettings/CreateDefaultTemplates", $("#SaveChanges").serialize());
+            posting.done(function (data) {
+                if (data.success) {
+                    Swal.fire(` ?? ????? ???? ???? `);
+                } else {
+                    Swal.fire(data.message);
+                }
+
+            });
+        }
+
+        async function Delete() {
+
+            Swal.fire({
+                title: "?? ???? ??? ?????? ?",
+                text: "!??? ??? ??? ?????? ? ???????? ??????",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                cancelButtonText: "????? ?????",
+                confirmButtonText: "???, ???? ???"
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    var posting = $.post("/AppSettings/DeleteDefaultTemplates", $("#SaveChanges").serialize());
+                    posting.done(function (data) {
+
+                        window.location.href = `/AppSettings/DefaultTemplates`;
+                    });
+                }
+            });
+        }
+
+         function selectProfile() {
+            roleSelectionValue = document.getElementById('roleSelection').value;
+            window.location.href = `/AppSettings/DefaultTemplates?id=${roleSelectionValue}`;
+        }
+
+    </script>
+}
+             
+
+   

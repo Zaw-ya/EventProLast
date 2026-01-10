@@ -1,0 +1,61 @@
+﻿--created on : 12-12-2023 
+--Upated 19-12-2023
+-- by : Sherief El Shareef        
+--DECLARE @Totalcount INT;exec Proc_GetEventsStatsByGK @GatekeeperId=25,@pageNo=1,@PageSize=1,@NoOfPages=@Totalcount OUTPUT;select @Totalcount     
+ALTER PROCEDURE Proc_GetEventsStatsByGK       
+@GatekeeperId int null, 
+@pageNo int =1,
+@PageSize int =30,
+@NoOfPages INT = 0 OUTPUT
+AS     
+BEGIN  
+ BEGIN--
+	SET NOCOUNT ON;
+	  WITH cte AS (   
+		  SELECT  E.id,E.ContactName,E.ContactPhone,
+		  RIGHT(CONVERT(VARCHAR, AttendanceTime, 100), 7) AS AttendanceTime ,
+		   RIGHT(CONVERT(VARCHAR, LeaveTime, 100), 7) AS LeaveTime ,
+
+		  GMapCode ,Country.CountryName,City.CityName ,
+		        E.eventTitle,E.eventFrom,E.eventTo,E.eventVenue,CONCAT('E',FORMAT(e.Id, '00000')) AS EventCode     
+		 ,(SELECT count( Allowed.GuestId) ) scanned	  			   
+	
+		FROM EventGatekeeperMapping EGKM
+			INNER JOIN Events E            on E.Id=EGKM.EventId  
+			LEFT JOIN   guest GH            on GH.EventId=E.Id 
+			Left JOIN  ScanHistory Allowed ON Allowed.GuestId=GH.GuestId  AND Allowed.ResponseCode='Allowed' 
+		    Left Join City on City.id=E.CityID
+		    Left Join Country on City.CountryId=Country.Id
+	 
+	  WHERE    EGKM.GatekeeperId=@GatekeeperId  AND GH.Archived is null				
+          
+	  GROUP BY E.ContactName,E.ContactPhone,E.LeaveTime,E.AttendanceTime,GMapCode 
+	  ,Eventlocation,Country.CountryName,City.CityName,
+	        E.id,E.EventTitle,E.EventFrom,E.EventTo,E.EventVenue,EventCode
+	)
+
+	SELECT    CTE.id,CTE.ContactName,CTE.ContactPhone,CTE.AttendanceTime,CTE.LeaveTime,
+		  'https://maps.app.goo.gl/'+GMapCode as 'GmapCode' ,CTE.eventTitle,CTE.eventFrom,CTE.eventTo,CTE.eventVenue
+		  , EventCode, scanned	 ,
+	CountryName+'|'+CityName as Eventlocation,
+	--5 as Eventlocation,
+	(SELECT sum (g.NoOfMembers) ) 'totalAllocated'
+	FROM cte 
+	 LEFT JOIN guest G  on G.EventId=cte.Id --and G.Archived is null
+	  GROUP BY  cte.ContactName,cte.ContactPhone,cte.LeaveTime,cte.AttendanceTime,
+	         GMapCode ,CountryName,CityName,
+	         cte.id,cte.EventTitle,cte.EventFrom,cte.EventTo,cte.EventVenue,EventCode,cte.scanned,GmapCode
+	  
+	 ORDER BY EventFrom DESC
+	  OFFSET ((@pageNo - 1) * @PageSize) ROWS FETCH NEXT @PageSize ROWS ONLY;
+ END
+
+ if(@pageNo=1)---For count all
+BEGIN 
+	 SELECT  @NoOfPages=CEILING(cast(COUNT_BIG(distinct E.Id)as float) /@PageSize)
+	FROM EventGatekeeperMapping EGKM
+		INNER JOIN Events E            on E.Id=EGKM.EventId  	 
+  WHERE   EGKM.GatekeeperId=@GatekeeperId                                                 
+END
+
+END

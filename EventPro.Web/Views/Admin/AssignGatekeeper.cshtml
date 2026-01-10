@@ -1,0 +1,167 @@
+@model EventPro.DAL.Models.VwEvents
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3">
+
+                <!-- Profile Image -->
+                <div class="card card-primary card-outline">
+                    <div class="card-body box-profile">
+                        <div class="text-center">
+                            <img class="profile-user-img img-fluid img-circle" src="~/Upload/card/@Model.Icon" alt="User profile picture">
+                        </div>
+
+                        <h3 class="profile-username text-center">@Model.EventTitle</h3>
+
+                        <p class="text-muted text-center">@Model.Category</p>
+
+                        <ul class="list-group list-group-unbordered mb-3">
+                            <li class="list-group-item">
+                                <b>Event Code</b> <a class="float-right">@{var eventCode = "E0000" + Model.Id;}@eventCode</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Scheduled</b> <a class="float-right">@Convert.ToDateTime(Model.EventFrom).ToString("dd/MMM/yyyy")</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Venue</b> <a class="float-right">@Model.EventVenue</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Direction</b> <a class="float-right" style="color:blue;cursor:pointer; font-size:small; font-style:italic" id="GmapCode" onclick="showMap()"><u>Click here</u></a>
+                            </li>
+                        </ul>
+
+                        @*<a href="#" class="btn btn-primary btn-block"><b>Follow</b></a>*@
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+                <!-- About Me Box -->
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">About Event</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <strong><i class="fas fa-book mr-1"></i> Description</strong>
+
+                        <p class="text-muted">
+                            @Html.Raw(Model.EventDescription)
+                        </p>
+
+                        <hr>
+
+                        <strong><i class="fas fa-map-marker-alt mr-1"></i> Location</strong>
+
+                        <p class="text-muted">@Model.EventVenue</p>
+
+                        <hr>
+
+                        <strong><i class="fas fa-pencil-alt mr-1"></i> Client</strong>
+
+                        <p class="text-muted">
+                            <span class="tag tag-danger">@Model.FirstName</span>
+                            <span class="tag tag-success">@Model.LastName</span>
+                        </p>
+
+                        <hr>
+
+                        <strong><i class="far fa-file-alt mr-1"></i> Status</strong>
+
+                        <p class="text-muted">@Model.Status</p>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header p-2">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item"><a class="nav-link active" href="#available" data-toggle="tab">Available</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#assigned" data-toggle="tab">Assigned</a></li>
+                        </ul>
+                    </div><!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="available">
+                                <div class="card">
+                                    <table id="searchableTable" class="table table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Full Name</th>
+                                                <th>Events <small>(Assigned on same day)</small></th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var agk in ViewBag.AvailableGateKeeper)
+                                            {
+                                                <tr>
+                                                    <td>@agk.FullName</td>
+                                                    <td>
+                                                        @if (ViewData["Scheule_" + agk.UserId] != null)
+                                                        {
+                                                            <ul>
+                                                                @foreach (var a in ViewData["Scheule_" + agk.UserId])
+                                                                {
+                                                                    <li>@a.EventTitle</li>
+                                                                }
+                                                            </ul>
+                                                        }
+                                                    </td>
+                                                    <td><a href="~/admin/assigned?userid=@agk.UserId&eventId=@ViewBag.EventId" class="btn btn-success">&nbsp; Assigned</a></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="assigned">
+                                <div class="card">
+                                    <table id="searchableTable2" class="table table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Full Name</th>
+                                                <th>Username</th>
+                                                <th>IBN No</th>
+                                                <th>Account No</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var agk in ViewBag.AssignedGateKeeper)
+                                            {
+                                            <tr>
+                                                <td>@agk.FullName</td>
+                                                <td>@agk.UserName</td>
+                                                <td>@agk.Ibnnumber</td>
+                                                <td>@agk.BankName</td>
+                                                <td><a href="~/admin/unassigned?taskId=@agk.TaskId" onclick="return confirm('Are you sure want to release Gatekeeper?')" class="btn btn-outline-danger">&nbsp; Release</a></td>
+                                            </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- /.tab-content -->
+                        </div><!-- /.card-body -->
+                    </div>
+                    <!-- /.nav-tabs-custom -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+</section>
+
+
+<script>
+    function showMap() {
+        window.open("https://maps.app.goo.gl/@ViewBag.EventLocation", '_blank');
+    }
+</script>

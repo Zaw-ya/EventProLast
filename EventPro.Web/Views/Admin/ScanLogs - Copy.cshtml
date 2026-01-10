@@ -1,0 +1,214 @@
+@model EventPro.DAL.Models.Guest
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+    @using (Html.BeginForm(null, null, FormMethod.Post))
+    {
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-default color-palette-box">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-tag"></i>
+                                Filter's
+                            </h3>
+
+                        </div>
+                        <div class="card-body">
+                            <div class="col-md-3" style="float:left">
+                                <div class="form-group">
+                                    <label>Scan From:</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                        </div>
+                                        <input type="date" name="scanFrom" class="form-control float-right" id="scanFrom">
+                                    </div>
+                                    <!-- /.input group -->
+                                </div>
+                            </div>
+                            <div class="col-md-3" style="float:left">
+                                <div class="form-group">
+                                    <label>Scan To:</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                        </div>
+                                        <input type="date" name="todate" class="form-control float-right" id="scanTo">
+                                    </div>
+                                    <!-- /.input group -->
+                                </div>
+                            </div>
+                            <div class="col-md-3" style="float:left">
+                                <div class="form-group">
+                                    <label>Code:</label>
+                                    <select id="scanCode" name="code" class="form-control " style="width: 100%;" data-select2-id="1" tabindex="-1" aria-hidden="true">
+                                        <option selected="selected">All</option>
+                                        <option value="Allowed">Allowed</option>
+                                        <option value="Declined">Declined</option>
+                                        <option value="Authorization">Authorization</option>
+                                        <option value="Expire">Expire</option>
+                                        <option value="Invalid QR">Invalid QR</option>
+                                    </select>
+                                    <!-- /.input group -->
+                                </div>
+                            </div>
+                            <div class="col-md-3" style="float:left">
+                                <div class="form-group">
+                                    <label>Event ID</label>
+                                    <input id="EventId" type="text" class="form-control" name="EventId" placeholder="Enter Event ID" />
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="card-body">
+                            <div >
+                                <div class="col-md-3">
+                                    <label>Gatekeeper</label>
+                                    <select i asp-items="ViewBag.Gatekeeper" name="gatekeeper" id="GateKeeperName" class="form-control select2 " style="width: 100%;" data-select2-id="1" tabindex="-1" aria-hidden="true">
+                                        <option value="-1">All</option>
+                                    </select>
+                                    <!-- /.input group -->
+                                </div>
+                            </div>
+
+                            <div class="col-md-2" style="float:right;">
+                             <div>
+                                    <a onclick="searchFilter()" class="btn btn-warning btn-sm" style="width:100%;height:100%; cursor:pointer;">Search</a>
+                             </div>
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+
+                </div>
+                <div class="col-md-12">
+
+                    <div class="card">
+                        <div class="container-fluid" style="margin-top:10px">
+                            <!-- /.card-header -->
+                            <div class="card-body p-0">
+                                <div class="table-title">
+
+                                </div>
+                                <table id="scanlogs" class="table table-bordered table-hover text-center">
+                                    <thead>
+                                        <tr>
+                                            <th>EventId</th>
+                                            <th>Event Id</th>
+                                            <th>Event Title</th>
+                                            <th>Linked Event</th>
+                                            <th>Guest Name</th>
+                                            <th>no. of members</th>
+                                            <th>Status</th>
+                                            <th>Scan Response</th>
+                                            <th>Gate Keeper ID</th>
+                                            <th>Gate Keeper Name</th>
+                                            <th>Scanned On</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+
+
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script src="~/assets/plugins/datatables/js/jquery.datatables.min.js"></script>
+    <script src="~/assets/plugins/datatables/js/jquery.datatables.js"></script>
+    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.min.js"></script>
+    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.js"></script>
+    <script>
+
+        function searchFilter() {
+            var scanFrom = document.getElementById('scanFrom').value;
+            var scanTo = document.getElementById('scanTo').value;
+            var scanCode = document.getElementById('scanCode').value;
+            var GateKeeperId = document.getElementById('GateKeeperName').value;
+            var EventId = document.getElementById('EventId').value;
+
+            $('#scanlogs').DataTable().ajax.url("/admin/GetScanLogs?scanFrom=" + scanFrom + "&&scanTo=" + scanTo + "&&scanCode=" + scanCode + "&&GateKeeperId=" + GateKeeperId + "&&EventId=" + EventId).load();
+
+        }
+
+        $(document).ready(function () {
+            $('#scanlogs').DataTable({
+                "fixedHeader": false,
+                "lengthChange": true,
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                dom: 'lfrBtip',
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: 'Export Excel',
+                        exportOptions: {
+                            columns: [2,4,5,6,7,10]
+                        }
+                    }, {
+                        extend: 'print',
+                        exportOptions: {
+                            columns: [2, 4, 5, 6, 7, 10]
+                        }
+                    }
+                ],
+                "serverSide": true,
+                "processing": true,
+                "filter": true,
+                "ajax": {
+                    "url": "/admin/GetScanLogs" ,
+                    "type": "POST",
+                    "dataType": "json"
+                },
+                "columnDefs": [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+                "columns": [
+                    { "data": "eventId", "name": "EventId", "autowidth": true, "orderable": false },
+                    { "data": "eventId", "name": "EventId", "autowidth": true, "orderable": false },
+                    { "data": "eventTitle", "name": "EventTitle", "autowidth": true, "orderable": false },
+                    { "data": "eventLinkedTo", "name": "EventLinkedTo", "autowidth": true, "orderable": false },
+                    { "data": "guestName", "name": "GuestName", "autowidth": true, "orderable": false },
+                    { "data": "validity", "name": "Validity", "autowidth": true, "orderable": false },
+                    { "data": "code", "name": "Code", "autowidth": true, "orderable": false },
+                    { "data": "message", "name": "Message", "autowidth": true, "orderable": false },
+                    { "data": "gateKeeperId", "name": "GateKeeperId", "autowidth": true, "orderable": false },
+                    { "data": "gateKeeperName", "name": "GateKeeperName", "autowidth": true, "orderable": false },
+                    { "data": "scannedOn", "name": "ScannedOn", "autowidth": true, "orderable": false },
+                ]
+
+            });
+        });
+
+    </script>
+
+}
+
+
+

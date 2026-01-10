@@ -1,0 +1,422 @@
+﻿ALTER TABLE TwilioProfileSettings
+ADD ReminderTemp1WithCalenderIcs NVARCHAR(60),
+ ReminderTemp2WithCalenderIcs NVARCHAR(60),
+ ReminderTemp3WithCalenderIcs NVARCHAR(60),
+ ReminderTemp1WithHeaderImageWithCalenderIcs NVARCHAR(60),
+ ReminderTemp2WithHeaderImageWithCalenderIcs NVARCHAR(60),
+ ReminderTemp3WithHeaderImageWithCalenderIcs NVARCHAR(60)
+ ----------------------------------------------------------------------
+ CREATE TABLE ReportDeletedEventsByGk( 
+	Id INT PRIMARY KEY IDENTITY,
+    EventId INT NOT NULL,
+    GatekeeperId INT NOT NULL,
+    UnassignedOn DATETIME NOT NULL,
+    UnassignedById INT NOT NULL,        
+    UnassignedByName NVARCHAR(200) NULL, 
+);
+------------------------------------------------------------------------
+ALTER TABLE Events
+ADD DeletedOn DATETIME NULL; 
+------------------------------------------------------------------------
+ALTER TABLE Events
+ADD IsDeleted BIT NOT NULL DEFAULT 0;  
+------------------------------------------------------------------------
+ALTER TABLE Events
+ADD DeletedBy INT NULL; 
+------------------------------------------------------------------------
+ALTER VIEW [dbo].[Vw_Events]                
+AS                
+SELECT 
+    e.Id,            
+    e.EventCode,            
+    e.EventTitle,            
+    e.Type,            
+    e.EventFrom,            
+    e.EventTo,            
+    e.EventVenue,            
+    CONCAT('E', REPLACE(STR(e.Id, 5), SPACE(1), '0')) AS GmapCode,            
+    e.GmapCode AS GLocation,            
+    e.EventDescription,            
+    e.CreatedBy,            
+    e.CreatedFor,            
+    e.CreatedOn,            
+    e.ModifiedBy,            
+    e.ModifiedOn,            
+    e.IsArchived,   
+    e.LinkedEvent,
+    e.SystemEventTitle,
+    e.Status,
+    'https://www.myinvite.cc/Upload/card/' + ec.Icon AS IconUrl,
+    ec.Icon,
+	u.FirstName,
+	u.LastName,
+	du.FirstName AS DeletedBy_FirstName,
+	du.LastName AS DeletedBy_LastName,
+    ec.Category,
+    e.DeletedOn,
+    e.IsDeleted,
+    e.DeletedBy
+FROM Events (NOLOCK) e                
+INNER JOIN EventCategory (NOLOCK) ec                
+    ON e.Type = ec.EventId                
+INNER JOIN Users (NOLOCK) u                
+    ON e.CreatedBy = u.UserId
+LEFT JOIN Users (NOLOCK) du
+    ON e.DeletedBy = du.UserId;
+
+GO
+
+-----------------------------------------------------------------------------
+
+
+ ALTER view [dbo].[vw_ConfirmationReport]
+ as    
+ select Id,linkedEvent,eventTitle,ge.SystemEventTitle,ge.IsDeleted,
+ (select count(*) from Guest(nolock)  
+ where Eventid=ge.Id and
+ (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as YesResponse, 
+ (select sum(NoOfMembers) from Guest(nolock)    where Eventid=ge.Id and (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as TotalConfirmedGuests, 
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response = N'اعتذار' or Response = N'الاعتذار عن الدعوة' or Response = N'Decline'   or Response = 'اعتذار' or Response = 'الاعتذار عن الدعوة' or Response = 'Decline'    )) as NoResponse,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,    
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.Id  and ResponseCode='Declined' ) as Declined,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and TextDelivered = 1) as TextDelivered,   
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and MessageId is not null) as TextSent
+ from Events ge
+ where WhatsappConfirmation = 1  
+GO
+
+--------------------------------------------------------------------------
+ALTER PROCEDURE [dbo].[ProcScanSummary]      
+AS      
+BEGIN  
+    SELECT TOP 200  
+        e.id,
+        e.LinkedEvent,
+        e.EventTitle,
+        e.SystemEventTitle,
+        (SELECT ISNULL(SUM(g.NoOfMembers), 0) FROM Guest g WHERE g.EventId = e.id) AS TotalGuests,
+        COUNT(CASE WHEN sch.ResponseCode = 'Allowed' THEN 1 END) AS Allowed,
+        COUNT(CASE WHEN sch.ResponseCode = 'Declined' THEN 1 END) AS Declined
+    FROM events e     
+    LEFT JOIN Guest g ON e.Id = g.EventId   
+    LEFT JOIN ScanHistory sch ON sch.GuestId = g.GuestId   
+    WHERE e.EventFrom <= GETDATE() + 1  AND
+	 e.IsDeleted = 0
+    GROUP BY 
+        e.id, 
+        e.LinkedEvent, 
+        e.EventTitle,
+        e.SystemEventTitle 
+    ORDER BY e.id DESC  
+END
+---------------------------------------------------------------------------
+
+ALTER view [dbo].[VwScanLogs]    
+as     
+select sh.*,u.FirstName +' '+u.LastName as ScannedBy,g.FirstName as GuestName 
+,g.NoOfMembers as Nos,    e.LinkedEvent,e.SystemEventTitle,e.EventTitle,e.GmapCode as EventCode
+,e.CreatedFor ,e.Id as EventId
+from ScanHistory(nolock) sh    left join Users(nolock) u    
+on sh.ScanBy=u.UserId   left join guest(nolock) g        
+on g.GuestId=sh.GuestId left join Events (nolock) e       
+on e.Id=g.EventId 
+WHERE e.IsDeleted = 0 
+GO
+----------------------------------------------------------------------------
+CREATE TABLE EventOperator (
+    OperatorId INT NOT NULL,
+    EventId INT NOT NULL,
+	EventStart dateTIME NULL,
+	EventEnd datetime null,
+    PRIMARY KEY (OperatorId, EventId),
+    FOREIGN KEY (OperatorId) REFERENCES Users(UserId) ON DELETE CASCADE,
+    FOREIGN KEY (EventId) REFERENCES Events(Id) ON DELETE CASCADE
+);
+-----------------------------------------------------------------------
+INSERT INTO EventOperator (OperatorId, EventId,EventStart,EventEnd)
+SELECT CreatedBy, Id ,EventFrom,EventTo
+FROM Events
+WHERE CreatedBy IS NOT NULL;
+-----------------------------------------------------------------------
+-- Reverse lookup index (recommended)
+CREATE NONCLUSTERED INDEX IX_EventOperator_UserId
+ON EventOperator (operatorId);
+-----------------------------------------------------------------------
+ALTER PROCEDURE [dbo].[Proc_GetEventsStatsByGK]        
+    @GatekeeperId INT NULL,  
+    @pageNo INT = 1, 
+    @PageSize INT = 30, 
+    @NoOfPages INT = 0 OUTPUT 
+AS
+BEGIN
+    WITH cte AS (
+        SELECT  
+            E.id,
+            E.ContactName,
+            E.ContactPhone,
+            RIGHT(CONVERT(VARCHAR, AttendanceTime, 100), 7) AS AttendanceTime,
+            RIGHT(CONVERT(VARCHAR, LeaveTime, 100), 7) AS LeaveTime,
+            GMapCode,
+            Country.CountryName,
+            City.CityName,
+            E.eventTitle,
+            E.eventFrom,
+            E.eventTo,
+            E.eventVenue,
+            CONCAT('E',FORMAT(e.Id, '00000')) AS EventCode,
+            (SELECT COUNT(Allowed.GuestId))
+            scanned
+        FROM EventGatekeeperMapping EGKM
+        INNER JOIN Events E ON E.Id = EGKM.EventId
+        LEFT JOIN guest GH ON GH.EventId = E.Id
+        LEFT JOIN ScanHistory Allowed ON Allowed.GuestId = GH.GuestId  
+                                  AND Allowed.ResponseCode = 'Allowed'
+        LEFT JOIN City ON City.id = E.CityID
+        LEFT JOIN Country ON City.CountryId = Country.Id
+        WHERE EGKM.GatekeeperId = @GatekeeperId
+          AND GH.Archived IS NULL
+          AND E.IsDeleted = 0
+        GROUP BY 
+            E.ContactName, E.ContactPhone, E.LeaveTime, E.AttendanceTime, 
+            GMapCode, Eventlocation, Country.CountryName, City.CityName, 
+            E.id, E.EventTitle, E.EventFrom, E.EventTo, E.EventVenue, EventCode
+    )
+    SELECT    
+        CTE.id,
+        CTE.ContactName,
+        CTE.ContactPhone,
+        CTE.AttendanceTime,
+        CTE.LeaveTime,
+        'https://maps.app.goo.gl/' + GMapCode AS 'GmapCode',
+        CTE.eventTitle,
+        CTE.eventFrom,
+        CTE.eventTo,
+        CTE.eventVenue,
+        EventCode,
+        scanned,
+        CountryName + '|' + CityName AS Eventlocation,
+        (SELECT SUM(g.NoOfMembers)) 'totalAllocated'
+    FROM cte  
+    LEFT JOIN guest G ON G.EventId = cte.Id
+    GROUP BY  
+        cte.ContactName, cte.ContactPhone, cte.LeaveTime, cte.AttendanceTime, 
+        GMapCode, CountryName, CityName, 
+        cte.id, cte.EventTitle, cte.EventFrom, cte.EventTo, cte.EventVenue, EventCode, cte.scanned, GmapCode
+    ORDER BY EventFrom DESC  
+    OFFSET ((@pageNo - 1) * @PageSize) ROWS 
+    FETCH NEXT @PageSize ROWS ONLY;
+
+    IF (@pageNo = 1) --- For count all
+    BEGIN
+        SELECT  
+            @NoOfPages = CEILING(CAST(COUNT_BIG(DISTINCT E.Id) AS FLOAT) / @PageSize)
+        FROM EventGatekeeperMapping EGKM
+        INNER JOIN Events E ON E.Id = EGKM.EventId
+        WHERE EGKM.GatekeeperId = @GatekeeperId
+          AND E.IsDeleted = 0
+    END
+END
+-----------------------------------------------------------------------------
+create table BulkOperatorEvents
+( Id int primary Key identity,
+  OperatorAssignedFromId int not null ,
+  OperatorAssignedToId int not null ,
+  AssignedOn DATETIME not null ,
+  AssignedById int not null,
+  FOREIGN KEY (OperatorAssignedFromId) REFERENCES Users(UserId) ON DELETE no action,
+  FOREIGN KEY (OperatorAssignedToId) REFERENCES Users(UserId) ON DELETE no action,
+  FOREIGN KEY (AssignedById) REFERENCES Users(UserId) ON DELETE no action
+)
+-------------------------------------------------------------------------------
+Alter table EventOperator
+Add BulkOperatroEventsId int null 
+-------------------------------------------------------------------------------
+Insert Into Roles values (
+ 'Supervisor' )
+ ------------------------------------------------------------------------------
+Alter table Events
+Add ResponseNotInterestedOfMarketingMsg nvarchar(100) null,
+ResponseInterestedOfMarketingMsg nvarchar(100) null
+--------------------------------------------------------------------------------
+Alter table TwilioProfileSettings
+Add MarketingInterestMsg nvarchar(100),
+MarketingInterestMsgWithImage nvarchar(100),
+MarketingNotInterestMsg nvarchar(100),
+MarketingNotInterestMsgWithImage nvarchar(100)
+--------------------------------------------------------------------------------
+Alter table Events
+Add ResponseInterestedOfMarketingMsgHeaderImage nvarchar(100),
+ResponseNotInterestedOfMarketingMsgHeaderImage nvarchar(100)
+--------------------------------------------------------------------------------
+use [MyInvite]
+
+Alter table [dbo].[Guest]
+alter column [YesButtonId] nvarchar(700)
+
+ALTER TABLE [dbo].[Guest]
+ALTER COLUMN [NoButtonId] NVARCHAR(700);
+
+ALTER TABLE [dbo].[Guest]
+ALTER COLUMN [EventLocationButtonId] NVARCHAR(700);
+--------------------------------------------------------------------------------
+alter table TwilioProfileSettings
+add ConfirmArabicFemaleWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderTextAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderImageAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderVideoAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderTextAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderImageAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderVideoAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderTextAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderImageAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderVideoAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderTextAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderImageAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderVideoAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderTextAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderImageAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderVideoAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderImageAndHeaderTextAndWithoutGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderTextAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderImageAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderVideoAndWithGuestNameWithLink nvarchar(60) null,
+ConfirmEnglishWithHeaderImageAndHeaderTextAndWithGuestNameWithLink nvarchar(60) null
+-----------------------------------------------------------------------------------------------
+Alter table Events
+Add ConfirmationButtonsType nvarchar(100) null
+-----------------------------------------------------------------------------------------------
+update Events
+set ConfirmationButtonsType ='QuickReplies'
+-----------------------------------------------------------------------------------------------
+Alter table Events 
+Add SendingConfiramtionMessagesLinksLanguage nvarchar(100),
+LinkGuestsCardText nvarchar(600),
+LinkGuestsLocationEmbedSrc nvarchar(800)
+-----------------------------------------------------------------------------------------------
+Alter table Events
+Add CustomConfirmationTemplateWithVariables nvarchar(900) null
+-----------------------------------------------------------------------------------------------
+Alter table Events 
+Add CustomCardTemplateWithVariables nvarchar(900),
+CustomReminderTemplateWithVariables nvarchar(900),
+CustomCongratulationTemplateWithVariables nvarchar(900)
+-----------------------------------------------------------------------------------------------
+CREATE TABLE ConfirmationMessageResponsesKeyword (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    KeywordKey NVARCHAR(100) NOT NULL,          
+    LanguageCode NVARCHAR(20) NOT NULL,        
+    KeywordValue NVARCHAR(200) NOT NULL,        
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME NULL,
+    CreatedBy INT NOT NULL,
+    UpdatedBy INT NULL,
+
+    CONSTRAINT UQ_Key_Lang_Value UNIQUE (KeywordValue),
+
+    CONSTRAINT FK_ConfirmationMessageResponsesKeyword_CreatedBy 
+        FOREIGN KEY (CreatedBy) REFERENCES Users(UserId) ON DELETE NO ACTION,
+
+    CONSTRAINT FK_ConfirmationMessageResponsesKeyword_UpdatedBy 
+        FOREIGN KEY (UpdatedBy) REFERENCES Users(UserId) ON DELETE NO ACTION
+);
+----------------------------------------------------------------------------------------------
+Insert Into Roles values (
+ 'Accounting' )
+----------------------------------------------------------------------------------------------
+ALTER TABLE AppSettings
+ADD [TwilioBalanceEmailAlertThreshold] DECIMAL(10,2) NOT NULL DEFAULT 60;
+----------------------------------------------------------------------------------------------
+ALTER TABLE Users
+ADD [SendNotificationsOrEmails] BIT NOT NULL DEFAULT 0;
+----------------------------------------------------------------------------------------------
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[Proc_GetEventsStatsByGK]       
+@GatekeeperId int null, 
+@pageNo int =1,
+@PageSize int =30,
+@NoOfPages INT = 0 OUTPUT
+AS     
+BEGIN  
+ BEGIN--
+	SET NOCOUNT ON;
+	  WITH cte AS (   
+		  SELECT  E.id,E.ContactName,
+		  E.ContactPhone,
+		  RIGHT(CONVERT(VARCHAR, AttendanceTime, 100), 7) AS AttendanceTime ,
+		   RIGHT(CONVERT(VARCHAR, LeaveTime, 100), 7) AS LeaveTime ,
+
+		  GMapCode 
+		  ,Country.CountryName,
+		  City.CityName ,
+		  E.SystemEventTitle as EventTitle,
+		  E.eventFrom,
+		  E.eventTo,
+		  E.eventVenue,CONCAT('E',FORMAT(e.Id, '00000')) AS EventCode     
+		 ,(SELECT count( Allowed.GuestId) ) scanned	  			   
+	
+		FROM EventGatekeeperMapping EGKM
+			INNER JOIN Events E            on E.Id=EGKM.EventId  
+			LEFT JOIN   guest GH            on GH.EventId=E.Id 
+			Left JOIN  ScanHistory Allowed ON Allowed.GuestId=GH.GuestId  AND Allowed.ResponseCode='Allowed' 
+		    Left Join City on City.id=E.CityID
+		    Left Join Country on City.CountryId=Country.Id
+	 
+	  WHERE    EGKM.GatekeeperId=@GatekeeperId  AND GH.Archived is null	
+	            AND E.IsDeleted = 0
+	  GROUP BY E.ContactName,
+	  E.ContactPhone,
+	  E.LeaveTime,
+	  E.AttendanceTime,
+	  GMapCode 
+	  ,Eventlocation,
+	  Country.CountryName,
+	  City.CityName,
+	  E.id,
+	  E.SystemEventTitle,
+	  E.EventFrom,
+	  E.EventTo,
+	  E.EventVenue
+	 ,EventCode
+	)
+
+	SELECT    CTE.id,CTE.ContactName,CTE.ContactPhone,CTE.AttendanceTime,CTE.LeaveTime,
+		  'https://maps.app.goo.gl/'+GMapCode as 'GmapCode' ,CTE.EventTitle,CTE.eventFrom,CTE.eventTo,CTE.eventVenue
+		  , EventCode, scanned	 ,
+	CountryName+'|'+CityName as Eventlocation,
+	--5 as Eventlocation,
+	(SELECT sum (g.NoOfMembers) ) 'totalAllocated'
+	FROM cte 
+	 LEFT JOIN guest G  on G.EventId=cte.Id --and G.Archived is null
+	  GROUP BY  cte.ContactName,cte.ContactPhone,cte.LeaveTime,cte.AttendanceTime,
+	         GMapCode ,CountryName,CityName,
+	         cte.id,cte.EventTitle,cte.EventFrom,cte.EventTo,cte.EventVenue,EventCode,cte.scanned,GmapCode
+	  
+	 ORDER BY EventFrom DESC
+	  OFFSET ((@pageNo - 1) * @PageSize) ROWS FETCH NEXT @PageSize ROWS ONLY;
+ END
+
+ if(@pageNo=1)---For count all
+BEGIN 
+	 SELECT  @NoOfPages=CEILING(cast(COUNT_BIG(distinct E.Id)as float) /@PageSize)
+	FROM EventGatekeeperMapping EGKM
+		INNER JOIN Events E            on E.Id=EGKM.EventId  	 
+  WHERE   EGKM.GatekeeperId=@GatekeeperId    
+  AND E.IsDeleted = 0
+END
+
+END
+--------------------------------------------------------------------------------------------------

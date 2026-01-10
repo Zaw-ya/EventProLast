@@ -1,0 +1,1617 @@
+@using Microsoft.AspNetCore.Http;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>EventPro | Dashboard</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/lte/assets/plugins/fontawesome-free/css/all.min.css">
+    <link href="~/lte/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" />
+
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Tempusdominus Bbootstrap 4 -->
+    <link rel="stylesheet" href="~/lte/assets/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+    <!-- iCheck -->
+    <link rel="stylesheet" href="~/lte/assets/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <!-- JQVMap -->
+    <link rel="stylesheet" href="~/lte/assets/plugins/jqvmap/jqvmap.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="~/lte/assets//css/adminlte.min.css">
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="~/lte/assets/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
+    <!-- Daterange picker -->
+    <link rel="stylesheet" href="~/lte/assets/plugins/daterangepicker/daterangepicker.css">
+    <!-- summernote -->
+    <link href="~/lte/assets/plugins/select2/css/select2.css" rel="stylesheet" />
+    <link href="~/lte/assets/plugins/select2-bootstrap4-theme/select2-bootstrap4.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lte/assets/plugins/summernote/summernote-bs4.css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    <link href="~/lte/assets/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <link href="~/lte/assets/css/site.css" rel="stylesheet" />
+    <script src="@Url.Content("~")/lte/assets/plugins/jquery/jquery.min.js"></script>
+    <script src="~/lte/assets/lib/sweetalert2/sweetalert2.min.js"></script>
+    <script src="~/assets/plugins/moment/moment.js/moment.min.js"></script>
+    <link rel="stylesheet" href="~/assets/plugins/datatables/datatables.bundle.css" />
+    <script src="~/assets/plugins/datatables/datatables.bundle.js"></script>
+    <link rel="icon" type="image/png" href="~/assets/img/EventPro.jpg">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+    @{
+        var CurrentUrl = Convert.ToString(this.Url.Action());
+
+        ViewBag.DashboardActive = "";
+        ViewBag.EventActive = "";
+        ViewBag.CategoryActive = "";
+        ViewBag.EventsActive = "";
+        ViewBag.PushNotifActive = "";
+        ViewBag.RespReportActive = "";
+        ViewBag.ScanReportActive = "";
+        ViewBag.ScanLogReportActive = "";
+        ViewBag.AuditLogReportActive = "";
+        ViewBag.ReportDeletedEventsByGk = "";
+        ViewBag.UserActive = "";
+        ViewBag.LocalizationActive = "";
+        ViewBag.ArchiveEventsActive = "";
+        ViewBag.EventByOperator = "";
+        ViewBag.CreatBackup = "";
+        ViewBag.DownLoadBackup = "";
+        ViewBag.TotalGuest = "";
+        ViewBag.AppSettings = "";
+        ViewBag.EventByGatekeeper = "";
+        ViewBag.GatekeepersCheck = "";
+        ViewBag.DeletedEventsActive = "";
+        ViewBag.AssigningEventsOperator = "";
+
+        // menu-open
+        if (CurrentUrl.ToLower().Equals("/AssigningEventsOperator".ToLower()))
+        {
+            ViewBag.AssigningEventsOperator = "active";
+        }
+
+        if (CurrentUrl.ToLower().Equals("/admin/GatekeepersCheck".ToLower()))
+        {
+            ViewBag.GatekeepersCheck = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/EventByGatekeeper".ToLower()))
+        {
+            ViewBag.EventByGatekeeper = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/TotalGuests".ToLower()))
+        {
+            ViewBag.TotalGuest = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/AppSettings/Update".ToLower()))
+        {
+            ViewBag.AppSettings = "active";
+        }
+
+        if (CurrentUrl.ToLower().Equals("/admin"))
+            ViewBag.DashboardActive = "active";
+        if (CurrentUrl.ToLower().Equals("/admin/"))
+            ViewBag.EventActive = "active";
+        if (CurrentUrl.ToLower().Equals("/admin/eventcategory"))
+        {
+            ViewBag.CategoryActive = "active";
+            ViewBag.EventsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/events"))
+        {
+            ViewBag.EventsActive = "active";
+            ViewBag.EventsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/ArchiveEvents".ToLower()))
+        {
+            ViewBag.ArchiveEventsActive = "active";
+            ViewBag.EventsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/WaQRReport".ToLower()))
+        {
+            ViewBag.PushNotifActive = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/WaRespReport".ToLower()))
+        {
+            ViewBag.RespReportActive = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/ScanSummary".ToLower()))
+        {
+            ViewBag.ScanReportActive = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/ScanLogs".ToLower()))
+        {
+            ViewBag.ScanLogReportActive = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if(CurrentUrl.ToLower().Equals("/admin/AuditLogReport".ToLower()))
+        {
+            ViewBag.AuditLogReportActive = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+
+        if (CurrentUrl.ToLower().Equals("/admin/eventbyoperator"))
+        {
+            ViewBag.EventByOperator = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if(CurrentUrl.ToLower().Equals("/admin/EventsByGatekeeper"))
+        {
+            ViewBag.EventsByGatekeeper = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if(CurrentUrl.ToLower().Equals("/admin/TotalGuests"))
+        {
+            ViewBag.TotalGuest = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+
+        if(CurrentUrl.ToLower().Equals("/admin/GatekeepersCheck"))
+        {
+            ViewBag.GatekeepersCheck = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+         if(CurrentUrl.ToLower().Equals("/admin/ReportDeletedEventsByGk".ToLower()))
+        {
+            ViewBag.ReportDeletedEventsByGk = "active";
+            ViewBag.ReportsOpen = "menu-open";
+        }
+        if (CurrentUrl.ToLower().Equals("/admin/users".ToLower()))
+            ViewBag.UserActive = "active";
+        if (CurrentUrl.ToLower().Equals("/admin/Localization".ToLower()))
+            ViewBag.LocalizationActive = "active";
+        if (CurrentUrl.ToLower().Equals("/EventLocation".ToLower()))
+            ViewBag.LocationsActive = "active";
+        if (CurrentUrl.ToLower().Equals("/Country".ToLower()))
+            ViewBag.CountryActive = "active";
+        if(CurrentUrl.ToLower().Equals("/City".ToLower()))
+            ViewBag.CityActive = "active";
+        if (CurrentUrl.ToLower().Equals("/Logs".ToLower()))
+            ViewBag.Logs = "active";
+
+        if (CurrentUrl.ToLower().Equals("/MessagesLogs".ToLower()))
+            ViewBag.MessagesLogs = "active";
+
+        if (CurrentUrl.ToLower().Equals("/admin/showDeletedEvents".ToLower()))
+        {
+            ViewBag.DeletedEventsActive = "active";
+            ViewBag.DeletedOpen = "menu-open";
+        }
+        
+    }
+    <div id="mainxxx" class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light" style="z-index:1">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="~/admin/index" class="nav-link">Home</a>
+                </li>
+                @*<li class="nav-item d-none d-sm-inline-block">
+                        <a href="#" class="nav-link">Contact</a>
+                    </li>*@
+            </ul>
+
+            <!-- SEARCH FORM -->
+            @*<form class="form-inline ml-3">
+                    <div class="input-group input-group-sm">
+                        <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
+                        <div class="input-group-append">
+                            <button class="btn btn-navbar" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>*@
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto" >
+                <!-- Messages Dropdown Menu -->
+                <li class="nav-item dropdown" style="display:none">
+                    <a class="nav-link" data-toggle="dropdown" href="#">
+                        <i class="far fa-comments"></i>
+                        <span class="badge badge-danger navbar-badge">3</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <a href="#" class="dropdown-item">
+                            <!-- Message Start -->
+                            <div class="media">
+                                <img src="~/assets/img/profile-pic.png" alt="User Avatar" class="img-size-50 mr-3 img-circle">
+                                <div class="media-body">
+                                    <h3 class="dropdown-item-title">
+                                        Brad Diesel
+                                        <span class="float-right text-sm text-danger"><i class="fas fa-star"></i></span>
+                                    </h3>
+                                    <p class="text-sm">Call me whenever you can...</p>
+                                    <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
+                                </div>
+                            </div>
+                            <!-- Message End -->
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">
+                            <!-- Message Start -->
+                            <div class="media">
+                                <img src="~/lte/assets/img/profile-pic.png" alt="User Avatar" class="img-size-50 img-circle mr-3">
+                                <div class="media-body">
+                                    <h3 class="dropdown-item-title">
+                                        John Pierce
+                                        <span class="float-right text-sm text-muted"><i class="fas fa-star"></i></span>
+                                    </h3>
+                                    <p class="text-sm">I got your message bro</p>
+                                    <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
+                                </div>
+                            </div>
+                            <!-- Message End -->
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">
+                            <!-- Message Start -->
+                            <div class="media">
+                                <img src="~/lte/assets/img/profile-pic.png" alt="User Avatar" class="img-size-50 img-circle mr-3">
+                                <div class="media-body">
+                                    <h3 class="dropdown-item-title">
+                                        Nora Silvester
+                                        <span class="float-right text-sm text-warning"><i class="fas fa-star"></i></span>
+                                    </h3>
+                                    <p class="text-sm">The subject goes here</p>
+                                    <p class="text-sm text-muted"><i class="far fa-clock mr-1"></i> 4 Hours Ago</p>
+                                </div>
+                            </div>
+                            <!-- Message End -->
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>
+                    </div>
+                </li>
+                <!-- Notifications Dropdown Menu -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#">
+                        <i class="far fa-bell"></i>
+                        <span class="badge badge-warning navbar-badge">15</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <span class="dropdown-item dropdown-header">15 Notifications</span>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-envelope mr-2"></i> Event created in System
+                            <span class="float-right text-muted text-sm">3 mins</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-users mr-2"></i> Users created
+                            <span class="float-right text-muted text-sm">12 hours</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
+                        <i class="fas fa-th-large"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+        <!-- Main Sidebar Container -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-link">
+                <img src="~/assets/img/EventPro.jpg" alt="My Invite" class="brand-image img-circle elevation-3"
+                style="opacity: .8">
+                <span class="brand-text font-weight-light">My Invite</span>
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sidebar user panel (optional) -->
+                <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                    <div class="image">
+                        <img src="~/assets/img/profile-pic.png" class="img-circle elevation-2" alt="User Image">
+                    </div>
+                    <div class="info">
+                        <a href="#" class="d-block">@User.Identity.Name</a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+
+                        <li class="nav-item">
+                            <a href="~/admin" class="nav-link @ViewBag.DashboardActive">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>
+                                    Dashboard
+                                </p>
+                            </a>
+                        </li>
+                        <li class="nav-item has-treeview @ViewBag.EventsOpen">
+                            <a href="#" class="nav-link @ViewBag.EventActive">
+                                <i class="nav-icon fas fa-calendar"></i>
+                                <p>
+                                    Events
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                           
+                            <ul class="nav nav-treeview">
+
+                                
+                                  @if (User.IsInRole("Administrator"))
+                                {
+                                    <li class="nav-item">
+                                        <a href="~/admin/eventcategory" class="nav-link @ViewBag.CategoryActive">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Category
+                                            </p>
+                                        </a>
+                                    </li>
+                                }
+                                <li class="nav-item">
+                                    <a href="~/admin/events" class="nav-link @ViewBag.EventsActive">
+                                        <i class="nav-icon fas fa-test"></i>
+                                        <p>
+                                            Events
+                                        </p>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a href="~/admin/ArchiveEvents" class="nav-link @ViewBag.ArchiveEventsActive">
+                                        <i class="nav-icon fas fa-test"></i>
+                                        <p>
+                                            Archive Events
+                                        </p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview @ViewBag.ReportsOpen">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-calendar"></i>
+                                <p>
+                                    Reports
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                @if (User.IsInRole("Administrator") && !User.IsInRole("Operator"))
+                                {
+                                    <li class="nav-item">
+                                        <a href="~/admin/eventbyoperator" class="nav-link @ViewBag.EventByOperator">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Event By Operator
+                                            </p>
+                                        </a>
+                                    </li>
+                                }
+                                @if (User.IsInRole("Administrator") && !User.IsInRole("Operator") || User.IsInRole("Agent") )
+                                {
+                                    <li class="nav-item">
+                                        <a href="~/admin/EventByGatekeeper" class="nav-link @ViewBag.EventByGatekeeper">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Event By GK
+                                            </p>
+                                        </a>
+                                    </li>
+                                }
+                                <li class="nav-item">
+                                    <a href="~/admin/TotalGuests" class="nav-link @ViewBag.TotalGuest">
+                                        <i class="nav-icon fas fa-test"></i>
+                                        <p>
+                                            Total Guests
+                                        </p>
+                                    </a>
+                                </li>
+                                @if (User.IsInRole("Administrator") && !User.IsInRole("Operator") || User.IsInRole("Agent") )
+                                {
+                                    <li class="nav-item">
+                                        <a href="~/admin/GatekeepersCheck" class="nav-link @ViewBag.GatekeepersCheck">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                GK CheckIn/Out
+                                            </p>
+                                        </a>
+                                    </li>
+                                }
+                                 @if (!User.IsInRole("Agent"))
+                                {
+                                    <li class="nav-item">
+                                        <a href="~/admin/WaRespReport" class="nav-link @ViewBag.RespReportActive">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Whatsapp Confirmation
+                                            </p>
+                                        </a>
+                                    </li>
+                                }
+                                <li class="nav-item">
+                                    <a href="~/admin/ScanSummary" class="nav-link @ViewBag.ScanReportActive">
+                                        <i class="nav-icon fas fa-test"></i>
+                                        <p>
+                                            Scan Summary
+                                        </p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="~/admin/ScanLogs" class="nav-link @ViewBag.ScanLogReportActive">
+                                        <i class="nav-icon fas fa-test"></i>
+                                        <p>
+                                            Scan Logs
+                                        </p>
+                                    </a>
+                                </li>
+
+                                @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor"))
+                                {
+                                    <li class="nav-item">
+                                        <a href="~/admin/AuditLogReport" class="nav-link @ViewBag.AuditLogReportActive">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Audit Logs
+                                            </p>
+                                        </a>
+                                    </li>
+
+                                }
+
+                                @if (User.IsInRole("Administrator") || User.IsInRole("Agent")  )
+                                {
+
+                                    <li class="nav-item">
+                                        <a href="~/admin/ReportDeletedEventsByGk" class="nav-link @ViewBag.ReportDeletedEventsByGk">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Unassigned Events By Gk
+                                            </p>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                        @if (User.IsInRole("Administrator") || User.IsInRole("Operator") || User.IsInRole("Agent") || User.IsInRole("Supervisor"))
+                        {
+
+                            <li class="nav-item">
+                                <a href="~/admin/users" class="nav-link @ViewBag.UserActive">
+                                    <i class="nav-icon fas fa-user"></i>
+                                    <p>
+                                        Users
+                                    </p>
+                                </a>
+                            </li>
+  
+                        }
+
+                         @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor"))
+                        {
+                            <li class="nav-item">
+                                <a href="~/AssigningEventsOperator/Index" class="nav-link @ViewBag.AssigningEventsOperator">
+
+                                    <i class="nav-icon fa fa-tasks"></i>
+
+                                    Shared Operator Events
+
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="~/MessagesLogs/Index" class="nav-link @ViewBag.MessagesLogs">
+                                    <i class="nav-icon fa fa-scroll"></i>
+                                    <p>
+                                        Messages Logs
+                                    </p>
+                                </a>
+                            </li>
+
+                        }
+
+                        @if (User.IsInRole("Administrator") )
+                        {
+
+                            <li class="nav-item">
+                                <a href="~/Country/Index" class="nav-link @ViewBag.CountryActive">
+                                    <i class="nav-icon fas fa-globe-asia"></i>
+                                    <p>
+                                        Countries
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="~/City/Index" class="nav-link @ViewBag.CityActive">
+                                    <i class="nav-icon fas fa-globe-asia"></i>
+                                    <p>
+                                        Cities
+                                    </p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="~/Logs/Index" class="nav-link @ViewBag.Logs">
+                                    <i class="nav-icon fa fa-history"></i>
+                                    <p>
+                                        System Logs
+                                    </p>
+                                </a>
+                            </li>
+
+                            <li hidden class="nav-item has-treeview">
+                                <a id="backup"  class="nav-link">
+                                    <i class="nav-icon fas fa-calendar"></i>
+                                    <p>
+                                        Backup
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="~/Backup/Create"  onclick="myFunction()" class="nav-link  @ViewBag.CreatBackup">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Create
+                                            </p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="~/Backup/DownloadDataBase" class="nav-link @ViewBag.DownLoadBackup">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Download DataBase
+                                            </p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="~/Backup/DownloadEventsData" class="nav-link @ViewBag.DownLoadBackup">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Download Events Data
+                                            </p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="~/AppSettings/Update" class="nav-link @ViewBag.AppSettings ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                                        <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                                    </svg>
+                                    <p class="ml-2"> 
+                                        Settings
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="~/Admin/Notifications/recurring" class="nav-link @ViewBag.Settings">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stopwatch-fill" viewBox="0 0 16 16">
+                                        <path d="M6.5 0a.5.5 0 0 0 0 1H7v1.07A7.001 7.001 0 0 0 8 16a7 7 0 0 0 5.29-11.584l.013-.012.354-.354.353.354a.5.5 0 1 0 .707-.707l-1.414-1.415a.5.5 0 1 0-.707.707l.354.354-.354.354-.012.012A6.97 6.97 0 0 0 9 2.071V1h.5a.5.5 0 0 0 0-1zm2 5.6V9a.5.5 0 0 1-.5.5H4.5a.5.5 0 0 1 0-1h3V5.6a.5.5 0 1 1 1 0" />
+                                    </svg>
+                                    <p class="ml-2">
+                                        Monitor Notifications
+                                    </p>
+                                </a>
+                            </li>
+                        }
+@*                         @if(!User.IsInRole("Agent"))
+                        {
+                            <li class="nav-item">
+                                <a href="~/admin/Localization" class="nav-link @ViewBag.LocalizationActive">
+                                    <i class="nav-icon fas fa-globe-asia"></i>
+                                    <p>
+                                        Locallization
+                                    </p>
+                                </a>
+                            </li>
+                        } *@
+
+                        @if (User.IsInRole("Administrator"))
+                        {
+                            <li class="nav-item has-treeview @ViewBag.DeletedOpen">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon fas fa-trash"></i>
+                                    <p>
+                                        Trash
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="~/admin/showDeletedEvents" class="nav-link @ViewBag.DeletedEventsActive">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Deleted Events
+                                            </p>
+                                        </a>
+                                    </li>      
+                                    <li class="nav-item" hidden>
+                                        <a href="#" class="nav-link ">
+                                            <i class="nav-icon fas fa-test"></i>
+                                            <p>
+                                                Deleted Guests
+                                            </p>
+                                        </a>
+                                    </li>     
+                                </ul>
+
+                            </li>
+                        }
+
+                        // <li class="nav-item">
+                        //     <a href="~/admin/Localization" class="nav-link @ViewBag.LocalizationActive">
+                        //         <i class="nav-icon fas fa-globe-asia"></i>
+                        //         <p>
+                        //             Locallization
+                        //         </p>
+                        //     </a>
+                        // </li>
+                        @*@if (AppSession.GetSession(this.Context, SesionConstant.Operator) != "Operator")
+                            {
+                                <li class="nav-item">
+                                    <a href="~/admin/WhatsappScan" class="nav-link">
+                                        <i class="nav-icon fas fa-comment-alt"></i>
+                                        <p>
+                                            Whatsapp
+                                        </p>
+                                    </a>
+                                </li>
+                            }*@
+                        <li class="nav-item">
+                            <a href="~/account/Logout" class="nav-link">
+                                <i class="nav-icon fas  fa-power-off"></i>
+                                <p>
+                                    Logout
+                                </p>
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0 text-dark" style="color:dodgerblue"><i class="@ViewBag.Icon"></i> &nbsp;&nbsp; @ViewBag.PageTitle</h1>
+                        </div><!-- /.col -->
+                        <div class="col-sm-6">
+                            <ol class="breadcrumb float-sm-right">
+                                <li class="breadcrumb-item"><a href="~/admin">Home</a></li>
+                                <li class="breadcrumb-item active">@ViewBag.PageTitle</li>
+                            </ol>
+                        </div><!-- /.col -->
+                    </div><!-- /.row -->
+                </div><!-- /.container-fluid -->
+            </div>
+            @RenderBody()
+            @await RenderSectionAsync("scriptPinacle", false)
+            @await RenderSectionAsync("Scripts", false)
+            @await RenderSectionAsync("Styles", false)
+        </div>
+
+
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar-dark">
+            <!-- Control sidebar content goes here -->
+        </aside>
+
+        <!-- /.control-sidebar -->
+    </div>
+
+    <!-- Bootstrap -->
+    <script src="@Url.Content("~")/lte/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="@Url.Content("~")/lte/assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.js"></script>
+    <!-- jquery-validation -->
+    <script src="@Url.Content("~")/lte/assets/plugins/jquery-validation/jquery.validate.min.js"></script>
+    <script src="@Url.Content("~")/lte/assets/plugins/jquery-validation/additional-methods.min.js"></script>
+    <script src="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.min.js"></script>
+    <!-- AdminLTE -->
+    <script src="@Url.Content("~")/lte/assets/js/adminlte.js"></script>
+
+    <!-- OPTIONAL SCRIPTS -->
+    <script src="@Url.Content("~")/lte/assets/js/demo.js"></script>
+    <script src="@Url.Content("~")/lte/assets/plugins/select2/js/select2.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.2.1/b-colvis-2.2.1/b-html5-2.2.1/b-print-2.2.1/cr-1.5.5/date-1.1.1/fc-4.0.1/fh-3.2.1/kt-2.6.4/r-2.2.9/rg-1.1.4/rr-1.2.8/sc-2.0.5/sb-1.3.0/sp-1.4.0/sl-1.3.4/sr-1.1.0/datatables.min.css" />
+
+
+    <script src="~/lib/pdfmake/pdfmake.min.js"></script>
+    <script src="~/lib/pdfmake/pdfmake.js"></script>
+    <script src="~/lib/pdfmake/pdfmake.min.js"></script>
+
+    <script src="~/lib/pdfmake/vfs_fonts.js"></script>
+    <script src="~/lib/pdfmake/vfs_fonts.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.11.3/af-2.3.7/b-2.2.1/b-colvis-2.2.1/b-html5-2.2.1/b-print-2.2.1/cr-1.5.5/date-1.1.1/fc-4.0.1/fh-3.2.1/kt-2.6.4/r-2.2.9/rg-1.1.4/rr-1.2.8/sc-2.0.5/sb-1.3.0/sp-1.4.0/sl-1.3.4/sr-1.1.0/datatables.min.js"></script>
+    <script src="~/lte/assets/js/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+      <script>
+        function myFunction() {
+            alert("Do you want to create backup");
+            let timerInterval
+            Swal.fire({
+                title: 'BACKUP',
+                html: 'creating Backup ....',
+                timer: 100000,
+                timerProgressBar: false,
+                didOpen: () => {
+                    Swal.showLoading()
+                    const b = Swal.getHtmlContainer().querySelector('b')
+                    timerInterval = setInterval(() => {
+                        b.textContent = Swal.getTimerLeft()
+                    }, 100)
+                },
+                willClose: () => {
+                    clearInterval(timerInterval)
+                }
+            }).then((result) => {
+                /* Read more about handling dismissals below */
+                if (result.dismiss === Swal.DismissReason.timer) {
+                    console.log('I was closed by the timer')
+                }
+            })
+        }
+    </script>
+
+
+    <script>
+        $(document).ready(function () {
+
+            //$('#EventFrom').on('change', function (e) {
+            //     $('#EventTo').val('')
+            //    $('#EventTo').datetimepicker({
+            //        minDate: $('#EventFrom').val()
+            //    });
+            //});
+            //$('#reservation').daterangepicker()
+            //Initialize Select2 Elements
+            $('.select2').select2()
+            $('.textarea').summernote()
+            //Initialize Select2 Elements
+            $('.select2bs4').select2({
+                theme: 'bootstrap4'
+            })
+            $('#searchableTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'print'
+                ],
+                "order": [[0, "desc"]],
+                "paging": true,
+                "keys": false,
+                "fixedHeader": false,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+            });
+            $('#searchableTable_double').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'print'
+                ],
+                "order": [[0, "desc"]],
+                "paging": true,
+                "keys": false,
+                "fixedHeader": false,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+            });
+            $('#searchableTable2').DataTable({
+                "order": [[0, "desc"]],
+                "paging": true,
+                "keys": false,
+                "fixedHeader": false,
+                "buttons": [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+            });
+
+            $('.color-picker').colorpicker();
+            $('.color-picker').on('change', function (e) {
+                GenerateQR()
+            });
+            $('#BarcodeWidth').on('change', function (e) {
+                GenerateQR()
+            });
+            $('#BarcodeHeight').on('change', function (e) {
+                GenerateQR()
+            });
+
+            $('#DefaultFont').on('change', function (e) {
+                SetFontPreview();
+            });
+
+            $('#mydiv').on('dblclick', function (e) {
+                $('#lblTitlebarcode').text('Barcode')
+                $('#barcodeSize').val($('#BarcodeWidth').val())
+                var modalDiv = $('#barcode-RightPropertyPanel');
+                modalDiv.modal({ backdrop: false, show: true });
+            });
+            $('#text1').on('dblclick', function (e) {
+                $('#lblTitle').text('Guest Name')
+                ShowRightPropertyPanel();
+            });
+            $('#contactNo').on('dblclick', function (e) {
+                $('#lblTitle').text('Contact No')
+                ShowRightPropertyPanel();
+            });
+            $('#cardAddText').on('dblclick', function (e) {
+                $('#lblTitle').text('Additional Text')
+                ShowRightPropertyPanel();
+            });
+            $('#cardNoScan').on('dblclick', function (e) {
+                $('#lblTitle').text('No. of Scan')
+                ShowRightPropertyPanel();
+            });
+
+            $('#fontColor').on('change', function (e) {
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $("#text1").css({ "color": $('#fontColor').val() });
+                        $('#FontColor').val($('#fontColor').val());
+                        break;
+                    case "Contact No":
+                        $("#contactNo").css({ "color": $('#fontColor').val() });
+                        $('#ContactNoFontColor').val($('#fontColor').val());
+                        break;
+                    case "Additional Text":
+                        $("#cardAddText").css({ "color": $('#fontColor').val() });
+                        $('#AltTextFontColor').val($('#fontColor').val());
+                        break;
+                    case "No. of Scan":
+                        $("#cardNoScan").css({ "color": $('#fontColor').val() });
+                        $('#NosfontColor').val($('#fontColor').val());
+                        break;
+                }
+            });
+
+            $("#text1").on('dragstart', function (e) {
+                $("#text1").css({ 'outline': 'dotted' })
+            });
+            $("#text1").on('dragleave', function (e) {
+                $("#text1").css({ 'outline': 'none' })
+            });
+
+            $('#font-normal').on('click', function (e) {
+                $('#font-normal').css({ 'background': 'wheat' })
+                $('#font-italic').css({ 'background': 'lightgray' })
+                $('#font-bold').css({ 'background': 'lightgray' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#text1').css({ 'font-weight': 'normal', 'font-style': 'normal' })
+                        $('#FontStyleName').val('normal');
+
+                        break;
+                    case "Contact No":
+                        $('#contactNo').css({ 'font-weight': 'normal', 'font-style': 'normal' })
+                        $('#FontStyleMobNo').val('normal');
+                        break;
+                    case "Additional Text":
+                        $('#cardAddText').css({ 'font-weight': 'normal', 'font-style': 'normal' })
+                        $('#FontStyleAddText').val('normal');
+                        break;
+                    case "No. of Scan":
+                        $('#cardNoScan').css({ 'font-weight': 'normal', 'font-style': 'normal' })
+                        $('#FontStyleNos').val('normal');
+                        break;
+                }
+            });
+
+            $('#font-bold').on('click', function (e) {
+                debugger;
+                $('#font-normal').css({ 'background': 'lightgray' })
+                $('#font-italic').css({ 'background': 'lightgray' })
+                $('#font-bold').css({ 'background': 'wheat' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#text1').css({ 'font-weight': 'bold' })
+                        $('#FontStyleName').val('bold');
+                        break;
+                    case "Contact No":
+                        $('#contactNo').css({ 'font-weight': 'bold' })
+                        $('#FontStyleMobNo').val('bold');
+                        break;
+                    case "Additional Text":
+                        $('#cardAddText').css({ 'font-weight': 'bold' })
+                        $('#FontStyleAddText').val('bold');
+                        break;
+                    case "No. of Scan":
+                        $('#cardNoScan').css({ 'font-weight': 'bold' })
+                        $('#FontStyleNos').val('bold');
+                        break;
+                }
+            });
+
+            $('#font-italic').on('click', function (e) {
+                debugger;
+                $('#font-normal').css({ 'background': 'lightgray' })
+                $('#font-italic').css({ 'background': 'wheat' })
+                $('#font-bold').css({ 'background': 'lightgray' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#text1').css({ 'font-style': 'italic', 'font-weight': 'normal' })
+                        $('#FontStyleName').val('italic');
+                        break;
+                    case "Contact No":
+                        $('#contactNo').css({ 'font-style': 'italic', 'font-weight': 'normal' })
+                        $('#FontStyleMobNo').val('italic');
+                        break;
+                    case "Additional Text":
+                        $('#cardAddText').css({ 'font-style': 'italic', 'font-weight': 'normal' })
+                        $('#FontStyleAddText').val('italic');
+                        break;
+                    case "No. of Scan":
+                        $('#cardNoScan').css({ 'font-style': 'italic', 'font-weight': 'normal' })
+                        $('#FontStyleNos').val('italic');
+                        break;
+                }
+            });
+
+
+            $('#font-left').on('click', function (e) {
+                $('#font-left').css({ 'background': 'wheat' })
+                $('#font-center').css({ 'background': 'lightgray' })
+                $('#font-right').css({ 'background': 'lightgray' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#FontAlignment').val('left');
+                        $('#text1').css({ 'text-align': 'left' })
+                        break;
+                    case "Contact No":
+                        $('#ContactNoAlignment').val('left');
+                        $('#contactNo').css({ 'text-align': 'left' })
+                        break;
+                    case "Additional Text":
+                        $('#AddTextFontAlignment').val('left');
+                        $('#cardAddText').css({ 'text-align': 'left' })
+                        break;
+                    case "No. of Scan":
+                        $('#NosAlignment').val('left');
+                        $('#cardNoScan').css({ 'text-align': 'left' })
+                        break;
+                }
+            });
+
+            $('#font-center').on('click', function (e) {
+                $('#font-left').css({ 'background': 'lightgray' })
+                $('#font-center').css({ 'background': 'wheat' })
+                $('#font-right').css({ 'background': 'lightgray' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#FontAlignment').val('center');
+                        $('#text1').css({ 'text-align': 'center' })
+                        break;
+                    case "Contact No":
+                        $('#ContactNoAlignment').val('center');
+                        $('#contactNo').css({ 'text-align': 'center' })
+                        break;
+                    case "Additional Text":
+                        $('#AddTextFontAlignment').val('center');
+                        $('#cardAddText').css({ 'text-align': 'center' })
+                        break;
+                    case "No. of Scan":
+                        $('#NosAlignment').val('center');
+                        $('#cardNoScan').css({ 'text-align': 'center' })
+                        break;
+                }
+            });
+
+            $('#font-right').on('click', function (e) {
+                $('#font-left').css({ 'background': 'lightgray' })
+                $('#font-center').css({ 'background': 'lightgray' })
+                $('#font-right').css({ 'background': 'wheat' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#FontAlignment').val('right');
+                        $('#text1').css({ 'text-align': 'right' })
+                        break;
+                    case "Contact No":
+                        $('#ContactNoAlignment').val('right');
+                        $('#contactNo').css({ 'text-align': 'right' })
+                        break;
+                    case "Additional Text":
+                        $('#AddTextFontAlignment').val('right');
+                        $('#cardAddText').css({ 'text-align': 'right' })
+                        break;
+                    case "No. of Scan":
+                        $('#NosAlignment').val('right');
+                        $('#cardNoScan').css({ 'text-align': 'right' })
+                        break;
+                }
+            });
+
+            $('#barcodeSize').on('change', function (e) {
+                $('#BarcodeWidth').val($('#barcodeSize').val());
+                $('#BarcodeHeight').val($('#barcodeSize').val());
+                $("#mydivheader").css({ "width": $('#barcodeSize').val() + 'px' });
+                $("#mydivheader").css({ "height": $('#barcodeSize').val() + 'px' });
+            });
+
+            $('#fontSize').on('change', function (e) {
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $("#text1").css({ "font-size": $('#fontSize').val() + 'px' });
+                        $('#FontSize').val($('#fontSize').val());
+                        break;
+                    case "Contact No":
+                        $("#contactNo").css({ "font-size": $('#fontSize').val() + 'px' });
+                        $('#ContactNoFontSize').val($('#fontSize').val());
+                        break;
+                    case "Additional Text":
+                        $("#cardAddText").css({ "font-size": $('#fontSize').val() + 'px' });
+                        $('#AltTextFontSize').val($('#fontSize').val());
+                        break;
+                    case "No. of Scan":
+                        $("#cardNoScan").css({ "font-size": $('#fontSize').val() + 'px' });
+                        $('#NosfontSize').val($('#fontSize').val());
+                        break;
+                }
+            });
+
+            $('#SelectedFont').on('change', function (e) {
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#text1').css({ "font-family": $('#SelectedFont').val() });
+                        $('#FontName').val($('#SelectedFont').val());
+                        break;
+                    case "Contact No":
+                        $("#contactNo").css({ "font-family": $('#SelectedFont').val() });
+                        $('#ContactNoFontName').val($('#SelectedFont').val());
+                        break;
+                    case "Additional Text":
+                        $("#cardAddText").css({ "font-family": $('#SelectedFont').val() });
+                        $('#AltTextFontName').val($('#SelectedFont').val());
+                        break;
+                    case "No. of Scan":
+                        $("#cardNoScan").css({ "font-family": $('#SelectedFont').val() });
+                        $('#NosfontName').val($('#SelectedFont').val());
+                        break;
+                }
+            });
+
+            function ShowRightPropertyPanel() {
+                $('#font-normal').css({ 'background': 'lightgray' })
+                $('#font-italic').css({ 'background': 'lightgray' })
+                $('#font-bold').css({ 'background': 'lightgray' })
+                switch ($('#lblTitle').text()) {
+                    case "Barcode":
+                        break;
+                    case "Guest Name":
+                        $('#SelectedFont').val($('#FontName').val()).trigger('change');
+                        $('#fontSize').val($('#FontSize').val());
+                        $('#fontColor').val($('#FontColor').val());
+                        switch ($('#FontStyleName').val()) {
+                            case "bold":
+                                $('#font-bold').css({ 'background': 'wheat' })
+                                break;
+                            case "normal":
+                                $('#font-normal').css({ 'background': 'wheat' })
+                                break;
+                            case "italic":
+                                $('#font-italic').css({ 'background': 'wheat' })
+                                break;
+                        }
+
+                        break;
+                    case "Contact No":
+                        $('#SelectedFont').val($('#ContactNoFontName').val()).trigger('change');
+                        $('#fontSize').val($('#ContactNoFontSize').val());
+                        $('#fontColor').val($('#ContactNoFontColor').val());
+                        switch ($('#FontStyleMobNo').val()) {
+                            case "bold":
+                                $('#font-bold').css({ 'background': 'wheat' })
+                                break;
+                            case "normal":
+                                $('#font-normal').css({ 'background': 'wheat' })
+                                break;
+                            case "italic":
+                                $('#font-italic').css({ 'background': 'wheat' })
+                                break;
+                        }
+                        break;
+                    case "Additional Text":
+                        $('#SelectedFont').val($('#AltTextFontName').val()).trigger('change');
+                        $('#fontSize').val($('#AltTextFontSize').val());
+                        $('#fontColor').val($('#AltTextFontColor').val());
+                        switch ($('#FontStyleAddText').val()) {
+                            case "bold":
+                                $('#font-bold').css({ 'background': 'wheat' })
+                                break;
+                            case "normal":
+                                $('#font-normal').css({ 'background': 'wheat' })
+                                break;
+                            case "italic":
+                                $('#font-italic').css({ 'background': 'wheat' })
+                                break;
+                        }
+                        break;
+                    case "No. of Scan":
+                        $('#SelectedFont').val($('#NosfontName').val()).trigger('change');
+                        $('#fontSize').val($('#NosfontSize').val());
+                        $('#fontColor').val($('#NosfontColor').val());
+                        switch ($('#FontStyleNos').val()) {
+                            case "bold":
+                                $('#font-bold').css({ 'background': 'wheat' })
+                                break;
+                            case "normal":
+                                $('#font-normal').css({ 'background': 'wheat' })
+                                break;
+                            case "italic":
+                                $('#font-italic').css({ 'background': 'wheat' })
+                                break;
+                        }
+                        break;
+                }
+
+                var modalDiv = $('#myModal-RightPropertyPanel');
+                modalDiv.modal({ backdrop: false, show: true });
+                //$('.modal-dialog').draggable({
+                //    handle: ".modal-header"
+                //});
+            }
+
+            $('#cardPlaceHolder').on('change', function (e) {
+                var selectedPlaceHolder = $('#cardPlaceHolder').val();
+                $("#mydiv").css({ "display": "none" });
+                $("#text1").css({ "display": "none" });
+                $("#contactNo").css({ "display": "none" });
+                $("#cardAddText").css({ "display": "none" });
+                $("#cardNoScan").css({ "display": "none" });
+
+                $('#SelectedPlaceHolder').val($('#cardPlaceHolder').val());
+                $.each(selectedPlaceHolder, function (idx, val) {
+                    switch (val) {
+                        case "QR Code":
+                            $("#mydiv").css({ "display": "inline" });
+                            if ($('#BarcodeXaxis').val() < 0) {
+                                $('#BarcodeYaxis').val(100);
+                                $('#BarcodeXaxis').val(100);
+                            }
+
+                            break;
+                        case "Guest Name":
+                            $("#text1").css({ "display": "inline" });
+                            if ($('#ContactNameYaxis').val() < 0) {
+                                $('#ContactNameYaxis').val(100);
+                                $('#ContactNameXaxis').val(100);
+                            }
+                            break;
+                        case "Mobile No":
+                            $("#contactNo").css({ "display": "inline" });
+                            if ($('#ContactNoYaxis').val() < 0) {
+                                $('#ContactNoYaxis').val(100);
+                                $('#ContactNoXaxis').val(100);
+                            }
+                            break;
+                        case "Additional Text":
+                            $("#cardAddText").css({ "display": "inline" });
+                            if ($('#AltTextYaxis').val() < 0) {
+                                $('#AltTextYaxis').val(100);
+                                $('#AltTextXaxis').val(100);
+                            }
+                            break;
+                        case "No. of Scan":
+                            $("#cardNoScan").css({ "display": "inline" });
+                            if ($('#Nosyaxis').val() < 0) {
+                                $('#Nosyaxis').val(100);
+                                $('#Nosxaxis').val(100);
+                            }
+                            break;
+                    }
+                });
+                setCardPosition();
+            });
+        });
+        function SetFontPreview() {
+            $('#fontPreview').css({ "font-family": $('#DefaultFont').val() });
+        }
+        SetFontPreview();
+        function GenerateQR() {
+            if (document.getElementById('barcodeRange') != undefined) {
+                var width = document.getElementById('barcodeRange').value;
+                var height = document.getElementById('barcodeRange').value;
+                var background = document.getElementById('BackgroundColor').value;
+                var foreground = document.getElementById('ForegroundColor').value;
+                if (foreground == "Transparent")
+                    foreground = "#FFFFFF";
+
+                if (document.getElementById('ForegroundColor').value == "#FFFFFF") {
+
+                }
+                document.getElementById("qrcode").innerHTML = "";
+                var qrcode = new QRCode(document.getElementById("qrcode"), {
+                    width: width,
+                    height: height,
+                    colorDark: background,
+                    colorLight: foreground,
+                });
+                qrcode.makeCode('EventPro')
+            }
+        }
+        GenerateQR();
+
+        function SetEventId(eventId) {
+            $('#GuestId').val(0);
+            $('#FirstName').val('');
+            $('#NoOfMembers').val('');
+            $('#PrimaryContactNo').val('');
+            $('#AdditionalText').val('');
+            $('#modalTitle').text('Add Guest');
+            $('#EventId').val(eventId);
+            $('#modal-guest').modal('show');
+        }
+        //Make the DIV element draggagle:
+
+        dragElement(document.getElementById("mydiv"));
+        dragElement(document.getElementById("text1"));
+        dragElement(document.getElementById("contactNo"));
+        dragElement(document.getElementById("cardAddText"));
+        dragElement(document.getElementById("cardNoScan"));
+
+        //$('#multiple-checkboxes').multiselect();
+
+        function dragElement(elmnt) {
+            if (elmnt !== undefined) {
+                var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                elmnt.onmousedown = dragMouseDown;
+
+                function dragMouseDown(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.onmouseup = closeDragElement;
+                    document.onmousemove = elementDrag;
+                }
+
+                function elementDrag(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                }
+
+                function closeDragElement() {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+        }
+
+        function SetCardBackground(imageURL) {
+            $("#mainBody").css({ "background-image": "url(" + imageURL + ")" });
+        }
+
+        function browserBack() {
+            window.history.go(-1);
+        }
+
+        function LoadPlaceholder() {
+            $('#cardPlaceHolder').val($("#SelectedPlaceHolder").val().split(",")).change();
+
+        }
+
+        function ToggleLang() {
+            //English
+            if (document.getElementById('switchLang').checked) {
+                $("#text1").html('Guest Name');
+                $("#contactNo").html('Contact No');
+                $("#cardAddText").html('Additional Text');
+                $("#cardNoScan").html('No');
+            } else {
+                //arbic
+                $("#text1").html('??? ?????');
+                $("#contactNo").html('??? ????????');
+                $("#cardAddText").html('?? ?????');
+                $("#cardNoScan").html('???');
+
+            }
+        }
+
+        function saveCardPosition() {
+            $('#BarcodeYaxis').val($('#mydivheader').offset().top - $('#mainBody').offset().top);
+            $('#BarcodeXaxis').val($('#mydivheader').offset().left - $('#mainBody').offset().left + 7);
+
+            $('#ContactNameXaxis').val($('#text1').offset().left - $('#mainBody').offset().left + 7);
+            $('#ContactNameYaxis').val($('#text1').offset().top - $('#mainBody').offset().top);
+
+            $('#ContactNoXaxis').val($('#contactNo').offset().left - $('#mainBody').offset().left + 7);
+            $('#ContactNoYaxis').val($('#contactNo').offset().top - $('#mainBody').offset().top);
+
+
+            $('#AltTextXaxis').val($('#cardAddText').offset().left - $('#mainBody').offset().left + 7);
+            $('#AltTextYaxis').val($('#cardAddText').offset().top - $('#mainBody').offset().top);
+
+            $('#Nosxaxis').val($('#cardNoScan').offset().left - $('#mainBody').offset().left + 7);
+            $('#Nosyaxis').val($('#cardNoScan').offset().top - $('#mainBody').offset().top);
+
+            $('#NameRightAxis').val(Math.floor($('#ContactNameXaxis').val()) + document.getElementById('text1').clientWidth);
+            $('#ContactRightAxis').val(Math.floor($('#ContactNoXaxis').val()) + document.getElementById('contactNo').clientWidth);
+            $('#NosRightAxis').val(Math.floor($('#Nosxaxis').val()) + document.getElementById('cardNoScan').clientWidth);
+            $('#AddTextRightAxis').val(Math.floor($('#AltTextXaxis').val()) + document.getElementById('cardAddText').clientWidth);
+        }
+
+        function BarcodeSizeChange() {
+            $('#BarcodeWidth').val($('#barcodeRange').val());
+            $('#BarcodeHeight').val($('#barcodeRange').val());
+            GenerateQR();
+        }
+
+        function setCardPosition() {
+            if ($("#text1") != undefined) {
+
+                $("#text1").css("top", $('#ContactNameYaxis').val() + 'px');
+                $("#text1").css("left", $('#ContactNameXaxis').val() + 'px');
+
+                $("#mydiv").css("top", $('#BarcodeYaxis').val() + 'px');
+                $("#mydiv").css("left", $('#BarcodeXaxis').val() + 'px');
+
+                $("#contactNo").css("top", $('#ContactNoYaxis').val() + 'px');
+                $("#contactNo").css("left", $('#ContactNoXaxis').val() + 'px');
+
+                $("#cardAddText").css("top", $('#AltTextYaxis').val() + 'px');
+                $("#cardAddText").css("left", $('#AltTextXaxis').val() + 'px');
+
+                $("#cardNoScan").css("top", $('#Nosyaxis').val() + 'px');
+                $("#cardNoScan").css("left", $('#Nosxaxis').val() + 'px');
+
+                $("#text1").css({ "font-family": $('#FontName').val() });
+                $("#text1").css({ "color": $('#FontColor').val() });
+                $("#text1").css({ "font-size": $('#FontSize').val() + 'px' });
+
+                $("#contactNo").css({ "font-family": $('#ContactNoFontName').val() });
+                $("#contactNo").css({ "color": $('#ContactNoFontColor').val() });
+                $("#contactNo").css({ "font-size": $('#ContactNoFontSize').val() + 'px' });
+
+                $("#cardAddText").css({ "font-family": $('#AltTextFontName').val() });
+                $("#cardAddText").css({ "color": $('#AltTextFontColor').val() });
+                $("#cardAddText").css({ "font-size": $('#AltTextFontSize').val() + 'px' });
+
+                $("#cardNoScan").css({ "font-family": $('#NosfontName').val() });
+                $("#cardNoScan").css({ "color": $('#NosfontColor').val() });
+                $("#cardNoScan").css({ "font-size": $('#NosfontSize').val() + 'px' });
+
+                switch ($('#FontStyleName').val()) {
+                    case "normal":
+                        $('#text1').css({ 'font-weight': 'normal' })
+                        break;
+                    case "bold":
+                        $('#text1').css({ 'font-weight': 'bold' })
+                        break;
+                    case "italic":
+                        $('#text1').css({ 'font-weight': 'italic' })
+                        break;
+                    default:
+                        $('#text1').css({ 'font-weight': 'normal' })
+                }
+
+                switch ($('#FontStyleMobNo').val()) {
+                    case "normal":
+                        $('#contactNo').css({ 'font-weight': 'normal' })
+                        break;
+                    case "bold":
+                        $('#contactNo').css({ 'font-weight': 'bold' })
+                        break;
+                    case "italic":
+                        $('#contactNo').css({ 'font-weight': 'italic' })
+                        break;
+                    default:
+                        $('#contactNo').css({ 'font-weight': 'normal' })
+                }
+                switch ($('#FontStyleAddText').val()) {
+                    case "normal":
+                        $('#cardAddText').css({ 'font-weight': 'normal' })
+                        break;
+                    case "bold":
+                        $('#cardAddText').css({ 'font-weight': 'bold' })
+                        break;
+                    case "italic":
+                        $('#cardAddText').css({ 'font-weight': 'italic' })
+                        break;
+                    default:
+                        $('#cardAddText').css({ 'font-weight': 'normal' })
+                }
+                switch ($('#FontStyleNos').val()) {
+                    case "normal":
+                        $('#cardNoScan').css({ 'font-weight': 'normal' })
+                        break;
+                    case "bold":
+                        $('#cardNoScan').css({ 'font-weight': 'bold' })
+                        break;
+                    case "italic":
+                        $('#cardNoScan').css({ 'font-weight': 'italic' })
+                        break;
+                    default:
+                        $('#cardNoScan').css({ 'font-weight': 'normal' })
+                }
+
+
+                switch ($('#FontAlignment').val()) {
+                    case "left":
+                        $('#text1').css({ 'text-align': 'left' })
+                        break;
+                    case "right":
+                        $('#text1').css({ 'text-align': 'right' })
+                        break;
+                    case "center":
+                        $('#text1').css({ 'text-align': 'center' })
+                        break;
+                    default:
+                        $('#text1').css({ 'text-align': 'right' })
+                }
+
+                switch ($('#AddTextFontAlignment').val()) {
+                    case "left":
+                        $('#cardAddText').css({ 'text-align': 'left' })
+                        break;
+                    case "right":
+                        $('#cardAddText').css({ 'text-align': 'right' })
+                        break;
+                    case "center":
+                        $('#cardAddText').css({ 'text-align': 'center' })
+                        break;
+                    default:
+                        $('#cardAddText').css({ 'text-align': 'right' })
+                }
+
+                switch ($('#ContactNoAlignment').val()) {
+                    case "left":
+                        $('#contactNo').css({ 'text-align': 'left' })
+                        break;
+                    case "right":
+                        $('#contactNo').css({ 'text-align': 'right' })
+                        break;
+                    case "center":
+                        $('#contactNo').css({ 'text-align': 'center' })
+                        break;
+                    default:
+                        $('#contactNo').css({ 'text-align': 'right' })
+                }
+
+                switch ($('#NosAlignment').val()) {
+                    case "left":
+                        $('#cardNoScan').css({ 'text-align': 'left' })
+                        break;
+                    case "right":
+                        $('#cardNoScan').css({ 'text-align': 'right' })
+                        break;
+                    case "center":
+                        $('#cardNoScan').css({ 'text-align': 'center' })
+                        break;
+                    default:
+                        $('#cardNoScan').css({ 'text-align': 'right' })
+                }
+
+            }
+
+        }
+
+        function SetImageBackground(width, height) {
+            console.log(width); console.log(height);
+            if (width <= 900) {
+                $('#mainBody').css({ 'width': width });
+                $('#mainBody').css({ 'height': height });
+            } else {
+                var diff = width - 900;
+                var per = 100 - (diff / width) * 100;
+                console.log(per); console.log(width * per / 100); console.log(height * per / 100);
+                $('#mainBody').css({ 'width': width * per / 100 });
+                $('#mainBody').css({ 'height': height * per / 100 });
+            }
+
+        }
+
+
+        function SetGuestIdForDelete(id) {
+            $('#selectedGuest').text(id);
+            $('#deleteGuest').attr('href', '../DeleteGuest/' + id);
+        }
+
+        function DeleteGuest() {
+            $('#deleteGuest').trigger('click');
+        }
+        function ToggleTransBackground() {
+            switch (document.getElementById('customSwitch1').checked) {
+                case true:
+                    $('#ForegroundColor').prop('disabled', true);
+                    $('#ForegroundColor').val('#FFFFFF')
+                    break;
+                default:
+                    $('#ForegroundColor').prop('disabled', false);
+                    $('#ForegroundColor').val('#FFFFFF')
+                    break;
+            }
+        }
+        function EditGuest(id, name, nos, pcn, at, cc) {
+            console.log(name);
+            $('#GuestId').val(id);
+            $('#FirstName').val(name);
+            $('#NoOfMembers').val(nos);
+            $('#PrimaryContactNo').val(pcn);
+            $('#SecondaryContactNo').val(cc);
+            $('#AdditionalText').val(at);
+            $('#modal-guest').modal('show');
+            $('#modalTitle').text('Edit Guest');
+        }
+        function convertHTMLToPDF() {
+            const { jsPDF } = window.jspdf;
+
+            var doc = new jsPDF('l', 'mm', [1200, 1210]);
+            var pdfjs = document.querySelector('#html-template');
+
+            doc.html(pdfjs, {
+                callback: function (doc) {
+                    doc.save("output.pdf");
+                },
+                x: 10,
+                y: 10
+            });
+        }
+    </script>
+    <style>
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #444;
+            line-height: 18px;
+        }
+    </style>
+</body>
+</html>

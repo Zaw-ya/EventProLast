@@ -1,0 +1,73 @@
+﻿ALTER TABLE Events
+ADD LinkedEvent Bigint null;
+
+-------------------
+ALTER view dbo.Vw_ScanHistoryLogs      
+as      
+select sh.*,u.FirstName +' '+u.LastName as ScannedBy,g.FirstName as GuestName ,g.NoOfMembers as Nos,
+e.LinkedEvent,e.EventTitle,e.Icon,e.GmapCode as EventCode,  
+e.Category,e.EventFrom,e.EventTo,e.CreatedFor from ScanHistory(nolock) sh      
+left join Users(nolock) u      
+on sh.ScanBy=u.UserId      
+left join guest(nolock) g      
+on g.GuestId=sh.GuestId    
+left join Vw_Events(nolock) e    
+on e.Id=g.EventId    
+--------------
+ALTER View dbo.Vw_Events                
+as                
+select e.Id,            
+e.EventCode,            
+e.EventTitle,            
+e.Type,            
+e.EventFrom,            
+e.EventTo,            
+e.EventVenue,            
+CONCAT('E', REPLACE(STR(id, 5), SPACE(1), '0'))  as GmapCode,            
+e.GmapCode as GLocation,            
+e.EventDescription,            
+e.CreatedBy,            
+e.CreatedFor,            
+e.CreatedOn,            
+e.ModifiedBy,            
+e.ModifiedOn,            
+e.IsArchived,   
+e.LinkedEvent,
+e.Status,'https://www.myinvite.me/Upload/card/'+ec.Icon as IconUrl,ec.Icon, u.FirstName,u.LastName,ec.Category from Events (nolock) e                
+inner join EventCategory(nolock) ec                
+on e.type=ec.eventid                
+inner join Users(nolock) u                
+on e.CreatedBy=u.UserId 
+-------------
+ALTER view vw_GuestReportWA  
+as  
+select g.GuestId,u.UserId,e.linkedevent,e.id as EventId,e.EventTitle, g.FirstName,  
+g.PrimaryContactNo,g.WAResponseTime,Response,g.MessageId,g.TextDelivered,g.TextSent,TextRead,g.TextFailed,  
+g.ImgDelivered,g.ImgSent,ImgRead,g.ImgFailed  from guest g (nolock)    
+inner join Events e (nolock)  
+on g.EventId=e.Id  
+inner join Users(nolock) u   
+on u.UserId=e.CreatedFor  
+  ---------------------
+ ALTER view vw_MIAgregationReport  
+as  
+select UserId,EventId,linkedEvent,eventTitle,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and Response = N'تأكيد') as YesResponse,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and Response = N'اعتذار') as NoResponse,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,  
+count(guestid) as TotalFamily,  
+(select sum(NoOfMembers) from Guest(nolock) where Eventid=ge.eventId ) as TotalGuest,  
+(select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.eventId  and ResponseCode='Allowed' ) as Allowed,  
+(select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.eventId  and ResponseCode='Declined' ) as Declined,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and TextDelivered = 1) as TextDelivered,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and TextSent = 1) as TextSent,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and TextRead = 1) as TextRead,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and TextFailed = 1) as TextFailed,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgDelivered = 1) as ImgDelivered,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgSent = 1) as ImgSent,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgRead = 1) as ImgRead,  
+(select count(*) from Guest(nolock) where Eventid=ge.eventId and ImgFailed = 1) as ImgFailed,  
+(select count(*) from Guest(nolock) where Response = 'Whatsapp Not exists' and Eventid=ge.eventId) as WhatsappNotExists   
+from vw_GuestReportWA ge  
+group by  EventId,eventTitle,UserId ,linkedEvent 
+  ------------------

@@ -1,0 +1,55 @@
+﻿-------------------------------------
+alter table events
+add ChoosenNumberWithinCountry int default 1
+_____________________________________
+update events 
+set ChoosenNumberWithinCountry = 1
+----------------------------------------
+-------------------------------------
+alter table events
+add choosenSendingWhatsappProfile nvarchar(40) 
+_____________________________________
+update events 
+set choosenSendingWhatsappProfile = 'MyInvite'
+
+----------------------------------------
+alter table events
+add choosenSendingCountryNumber nvarchar(40) 
+_____________________________________
+_____________________________________
+update events 
+set choosenSendingCountryNumber = 'KUWAIT'
+from events as e1
+join City as c1
+on e1.CityID = c1.Id
+join Country as co
+on c1.CountryId = co.Id
+where co.Id = 2
+--------------------------------------
+update events 
+set choosenSendingCountryNumber = 'BAHRAIN'
+from events as e1
+join City as c1
+on e1.CityID = c1.Id
+join Country as co
+on c1.CountryId = co.Id
+where co.Id = 6
+--------------------------------------
+update events 
+set choosenSendingCountryNumber = 'SAUDI'
+from events as e1
+join City as c1
+on e1.CityID = c1.Id
+join Country as co
+on c1.CountryId = co.Id
+where co.Id = 1
+----------------------------------------
+alter table AppSettings
+add WhatsappDefaultTwilioProfile nvarchar(40) 
+----------------------------------------
+ALTER TABLE AppSettings
+ADD BulkSendingLimit INT 
+----------------------------------------
+UPDATE AppSettings
+SET BulkSendingLimit = 100 
+---------------------------------------

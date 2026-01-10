@@ -1,0 +1,19 @@
+﻿__________________________________________________________________________
+
+ CREATE view vw_ConfirmationReport as  
+ select UserId,EventId,linkedEvent,eventTitle,   
+ (select count(*) from Guest(nolock)    where Eventid=ge.eventId and (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as YesResponse,  
+  (select sum(NoOfMembers) from Guest(nolock)    where Eventid=ge.eventId and (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as TotalConfirmedGuests,  
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and (Response = N'اعتذار' or Response = N'الاعتذار عن الدعوة' or Response = N'Decline'   or Response = 'اعتذار' or Response = 'الاعتذار عن الدعوة' or Response = 'Decline'    )) as NoResponse,  
+ (select count(*) from Guest(nolock) where Eventid=ge.eventId and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,    
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.eventId  and ResponseCode='Declined' ) as Declined,      (select count(*) from Guest(nolock) where Eventid=ge.eventId and TextDelivered = 1) as TextDelivered,      (select count(*) from Guest(nolock) where Eventid=ge.eventId and TextSent = 1) as TextSent
+ from vw_GuestReportWA ge  
+ where TextSent > 0
+ group by  EventId,eventTitle,UserId ,linkedEvent 
+
+ ___________________________________________________________________________
+
+ CREATE INDEX Guest_Index
+ON [dbo].[Guest] (EventId)
+
+---------------------------------------------------------------------------

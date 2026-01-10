@@ -1,0 +1,107 @@
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br />
+<br />
+<br />
+
+@if (ViewBag.Response == "Yes")
+{
+    <main id="main" style="padding-top:35px">
+
+        <center>
+            <div class="card" style="width: 18rem;">
+                <center>
+                    <img src="~/assets/img/confirm.png" class="card-img-top" style="
+    width: 120px;
+    height: 120px;
+">
+                </center>
+
+                <div class="card-body">
+                    <h5 class="card-title">Confirmation</h5>
+                    <p class="card-text"><b>Thank you for your response</b><br /> Your response is captured, Digital Invitation card will be delievered to your whatsapp shortly!!!</p>
+                </div>
+                @*<div class="card-footer">
+                        <button type="submit" class="btn btn-primary" onclick="window.close();" >Close</button>
+                    </div>*@
+            </div>
+        </center>
+    </main>
+}
+@if (ViewBag.Response == "No")
+{
+    <main id="main" style="padding-top:35px">
+
+        <center>
+            <div class="card" style="width: 18rem;">
+                <center>
+                    <img src="~/assets/img/sad.png" class="card-img-top" style="
+    width: 120px;
+    height: 120px;
+">
+                </center>
+
+                <div class="card-body">
+                    <h5 class="card-title">Decline</h5>
+                    <p class="card-text"><b>Thank you for your response</b><br /> Your response is captured!!!</p>
+                </div>
+                @*<div class="card-footer">
+                        <button type="submit" class="btn btn-primary" onclick="window.close();" >Close</button>
+                    </div>*@
+            </div>
+        </center>
+    </main>
+}
+@if (ViewBag.Response == "Warning")
+{
+    <main id="main" style="padding-top:35px">
+
+        <center>
+            <div class="card" style="width: 18rem;">
+                <center>
+                    <img src="~/assets/img/warning.png" class="card-img-top" style="
+    width: 120px;
+    height: 120px;
+">
+                </center>
+
+                <div class="card-body">
+                    <h5 class="card-title">Warning</h5>
+                    <p class="card-text"><b>This link is expired</b><br /> To change your response please reach to your organizer!!!</p>
+                </div>
+                @*<div class="card-footer">
+                        <button type="submit" class="btn btn-primary" onclick="window.close();" >Close</button>
+                    </div>*@
+            </div>
+        </center>
+    </main>
+}@if (ViewBag.Response == "Invalid")
+{
+    <main id="main" style="padding-top:35px">
+
+        <center>
+            <div class="card" style="width: 18rem;">
+                <center>
+                    <img src="~/assets/img/notfound.png" class="card-img-top" style="
+    width: 120px;
+    height: 120px;
+">
+                </center>
+
+                <div class="card-body">
+                    <h5 class="card-title">Not Found</h5>
+                    <p class="card-text"><b>Your information not found</b><br /> Please reach to your organizer!!!</p>
+                </div>
+                @*<div class="card-footer">
+                        <button type="submit" class="btn btn-primary" onclick="window.close();" >Close</button>
+                    </div>*@
+            </div>
+        </center>
+    </main>
+}
+<br />
+<br />
+<br />

@@ -1,0 +1,103 @@
+﻿use [MyInvite]
+-----------------------------------------------
+alter table Guest 
+add GuestArchieved bit default 1 
+----------------------------------------------
+drop view [dbo].[vw_ScannedInfo] ;
+-----------------------------------------------
+CREATE INDEX Guest_Archeive_Index
+ON [dbo].[Guest] (GuestArchieved)
+----------------------------------------------
+create view vw_ScannedInfo  as      select g.GuestId,g.whatsappMessageId 
+,g.whatsappMessageImgId ,     g.EventId, g.FirstName, g.LastName, g.Address,GuestArchieved,  
+sum(sh.ScanId) as ScanId,   g.PrimaryContactNo, g.SecondaryContactNo,  
+g.EmailAddress, g.ModeOfCommunication, g.NoOfMembers, g.CreatedOn,   
+g.CreatedBy,   g.Source, g.WAResponseTime, g.GateKeeper, g.MessageId, 
+g.AdditionalText,g.ImgSentMsgId, g.TextSent, g.TextDelivered, g.TextRead,  
+g.EventLocationSent  , g.EventLocationRead  , g.EventLocationDelivered  ,   
+g.EventLocationFailed   ,g.waMessageEventLocationForSendingToAll       
+,g.whatsappWatiEventLocationId ,g.TextFailed,  g.ImgFailed,g.ConguratulationMsgDelivered,  
+g.ConguratulationMsgRead,   g.ConguratulationMsgFailed,g.ConguratulationMsgSent, 
+g.WatiConguratulationMsgId,g.ConguratulationMsgId , g.ReminderMessageId ,g.ReminderMessageSent,
+g.ReminderMessageDelivered , g.ReminderMessageRead ,IsPhoneNumberValid ,
+g.ReminderMessageFailed,ReminderMessageWatiId ,     (select max(createdon) 
+from WhatsappResponseLogs(nolock) where WAKey=g.MessageId) as TextTime,   
+(select max(createdon) from WhatsappResponseLogs(nolock)
+where WAKey=g.ImgSentMsgId) as ImageTime,     g.ImgSent, g.ImgDelivered, g.ImgRead, g.Cypertext,
+g.WhatsappStatus,g.Response,count(*)-1 as Scanned from guest(nolock)    
+g left join ScanHistory(nolock) sh     on g.GuestId=sh.GuestId   and 
+sh.ResponseCode is not null and sh.ResponseCode='Allowed' 
+Group by g.GuestId,g.EventId,g.FirstName,LastName,Address,   
+g.whatsappMessageId, g.whatsappMessageImgId, PrimaryContactNo, 
+SecondaryContactNo,EmailAddress,ModeOfCommunication,    
+NoOfMembers,CreatedOn,CreatedBy,Source,GateKeeper,AdditionalText, 
+Cypertext,WhatsappStatus,g.Response,g.MessageId,g.ImgSentMsgId,  
+WAResponseTime,TextSent,TextDelivered,TextRead,ImgSent,    
+ImgDelivered, ImgRead,g.TextFailed, g.ImgFailed,g.EventLocationSent  ,    
+g.EventLocationRead  , g.EventLocationDelivered  ,     g.EventLocationFailed 
+,g.waMessageEventLocationForSendingToAll    ,     g.whatsappWatiEventLocationId 
+,g.ConguratulationMsgDelivered,      
+g.ConguratulationMsgRead,g.ConguratulationMsgFailed,g.ConguratulationMsgSent,  
+g.WatiConguratulationMsgId,g.ConguratulationMsgId  ,g.ReminderMessageId
+,g.ReminderMessageSent,     g.ReminderMessageDelivered , g.ReminderMessageRead 
+, g.ReminderMessageFailed , ReminderMessageWatiId , IsPhoneNumberValid ,GuestArchieved 
+---------------------------------------------------------------------------------------------
+update guest set GuestArchieved = 1
+---------------------------------------------------------------------------------------------
+update Guest set GuestArchieved  = 0
+where EventId > 2594
+---------------------------------------------------------------------------------------------
+create view vwGuestInfo  as   
+select g.GuestId,g.whatsappMessageId 
+,g.whatsappMessageImgId ,     g.EventId, g.FirstName, g.LastName, g.Address,GuestArchieved,  
+  g.PrimaryContactNo, g.SecondaryContactNo,  
+g.EmailAddress, g.ModeOfCommunication, g.NoOfMembers, g.CreatedOn,   
+g.CreatedBy,   g.Source, g.WAResponseTime, g.GateKeeper, g.MessageId, 
+g.AdditionalText,g.ImgSentMsgId, g.TextSent, g.TextDelivered, g.TextRead,  
+g.EventLocationSent  , g.EventLocationRead  , g.EventLocationDelivered  ,   
+g.EventLocationFailed   ,g.waMessageEventLocationForSendingToAll       
+,g.whatsappWatiEventLocationId ,g.TextFailed,  g.ImgFailed,g.ConguratulationMsgDelivered,  
+g.ConguratulationMsgRead,   g.ConguratulationMsgFailed,g.ConguratulationMsgSent, 
+g.WatiConguratulationMsgId,g.ConguratulationMsgId , g.ReminderMessageId ,g.ReminderMessageSent,
+g.ReminderMessageDelivered , g.ReminderMessageRead ,IsPhoneNumberValid ,
+g.ReminderMessageFailed,ReminderMessageWatiId ,   
+g.ImgSent, g.ImgDelivered, g.ImgRead, g.Cypertext,
+g.WhatsappStatus,g.Response , (select count(*) from ScanHistory(nolock) sh
+where g.GuestId=sh.GuestId   and 
+sh.ResponseCode is not null and sh.ResponseCode='Allowed')  as Scanned  from Guest  as g 
+------------------------------------------------------------------------------------------
+drop view vw_ConfirmationReport
+------------------------------------------------------------------------------------------
+ CREATE view vw_ConfirmationReport
+ as    
+ select Id,linkedEvent,eventTitle,   
+ (select count(*) from Guest(nolock)  
+ where Eventid=ge.Id and
+ (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as YesResponse, 
+ (select sum(NoOfMembers) from Guest(nolock)    where Eventid=ge.Id and (Response = N'تأكيد' or Response = N'قبول الدعوة' or  Response = N'Confirm'     or Response = 'تأكيد' or Response = 'قبول الدعوة' or  Response = 'Confirm' )) as TotalConfirmedGuests, 
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response = N'اعتذار' or Response = N'الاعتذار عن الدعوة' or Response = N'Decline'   or Response = 'اعتذار' or Response = 'الاعتذار عن الدعوة' or Response = 'Decline'    )) as NoResponse,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and (Response is null or Response='Message Processed Successfully') and TextSent=1) as WaitingResponse,    
+ (select count(*) from Vw_ScanForCount(nolock) where Eventid=ge.Id  and ResponseCode='Declined' ) as Declined,  
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and TextDelivered = 1) as TextDelivered,   
+ (select count(*) from Guest(nolock) where Eventid=ge.Id and MessageId is not null) as TextSent
+ from Events ge
+ where WhatsappConfirmation = 1  
+ -------------------------------------------------------------------------------------------
+CREATE view dbo.VwScanLogs    
+as     
+select sh.*,u.FirstName +' '+u.LastName as ScannedBy,g.FirstName as GuestName 
+,g.NoOfMembers as Nos,    e.LinkedEvent,e.EventTitle,e.GmapCode as EventCode
+,e.CreatedFor ,e.Id as EventId
+from ScanHistory(nolock) sh    left join Users(nolock) u    
+on sh.ScanBy=u.UserId   left join guest(nolock) g        
+on g.GuestId=sh.GuestId left join Events (nolock) e       
+on e.Id=g.EventId 
+where 
+e.id > 2500
+--------------------------------------------------------------------------------------------
+update Guest set GuestArchieved  = 1
+where EventId < 7500
+--------------------------------------------------------------------------------------------
+CREATE NONCLUSTERED INDEX Guest_Event_id
+ON [dbo].[Guest] (EventId DESC) 
+--------------------------------------------------------------------------------------------

@@ -1,0 +1,153 @@
+@model EventPro.Web.Models.LoginModel
+@{
+    Layout = "~/Views/Shared/_Login.cshtml";
+}
+<body class="hold-transition login-page">
+    <div class="login-box">
+        <div class="login-logo">
+            <div class="logo-container">
+                <img src="~/assets/img/EventPro.jpg" alt="Logo" class="logo-image" />
+            </div>
+        </div>
+
+        <div class="card login-card shadow">
+            <div class="card-body login-card-body">
+                <h3 class="text-center mb-3 fw-bold">Welcome Back</h3>
+                <p class="text-muted text-center mb-4">Sign in to continue</p>
+
+                @if (TempData["message"] != null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Error!</strong> @TempData["message"]
+                    </div>
+                }
+
+                @using (Html.BeginForm("Index", null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="form-group mb-3 position-relative">
+                        <span class="form-icon"><i class="fas fa-user"></i></span>
+                        @Html.TextBoxFor(p => p.UserName, new { @class = "form-control stylish-input", @placeholder = "User Name", @required = "required" })
+                    </div>
+
+                    <div class="form-group mb-3 position-relative">
+                        <span class="form-icon"><i class="fas fa-lock"></i></span>
+                        @Html.TextBoxFor(p => p.Password, new { @class = "form-control stylish-input", @type = "password", @placeholder = "Password", @required = "required" })
+                    </div>
+
+                    <div class="row mb-3 align-items-center">
+                        <div hidden class="col-6">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="remember">
+                                <label class="form-check-label" for="remember">Remember Me</label>
+                            </div>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary stylish-btn w-100">Sign In</button>
+                        </div>
+                    </div>
+                }
+
+                <p hidden class="text-center mb-2">
+                    <a href="#" class="text-decoration-none text-primary">Forgot password?</a>
+                </p>
+
+                <p class="text-center mb-0">
+                    <a href="/" class="text-muted text-decoration-none">? Back to Application</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <style>
+    body {
+        background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .login-box {
+        width: 400px;
+        max-width: 90%;
+    }
+
+    .logo-container {
+        padding: 12px;
+        backdrop-filter: blur(6px);
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        margin-bottom: 10px;
+    }
+
+    .logo-image {
+        width: 250px;
+        height: 225px;
+        border-radius: 14px;
+        object-fit: cover;
+    }
+
+    .login-card {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stylish-input {
+        padding-left: 40px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        transition: 0.3s;
+        box-shadow: none !important;
+    }
+
+    .stylish-input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    }
+
+    .form-icon {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        transform: translateY(-50%);
+        color: #999;
+    }
+
+    .stylish-btn {
+        border-radius: 12px;
+        padding: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .stylish-btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-1px);
+    }
+
+    .text-muted a:hover {
+        text-decoration: underline;
+    }
+
+    @@media (max-width: 480px) {
+        .logo-image {
+            width: 180px;
+            height: 150px;
+        }
+    }
+</style>
+
+    <!-- /.login-box -->
+    <!-- jQuery -->
+    <script src="../../plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="../../dist/js/adminlte.min.js"></script>
+
+</body>

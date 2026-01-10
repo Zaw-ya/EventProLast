@@ -1,0 +1,69 @@
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content(" ~") /lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+        <div class="alert alert-danger" role="alert">
+            <strong>Error!</strong> @TempData["message"].
+        </div>
+        }
+    </div>
+    @using (Html.BeginForm(null, null, FormMethod.Post))
+    {
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid" style="margin-top:10px">
+                        <!-- /.card-header -->
+                        <div class="card-body p-0">
+                            <div class="table-title">
+
+                            </div>
+                            <table id="WhatsappConfirmationReport" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Event Code</th>
+                                        <th>Linked To</th>
+                                        <th>Event Title</th>
+                                        <th>Sent</th>
+                                        <th>Count Yes</th>
+                                        <th>Confirmed Guests</th>
+                                        <th>Count No</th>
+                                        <th>Waiting</th>
+                                    </tr>
+                                </thead>                          
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                </div>
+                <!-- /.card -->
+
+            </div>
+        </div>
+    </div>
+    }
+</section>
+
+<script>
+    const userRole = '@User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value'.toLowerCase();
+</script>
+<!-- Modal -->
+@section Scripts {
+    <script src="~/assets/plugins/datatables/js/jquery.datatables.min.js"></script>
+    <script src="~/assets/plugins/datatables/js/jquery.datatables.js"></script>
+    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.min.js"></script>
+    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.js"></script>
+    <script src="~/assets/js/whatsappconfirmationreport.js"></script>
+}
+
+
+
+

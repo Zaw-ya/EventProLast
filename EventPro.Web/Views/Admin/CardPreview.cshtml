@@ -1,0 +1,319 @@
+@model EventPro.DAL.Models.CardInfo
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<style>
+    #mydiv {
+        position: absolute;
+        z-index: 9;
+        text-align: center;
+        border: 0px solid #d3d3d3;
+    }
+
+    #text1 {
+        position: absolute;
+        cursor: move;
+        z-index: 9;
+        font-size: 20px;
+        text-align: center;
+        border: 0px solid #d3d3d3;
+        width:200px;
+        outline:dotted;
+    }
+
+    #cardAddText {
+        position: absolute;
+        cursor: move;
+        z-index: 9;
+        font-size: 20px;
+        text-align: center;
+        border: 0px solid #d3d3d3;
+        width: 200px;
+        outline: dotted;
+    }
+
+    #cardNoScan {
+        position: absolute;
+        cursor: move;
+        z-index: 9;
+        font-size: 20px;
+        text-align: center;
+        border: 0px solid #d3d3d3;
+        width: 200px;
+        outline: dotted;
+    }
+
+    #contactNo {
+        position: absolute;
+        cursor: move;
+        z-index: 9;
+        font-size: 14px;
+        text-align: center;
+        border: 0px solid #d3d3d3;
+        width: 200px;
+        outline: dotted;
+    }
+
+    #mydivheader {
+        padding: 1px;
+        cursor: move;
+        z-index: 10;
+        color: #fff;
+    }
+
+    #mainBody {
+        border: 1;
+        width: 900px;
+        height: 600px;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        /*background-image: url('https://image.shutterstock.com/shutterstock/photos/654240673/display_1500/stock-vector-wedding-invitation-or-card-with-abstract-background-islam-arabic-indian-dubai-oriental-design-654240673.jpg');*/
+    }
+</style>
+@if (TempData["message2"] != null)
+{
+    <div class="modal fade" id="confirmMsg" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Success</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Template save successfully!!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+
+    @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        @Html.ValidationSummary(true)
+        <div class="container-fluid">
+            <div class="card card-default">
+                <div class="card-header">
+                    <h3 class="card-title">Card Designer</h3>
+                </div>
+                @Html.HiddenFor(Model => Model.EventId)
+
+                @Html.HiddenFor(Model => Model.BarcodeWidth)
+                @Html.HiddenFor(Model => Model.BarcodeHeight)
+                @Html.HiddenFor(Model => Model.BarcodeXaxis)
+                @Html.HiddenFor(Model => Model.BarcodeYaxis)
+
+                @Html.HiddenFor(Model => Model.ContactNameXaxis)
+                @Html.HiddenFor(Model => Model.ContactNameYaxis)
+                @Html.HiddenFor(Model => Model.FontName)
+                @Html.HiddenFor(Model => Model.FontColor)
+                @Html.HiddenFor(Model => Model.FontSize)
+
+                @Html.HiddenFor(Model => Model.ContactNoXaxis)
+                @Html.HiddenFor(Model => Model.ContactNoYaxis)
+                @Html.HiddenFor(Model => Model.ContactNoFontSize)
+                @Html.HiddenFor(Model => Model.ContactNoFontName)
+                @Html.HiddenFor(Model => Model.ContactNoFontColor)
+
+                @Html.HiddenFor(Model => Model.AltTextXaxis)
+                @Html.HiddenFor(Model => Model.AltTextYaxis)
+                @Html.HiddenFor(Model => Model.AltTextFontSize)
+                @Html.HiddenFor(Model => Model.AltTextFontName)
+                @Html.HiddenFor(Model => Model.AltTextFontColor)
+
+                @Html.HiddenFor(Model => Model.Nosxaxis)
+                @Html.HiddenFor(Model => Model.Nosyaxis)
+                @Html.HiddenFor(Model => Model.NosfontColor)
+                @Html.HiddenFor(Model => Model.NosfontName)
+                @Html.HiddenFor(Model => Model.NosfontSize)
+
+                @Html.HiddenFor(Model => Model.SelectedPlaceHolder)
+
+                @Html.HiddenFor(Model => Model.FontAlignment)
+                @Html.HiddenFor(Model => Model.AddTextFontAlignment)
+                @Html.HiddenFor(Model => Model.ContactNoAlignment)
+                @Html.HiddenFor(Model => Model.NosAlignment)
+
+                @Html.HiddenFor(Model => Model.NameRightAxis)
+                @Html.HiddenFor(Model => Model.ContactRightAxis)
+                @Html.HiddenFor(Model => Model.NosRightAxis)
+                @Html.HiddenFor(Model => Model.AddTextRightAxis)
+                @Html.HiddenFor(Model => Model.RightAlignment)
+                @Html.HiddenFor(Model => Model.BarcodeBorder)
+
+                @Html.HiddenFor(Model => Model.FontStyleName)
+                @Html.HiddenFor(Model => Model.FontStyleMobNo)
+                @Html.HiddenFor(Model => Model.FontStyleAddText)
+                @Html.HiddenFor(Model => Model.FontStyleNos)
+
+
+
+                <div class="card-body">
+                    <div class="row">
+
+                        <div class="col-md-8">
+                            <select class="select2" id="cardPlaceHolder" multiple="multiple" data-placeholder="Select Placeholder" style="width: 100%">
+                                <option>QR Code</option>
+                                <option>Guest Name</option>
+                                <option>Mobile No</option>
+                                <option>Additional Text</option>
+                                <option>No. of Scan</option>
+                            </select>
+                        </div>
+
+
+                        <div class="col-md-4" style="float:inline-end">
+                            <a href="~/admin/QRSettings/@Model.EventId" class="btn btn btn-danger">QR</a>
+                            <button type="submit" class="btn btn-primary" id="submit" onclick="saveCardPosition()">Save</button>
+                            <a href="~/admin/viewevent/@Model.EventId" class="btn btn btn-warning">Events</a>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="switchLang" onchange="ToggleLang()">
+                                <label class="custom-control-label" for="switchLang">Arbic/English</label>
+                            </div>
+                        </div>
+                        @*<div class="col-md-3">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="barcodeBorder" />
+                        <label class="custom-control-label" for="barcodeBorder">Barcode Border</label>
+                    </div>
+                </div>*@
+                    </div>
+                    <hr />
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div id="mainBody">
+                                <div id="mydiv">
+                                    @{
+                                        var barCode = "/upload/barcode/" + @ViewBag.Barcode;
+                                    }
+                                    <img id="mydivheader" src="@barCode?v=@DateTime.UtcNow.Ticks" width=@Model.BarcodeWidth height=@Model.BarcodeHeight>
+                                </div>
+                                <div id="text1">
+                                    Guest Name
+                                </div>
+                                <div id="contactNo">
+                                    XXX-XXX-XXXX
+                                </div>
+                                <div id="cardAddText">
+                                    Additional Text
+                                </div>
+                                <div id="cardNoScan">
+                                    XX
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    }
+</section>
+
+<div class="modal fade" id="myModal-RightPropertyPanel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document" style="top: 24px;  margin-right: 0;width:250px;">
+        <div class="modal-content">
+            <div class="modal-header" style="display:block">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel"><label id="lblTitle">Title</label></h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Font</label>
+                    <div class="input-group mb-12">
+                        @Html.DropDownList("SelectedFont", ViewBag.Fonts as SelectList, new { @class = "form-control select2", @style = "width:100%" })
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="customRange1">Font Size</label>
+                    <div class="input-group mb-12">
+                        @Html.DropDownList("FontSize", ViewBag.FontSize as SelectList, new { @id = "fontSize", @class = "form-control", @style = "width:100%" })
+                    </div>
+
+                </div>
+                <div class="form-group">
+                    <label for="customRange1">Font Color</label>
+                    <input type="text" class="form-control color-picker" id="fontColor">
+                </div>
+                <div class="form-group">
+                    <label for="customRange1">Font Style</label><br />
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm" id="font-normal"><i class="fas fa-font"></i></button>
+                        <button type="button" class="btn btn-default btn-sm" id="font-bold"><i class="fas fa-bold"></i></button>
+                        <button type="button" class="btn btn-default btn-sm" id="font-italic"><i class="fas fa-italic"></i></button>
+                    </div>
+                </div>
+      
+                <div class="form-group">
+                    <label for="customRange1">Font Allignment</label><br />
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm" id="font-left"><i class="fas fa-align-left"></i></button>
+                        <button type="button" class="btn btn-default btn-sm" id="font-center"><i class="fas fa-align-center"></i></button>
+                        <button type="button" class="btn btn-default btn-sm" id="font-right"><i class="fas fa-align-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="barcode-RightPropertyPanel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document" style="top: 24px;  margin-right: 0;width:250px;">
+        <div class="modal-content">
+            <div class="modal-header" style="display:block">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel"><label id="lblTitlebarcode">Title</label></h4>
+            </div>
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label for="customRange1">Barcode Size</label>
+                    <input type="range" class="custom-range" id="barcodeSize" min="0" max="600">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="@Url.Content("~")/lte/assets/plugins/jquery/jquery.min.js"></script>
+@if (TempData["message2"] != null)
+{
+    <script>
+        $(document).ready(function () {
+            $('#confirmMsg').modal('show');
+        });
+    </script>
+}
+<script>
+    $(document).ready(function () {
+        SetCardBackground('@Url.Content("~")/upload/card/@Model.BackgroundImage');
+        setCardPosition();
+        LoadPlaceholder();
+        ToggleLang();
+        setTimeout(function () { $('#cardPlaceHolder').trigger('change'); }, 500);
+        SetImageBackground(@ViewBag.ImageWidth, @ViewBag.ImageHeight)
+    });
+</script>

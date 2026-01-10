@@ -1,0 +1,105 @@
+﻿---add new role
+INSERT INTO Roles (RoleName)
+SELECT 'Agent'
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Roles
+    WHERE RoleName = 'Agent'
+);
+Audit log-------------
+
+CREATE TABLE [dbo].[AuditLog](
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
+	[UserId] [int] NULL,
+	[Action] [int] NULL,
+	[EventId] [int] NULL,
+	[RelatedId] [int] NULL,
+	[CreatedOn] [datetime] NULL,
+	[Notes] [nvarchar](max) NULL,
+ CONSTRAINT [PK_AuditLog] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+
+
+
+ALTER TABLE [AuditLog]
+ADD FOREIGN KEY (UserId) REFERENCES Users(UserId);
+ALTER TABLE [AuditLog]
+ADD FOREIGN KEY (EventId) REFERENCES Events(Id);
+------------------------------------
+
+---DeviceId For notication
+ALTER TABLE users ADD DeviceId varchar(Max);
+--------------location
+ALTER TABLE GKEventHistory DROP COLUMN Location;
+ALTER TABLE GKEventHistory Add latitude [varchar](250) NULL;
+ALTER TABLE GKEventHistory Add longitude  [varchar](250) NULL;
+-----------------------
+---8-3-20204 
+ALTER TABLE Events
+ADD SendInvitation bit DEFAULT 1 NOT NULL;
+-------------------------------------------26-3-2024--Location
+
+CREATE TABLE [dbo].[Country](
+	[Id] [int]  PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[CountryName] [nvarchar](500) NULL--,
+	--IsDeleted bit DEFAULT 0 NOT NULl
+) 
+
+CREATE TABLE City
+   (
+   [Id] [int] PRIMARY KEY IDENTITY(1,1) NOT NULL,
+	[CityName] [nvarchar](500) NULL,
+	--IsDeleted bit DEFAULT 0 NOT NULl,
+	CountryId int not null ,
+	FOREIGN KEY (CountryId) REFERENCES Country(Id)
+	);
+-----------
+	ALTER TABLE users
+ADD CityID int null,
+ FOREIGN KEY (CityID) REFERENCES City(Id);
+ ---------
+ update users set cityid=1
+ --------------------------
+ALTER TABLE Events
+ADD CityID int null,
+ FOREIGN KEY (CityID) REFERENCES City(Id);
+ ----------------
+  ALTER TABLE Events
+ADD LeaveTime [time] NULL,
+ContactName [nvarchar](200) NULL,
+ContactPhone [nvarchar](20) NULL
+------------------
+CREATE TABLE MobileLog (
+    Id bigint IDENTITY(1,1) NOT NULL primary key, 	
+	GKId bigint, 
+	DeviceInfo  nvarchar(Max) null,	
+    StartTime datetime null,
+	EndTime datetime null,
+	EventId bigint NULL,
+	Qrcode  nvarchar(Max) null,
+	ApiResponse  nvarchar(Max) null	
+);
+
+//======================================================================================3/8/2024 Ragab
+
+ALTER TABLE Events
+ADD DeclineTempId NVARCHAR(50) DEFAULT NULL;
+
+/=======================================================================================
+use[MyInvite]
+
+alter table [dbo].[EventCategory]
+ alter COLUMN [Icon] nvarchar(400)
+ --------------------------------------------------------------------------------------
+
+
+
+
+
+
+	

@@ -1,0 +1,105 @@
+﻿use [MyInvite]
+
+-------------
+alter table [dbo].[AppSettings]
+add  NumberOfOpertorToSendBulkOnSameTime int null
+--------------------
+update  [dbo].[AppSettings]
+set NumberOfOpertorToSendBulkOnSameTime = 5
+
+---------------------------------------------------------------
+alter table [dbo].[AppSettings]
+add  NumberOfWebHookRequestsDbCanHandleOnSameTime int null
+--------------------
+update  [dbo].[AppSettings]
+set NumberOfWebHookRequestsDbCanHandleOnSameTime = 3
+
+---------------------------------------------------------------
+create table TwilioProfileSettings
+
+(Id int primary key identity ,
+Name nvarchar(60) not null unique ,
+AuthToken nvarchar(60) not null ,
+AccountSid nvarchar(60) not null ,
+MessagingServiceSid nvarchar(60) not null ,
+WhatsAppNumberSaudi1 nvarchar(60) default null ,
+WhatsAppNumberSaudi2 nvarchar(60) default null ,
+WhatsAppNumberKuwait1 nvarchar(60) default null ,
+WhatsAppNumberKuwait2 nvarchar(60) default null ,
+WhatsAppNumberBahrain1 nvarchar(60) default null ,
+WhatsAppNumberBahrain2 nvarchar(60) default null ,
+ConfirmArabicFemaleWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderTextAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderImageAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderVideoAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderTextAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderImageAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderVideoAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderTextAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderImageAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderVideoAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithoutGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderTextAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderImageAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderVideoAndWithGuestName nvarchar(60) default null ,
+ConfirmArabicMaleWithHeaderImageAndHeaderTextAndWithGuestName nvarchar(60) default null ,
+ConfirmEnglishWithoutGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderTextAndWithoutGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderImageAndWithoutGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderVideoAndWithoutGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderImageAndHeaderTextAndWithoutGuestName nvarchar(60) default null ,
+ConfirmEnglishWithGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderTextAndWithGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderImageAndWithGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderVideoAndWithGuestName nvarchar(60) default null ,
+ConfirmEnglishWithHeaderImageAndHeaderTextAndWithGuestName nvarchar(60) default null ,
+ArabicCardWithoutGuestName nvarchar(60) default null ,
+ArabicCardWithGuestName nvarchar(60) default null ,
+EnglihsCardWithoutGuestName nvarchar(60) default null ,
+EnglishCardWithGuestName nvarchar(60) default null ,
+CustomThanksWithoutGuestName nvarchar(60) default null ,
+CustomThanksWithGuestName nvarchar(60) default null ,
+ThanksTemp1 nvarchar(60) default null ,
+ThanksTemp2 nvarchar(60) default null ,
+ThanksTemp3 nvarchar(60) default null ,
+ThanksTemp4 nvarchar(60) default null ,
+ThanksTemp5 nvarchar(60) default null ,
+ThanksTemp6 nvarchar(60) default null ,
+ThanksTemp7 nvarchar(60) default null ,
+ThanksTemp8 nvarchar(60) default null ,
+ThanksTemp9 nvarchar(60) default null ,
+ThanksTemp10 nvarchar(60) default null ,
+ArabicCongratulationMessageToEventOwner nvarchar(60) default null ,
+EnglishCongratulationMessageToEventOwner nvarchar(60) default null ,
+ArabicDuplicateAnswer nvarchar(60) default null ,
+EnglishDuplicateAnswer nvarchar(60) default null ,
+ArabicEventLocation nvarchar(60) default null ,
+EnglishEventLocation nvarchar(60) default null ,
+ArabicDecline nvarchar(60) default null ,
+CustomReminderWithoutGuestName nvarchar(60) default null ,
+CustomReminderWithGuestName nvarchar(60) default null ,
+ReminderTemp1 nvarchar(60) default null ,
+ReminderTemp2 nvarchar(60) default null ,
+ReminderTemp3 nvarchar(60) default null 
+)
+
+-------------------------------------------------------------------------------------------------
+create table DefaultWhatsappSettings (
+Id int not null primary key identity , 
+MessageTextBox nvarchar(800) default null ,
+SendMessageButton nvarchar(800) default null ,
+MediaOptions nvarchar(800) default null ,
+ImageOption nvarchar(800) default null ,
+SendImageButton nvarchar(800) default null ,
+ImageTextBox nvarchar(800) default null ,
+VideoTextBox nvarchar(800) default null ,
+AddNewChatButton nvarchar(800) default null ,
+SearchNewChatButton nvarchar(800) default null ,
+NewContactButton nvarchar(800) default null 
+)
+--------------------------------------------------------------------------------------------------

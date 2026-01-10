@@ -1,0 +1,23 @@
+﻿--------------------------------------------------------------
+alter table [dbo].[Events]
+add ReminderMsgHeaderImg nvarchar(200) null ,
+CongratulationMsgHeaderImg nvarchar(200) null
+-------------------------------------------------------------
+alter table [dbo].[TwilioProfileSettings]
+add CustomReminderWithoutGuestNameWithHeaderImage nvarchar(60),
+CustomReminderWithGuestNameWithHeaderImage nvarchar(60),
+ReminderTemp1WithHeaderImage nvarchar(60),
+ReminderTemp2WithHeaderImage nvarchar(60),
+ReminderTemp3WithHeaderImage nvarchar(60),
+CustomThanksWithoutGuestNameWithHeaderImage nvarchar(60),
+CustomThanksWithGuestNameWithHeaderImage nvarchar(60),
+ThanksTemp1WithHeaderImage nvarchar(60),
+ThanksTemp2WithHeaderImage nvarchar(60),
+ThanksTemp3WithHeaderImage nvarchar(60),
+ThanksTemp4WithHeaderImage nvarchar(60),
+ThanksTemp5WithHeaderImage nvarchar(60),
+ThanksTemp6WithHeaderImage nvarchar(60),
+ThanksTemp7WithHeaderImage nvarchar(60),
+ThanksTemp8WithHeaderImage nvarchar(60),
+ThanksTemp9WithHeaderImage nvarchar(60),
+ThanksTemp10WithHeaderImage nvarchar(60)

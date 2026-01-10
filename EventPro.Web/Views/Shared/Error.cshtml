@@ -1,0 +1,31 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Error.</h1>
+<h2 class="text-danger">An error occurred while processing your request. PLease contact EventPro Admin.</h2>
+
+
+    <p>
+        <strong>Request ID:</strong> <code>@ViewBag.RequestId</code>
+    </p>
+
+
+<h3>Exception Details:</h3>
+<div class="alert alert-danger">
+    <h5>Exception Path:</h5>
+    <hr />
+    <p>@ViewBag.ExceptionPath</p>
+</div>
+
+<div class="alert alert-danger">
+    <h5>Exception Message:</h5>
+    <hr />
+    <p>@ViewBag.ExceptionMessage</p>
+</div>
+<div class="alert alert-danger">
+    <h5>Inner Exception Message:</h5>
+    <hr />
+    <p>@ViewBag.InnerException</p>
+</div>

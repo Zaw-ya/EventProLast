@@ -1,0 +1,108 @@
+﻿--created on : 19-11-2023                      
+-- by : Sherief El Shareef              
+-- Scan QRCode and return response          
+--Scan Functionality.          
+         
+--exec Proc_ValidateScannedQRCode @GuestID=3506,@GatekeeperId=45          
+CREATE PROCEDURE Proc_ValidateScannedQRCode           
+@GuestID int null,          
+@GatekeeperId int null       
+AS           
+BEGIN       
+    
+-- select  0 'succeed', 'Allowed' as 'message','' as 'Name','1'as 'No', '1'as 'Scanned'          
+--End    
+ DECLARE            
+         @ValidGuestID int =null,          
+         @validGatekeeperId int =null,          
+         @NoOfMembers int=0,          
+         @Response varchar(500) =null,          
+         @ResponseCode varchar(500)= null,          
+   @scanCount int=0,          
+   @EventFrom datetime=null,          
+   @EventTo datetime=null,             
+   @EventId  int =null,          
+   @EventGatekeeperMappingId int =null,          
+   @GuestFirstName nvarchar(400)='-',          
+   @message varchar(500)= null,          
+   @succeed bit='false'          
+          
+  select top 1 @validGatekeeperId=UserId   
+  from Users  
+  WITH (NOLOCK) where UserId=@GatekeeperId and role=3--gatekeper role          
+   IF(@validGatekeeperId is nuLL)          
+  Begin           
+   set @Response='Invalid QR Code';          
+   set @ResponseCode= 'Invalid QR';          
+   set @message=@Response;            
+  End          
+ELSE          
+ begin          
+  select top 1 @EventId=EventId,@NoOfMembers=NoOfMembers,@GuestFirstName=FirstName,@ValidGuestID=GuestId  
+  FROM guest WITH (NOLOCK)   
+  WHERE GuestId=@GuestID          
+  IF(@EventId IS NOT NULL)          
+ begin          
+          
+  select top(1)          
+     --@EventTitle=e.EventTitle,          
+     @EventFrom= CONVERT(date, e.EventFrom),          
+     @EventTo=CONVERT(date, e.EventTo),              
+     @EventGatekeeperMappingId=GKM.TaskId          
+     from events e WITH(NOLOCK) inner join guest g WITH(NOLOCK) on e.Id=g.EventId           
+    left outer join EventGatekeeperMapping GKM  WITH(NOLOCK) on GKM.EventId=e.Id and GatekeeperId=@GatekeeperId          
+     where g.GuestId=GuestID and e.Id=@EventId order by e.id desc;          
+              
+   select @scanCount=count(*) from ScanHistory WITH (NOLOCK) where GuestId=@GuestId and  ResponseCode ='Allowed'          
+          
+   -- IF NOT  EXISTS(select 1 from EventGatekeeperMapping where EventId=@EventId and GatekeeperId=@GatekeeperId)--Event is not assigned to Gatekeeper          
+   if(@EventGatekeeperMappingId IS NULL)--Event is not assigned to Gatekeeper          
+  Begin           
+    set @ResponseCode= 'Declined';          
+    set @Response='Event is not assigned to you';          
+     set @message=@Response;          
+  End          
+          
+    Else if(@EventFrom>CONVERT(date, GETDATE()))--"Event is not yet started          
+   Begin          
+    set @ResponseCode= 'Declined';          
+    set @Response='Event is not yet started';          
+       set @message=@Response;          
+   End          
+          
+   Else if(@EventTo <CONVERT(date, GETDATE()))--"Event is out dated          
+    Begin          
+      set @ResponseCode= 'Declined';          
+      set @Response='Event is out dated';          
+      set @message=@Response;          
+    End          
+             
+    ELSE IF(@scanCount < @NoOfMembers)--Scanned------------------>          
+    BEGIN          
+               
+      set @scanCount=@scanCount+1;          
+    set @ResponseCode= 'Allowed';          
+      set @Response='Scanned '+CAST(@scanCount AS VARCHAR(16)) +' of '+CAST(@NoOfMembers AS VARCHAR(16)) ;          
+      set @message= @Response;          
+      set @succeed='true';          
+    END          
+    ELSE IF(@scanCount >= @NoOfMembers)          
+   BEGIN-------Maximum scan limit exceed          
+      set @ResponseCode= 'Declined';          
+      set @Response='Maximum scan limit exceed';          
+      set @message=@Response;          
+    END          
+  End          
+          
+ ELSE--Invalid QR Code    
+ BEGIN          
+   set @Response='Invalid QR Code';          
+   set @ResponseCode= 'Invalid QR';          
+   set @message=@Response;          
+ END          
+ End        
+       
+        INSERT into scanHistory(ScanBy, ScannedOn,  GuestId,     ResponseCode,Response)           
+   values(@GatekeeperId,GETUTCDATE(),@ValidGuestID,@ResponseCode,@Response);         
+   select  @succeed 'succeed', @message 'message',@GuestFirstName 'Name',@NoOfMembers 'No', @scanCount 'Scanned'          
+END 

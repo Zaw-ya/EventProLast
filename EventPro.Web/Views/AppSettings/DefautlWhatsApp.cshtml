@@ -1,0 +1,170 @@
+@model EventPro.DAL.Models.DefaultWhatsappSettings
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+
+<style>
+    .sendingMessage span {
+        z-index: 2;
+        position: fixed;
+        top: 50%;
+        left: 55%;
+        transform: translate(-50%, -50%);
+        width: 20%;
+        height: 20%;
+        color: black;
+        margin: 5px;
+        background-color: white;
+        width: 150px;
+        height: 40px;
+        text-align: center;
+        box-shadow: 1px -1px 19px -4px rgba(0,0,0,0.75);
+    }
+</style>
+
+<div class="sendingMessage" hidden id="sendingMessage" syle="background-color: lightgreen">
+    <span>...???? ????? ???????</span>
+</div>
+
+<section>
+    <div class="card m-4 ">
+        <div class="m-4 p-2 pt-0 mt-2" >
+            <form method="post" id="SaveChanges">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                <input asp-for="@Model.Id" hidden />
+                <div >
+                    <div class="pb-2">
+                        <h2 class="text-primary">Default Whatsapp control settings</h2>
+                        <hr />
+                    </div>
+
+                    <div class="mb-3 d-flex justify-content-between row" >
+                        <div class="col-10">
+                            <h4>Message Text Box</h4>
+                            <span>Xpath for Text box element to send message without media file </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.MessageTextBox" class="form-control text-center" />
+                        </div>
+
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row" >
+                        <div class="col-10">
+                            <h4>Send Message Button</h4>
+                            <span>Xpath for button to send a message without media file </span>
+                        </div>
+                        <div class="col-2" >
+                            <input asp-for="@Model.SendMessageButton" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Media Options</h4>
+                            <span>Xpath for button to open media file options </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.MediaOptions" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Image Option</h4>
+                            <span>Xpath for button to select sending image option </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.ImageOption" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Send Image Button</h4>
+                            <span>Xpath for button to send a message with media file (Image) </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.SendImageButton" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Image Text Box</h4>
+                            <span>Xpath for text box to send message with media file (Image) </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.ImageTextBox" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Video Text Box</h4>
+                            <span>Xpath for text box to send message with media file (Video) </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.VideoTextBox" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Add New Chat Button</h4>
+                            <span>Xpath for adding new chat button </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.AddNewChatButton" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Search New Chat Button</h4>
+                            <span>Xpath for searching for new chat using number </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.SearchNewChatButton" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Searched Contact</h4>
+                            <span>Xpath for searched contact </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.NewContactButton" class="form-control text-center" />
+                        </div>
+                    </div>
+                   
+
+                    <br />
+                    <br />
+                    <div>
+                        <a class="btn btn-secondary" asp-controller="Admin" asp-action="Index">Back to Dashboard</a>
+                        <a onclick="SaveChanges()" class="btn btn-primary" style="width:220px;float:right; ">Save Changes</a>
+                    </div>
+
+
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+@section scripts{
+
+    <script>
+        const sendingMessage = document.getElementById('sendingMessage');
+
+       
+        async function SaveChanges() {
+
+            var posting = $.post("/AppSettings/DefautlWhatsApp", $("#SaveChanges").serialize());
+            posting.done(function (data) {
+                if (data.success) {
+                        Swal.fire(` ?? ????? ????????? `);
+
+                } else {
+                    Swal.fire(data.message);
+                }
+
+            });
+        }
+
+    </script>
+}

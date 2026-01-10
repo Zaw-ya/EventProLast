@@ -1,0 +1,1407 @@
+@model EventPro.DAL.Models.Guest
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+    var language = "arabic";
+}
+<style>
+    @@keyframes rotate {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .rotate-icon.rotating {
+        animation: rotate 0.6s linear;
+    }
+</style>
+<style>
+    .phone-number-invalid {
+        background-color: lightcoral !important;
+    }
+
+    .phone-number-valid {
+        background-color: lightgreen !important;
+    }
+</style>
+
+
+<link href="~/assets/css/loader.css" rel="stylesheet" />
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css" />
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+        @if (TempData["WaError"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["WaError"].
+            </div>
+        }
+
+        @if (ViewBag.thanksCard != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                @ViewBag.thanksCard
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-warning">
+                    <div class="card">
+                        <div class="container-fluid">
+                            <div class="card-header">                              
+                                <div style="padding-bottom: 10px; float:left">
+                                    @if (ViewBag.GmapCode == null)
+                                    {
+                                        <span style="color:red">Google Map Location not set, please update first before sending message, else whatsapp message will not sent</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:forestgreen">Google Map Location found for this event, whatsapp mesage will send</span>
+                                    }
+                                    <br /><span style="color: red">Current Message limit for whatsapp in 1 batch is 300</span>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" onchange="changeLanguage()" type="radio" name="languageRadioButton" id="arabicButton" value="arabic" checked>
+                                        <label class="form-check-label" for="flexRadioDefault1">
+                                            ????
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" onchange="changeLanguage()" type="radio" name="languageRadioButton" id="englishButton"  value="english">
+                                        <label class="form-check-label" for="flexRadioDefault2">
+                                            English
+                                        </label>
+                                    </div>
+                                </div>
+                                <div style="padding-bottom: 10px; float:right">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" dir="ltr" aria-haspopup="true" aria-expanded="false">
+                                            Action
+                                        </button>
+                                        <div class="dropdown-menu" style="font-size: small">
+                                            <a href="#" onclick="SetEventId(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:cornflowerblue"></i>&nbsp; Add Guest</a>
+                                            <a href="#" class="dropdown-item" data-toggle="modal" data-target="#modal-uploadguest"><i class="nav-icon fas fa-upload" style="color:cornflowerblue"></i>&nbsp; Upload Guest</a>
+                                            <div class="dropdown-divider"></div>
+                                            <a href="~/Upload/Samplefile.xlsx" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Template</a>
+                                            <div class="dropdown-divider"></div>
+                                            
+                                            <a href="#" onclick="RefreshALl(@ViewBag.EventId);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh All</a>
+
+                                            <a href="~/admin/DownloadAll/@ViewBag.EventId" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download All</a>
+                                            <a href="~/admin/StatusRefreshForAllGuests/@ViewBag.EventId" class="dropdown-item"><i class="fas fa-sync-alt" title="?????? ???? ?????? ??????" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
+                                            <a href="~/admin/ValidateAllGuestPhoneNumbers/@ViewBag.EventId" class="dropdown-item">
+                                                <i class="fas fa-check-circle" style="color:blue"></i>&nbsp;Validate All Numbers Format
+                                            </a>
+
+                                            <div class="dropdown-divider"></div>
+                                            <a href="~/admin/SendToAll/@ViewBag.EventId" class="dropdown-item" onclick="return myConfirmatin('Are you sure you want to sent confirmation ?')"><i class="far fa-question-circle" style="color:orangered"></i>&nbsp; Send confirmation Whatsapp</a>
+                                            <a href="~/admin/SendCardToAll/@ViewBag.EventId" onclick="return myConfirmatin('Are you sure you want to sent QR ?')" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp; Send Push whatsapp</a>
+                                            <a href="~/admin/SendEventLocationToAll/@ViewBag.EventId" onclick="return myConfirmatin('Are you sure you want to sent Evend Location ?')" class="dropdown-item"><i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Event Location</a>
+                                            <a href="~/admin/SendCongratulationMessageToAll/@ViewBag.EventId" onclick="return myConfirmatin('Are you sure you want to send thanks cards ?')" class="dropdown-item"><i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Thanks Cards</a>
+                                            <div class="btn-group">
+                                                <button id="buttonList" class="dropdown-item dropdown-toggle" href="#" role="button" data-toggle="dropdown" dir="ltr" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Reminder Messages
+                                                </button>
+
+                                                <div id="dropList" hidden class="dropdown-menu" style="font-size: small">
+                                                    <a class="dropdown-item" href="~/admin/SendReminderMessageToAll/@ViewBag.EventId">Send Reminder Message To All</a>
+                                                    <a class="dropdown-item" href="~/admin/SendReminderMessageToOnlyAccepted/@ViewBag.EventId"> Send Reminder Message To Only Accepted</a>
+                                                    <a class="dropdown-item" href="~/admin/SendReminderMessageToOnlyNoAnswer/@ViewBag.EventId">Send Reminder Message To Only No Answer</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="~/admin/viewevent/@ViewBag.EventId" class="btn btn-warning btn-sm">Back to Events</a>
+                                </div>
+                            </div>
+                      
+                            <div id="Spinn" name="Spinn" style="display:none" class="spinner"></div>
+                            <!-- /.card-header -->
+                          <div class="card-body p-0" id="arabicTable">
+                                <table id="searchableTable" class="table table-bordered table-hover text-center" style="padding:5px; width:100%;">
+                                        <thead>
+                                            <tr>
+                                            <th><i class="fas fa-sync-alt"></i></th>
+                                                <th>#</th>
+                                                <th>??? ???????</th>
+                                                <th>??? ?????</th>
+                                                <th>??? ??????</th>
+                                                <th>??? ???? ?????</th>
+                                                <th>???? ????? ???????</th>
+                                                <th>???? ??????</th>
+                                                <th>???? ???? ????????</th>
+                                                <th>???? ??????? ?????????</th>
+                                                <th>???? ????? ???????</th>
+                                                <th>?? ?????</th>
+                                                <th>??? ?? ?????</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @{
+                                                int srNo = 0;                                          
+                                            }
+                                            @foreach (var guest in ViewBag.GuestList)
+                                            {
+                                                srNo++;
+                                                <tr>
+                                                <td style="text-align: center;">
+                                                    <a href="~/admin/StatusRefreshIndividually/@guest.GuestId?eventid=@guest.EventId" class="rotate-icon">
+                                                        <i class="fas fa-sync-alt" title="????? ??????" style="color: darkgreen;"></i>
+                                                    </a>
+                                                </td>
+
+
+                                                    <td style="@(guest.IsPhoneNumberValid ? "" : "background-color: lightcoral;")">
+                                                    @srNo
+                                                    </td>
+                                                    <td>
+                                                        @{
+                                                            var ecode = "E00000" + @guest.EventId;
+                                                        } @ecode
+                                                    </td>
+                                                    <td>@guest.FirstName</td>
+                                                <td><a href="tel:+@guest.SecondaryContactNo@guest.PrimaryContactNo">+@guest.SecondaryContactNo@guest.PrimaryContactNo</a></td>
+
+                                           @if(guest.ScanId == 0 || guest.ScanId == null ){
+                                                <td>@guest.Scanned of @guest.NoOfMembers</td>
+                                           }else{
+                                                <td>@(guest.Scanned+1) of @guest.NoOfMembers</td>
+                                           }
+                                                    
+
+                                                    <td>
+                                                        @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                        {
+                                                            <span>?? ???? ???????</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.TextRead))
+                                                        {
+                                                            <span>???? ???????</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.TextDelivered))
+                                                        {
+                                                        <span>???? ???????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.TextSent))
+                                                    {
+                                                        if (guest.whatsappMessageId != null)
+                                                        {
+                                                            <span>?? ??? ??????? </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>????? ???????</span>
+                                                        }
+                                                        
+                                                        }
+                                                        else if (guest.MessageId != null)
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>Whatsapp Not exists</span>
+                                                            }
+                                                            else
+                                                            {                                                          
+                                                                <span>??? ???????</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>Whatsapp Not exists</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?????? ???????</span>
+                                                            }
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        @if (guest.ImgFailed != null && Convert.ToBoolean(guest.ImgFailed))
+                                                        {
+                                                            <span>?? ???? ???????</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.ImgRead))
+                                                        {
+                                                            <span>???? ??????</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.ImgDelivered))
+                                                        {
+                                                        <span>???? ??????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ImgSent))
+                                                    {
+                                                        if (guest.whatsappMessageImgId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered )|| Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>????? ??????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?? ??? ?????? </span>
+                                                            }
+                                                           
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>????? ??????</span>
+                                                        }
+                                                           
+                                                        }
+                                                        else if (guest.ImgSentMsgId != null)
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>Whatsapp Not exists</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>??? ???????</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>?? ???? ???????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                    <span>?? ??? ??????? ??????? ?????</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                                    {
+                                                                        <span>?? ???? ???????</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span>?????? ???????</span>
+                                                                    }
+
+                                                                }
+
+                                                            }
+                                                        }
+                                                    </td>
+                                               
+                                                <td>
+                                                    @if (guest.EventLocationFailed != null && Convert.ToBoolean(guest.EventLocationFailed))
+                                                    {
+                                                        <span>?? ???? ???????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.EventLocationRead))
+                                                    {
+                                                        <span>??? ???? ????????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.EventLocationDelivered))
+                                                    {
+                                                        <span>??? ???? ????????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.EventLocationSent))
+                                                    {
+                                                        if (guest.whatsappWatiEventLocationId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>???? ???? ????????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?? ??? ???? ???????? </span>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>???? ???? ????????</span>
+                                                        }
+
+                                                    }
+                                                    else if (guest.waMessageEventLocationForSendingToAll != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>??? ???????</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>?? ???? ???????</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                            {
+                                                                <span>?? ???? ???????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?????? ???????</span>
+                                                            }
+
+                                                        }
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (guest.ReminderMessageFailed != null && Convert.ToBoolean(guest.ReminderMessageFailed))
+                                                    {
+                                                        <span>?? ???? ???????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ReminderMessageRead))
+                                                    {
+                                                        <span>???? ??????? ?????????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ReminderMessageDelivered))
+                                                    {
+                                                        <span>???? ??????? ????????? </span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ReminderMessageSent))
+                                                    {
+                                                        if (guest.ReminderMessageWatiId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>????? ??????? ?????????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?? ??? ??????? ????????? </span>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>????? ??????? ????????? </span>
+                                                        }
+     
+                                                       
+                                                        
+                                                    }
+                                                    else if (guest.ReminderMessageId != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>??? ???????</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>?? ???? ???????</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (guest.ReminderMessageFailed != null && Convert.ToBoolean(guest.ReminderMessageFailed))
+                                                            {
+                                                                <span>?? ???? ???????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?????? ???????</span>
+                                                            }
+
+                                                        }
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (guest.ConguratulationMsgFailed != null && Convert.ToBoolean(guest.ConguratulationMsgFailed))
+                                                    {
+                                                        <span>?? ???? ???????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ConguratulationMsgRead))
+                                                    {
+                                                        <span>???? ????? ???????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ConguratulationMsgDelivered))
+                                                    {
+                                                        <span>???? ????? ???????</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ConguratulationMsgSent))
+                                                    {
+                                                        if (guest.WatiConguratulationMsgId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>????? ????? ???????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?? ??? ????? ??????? </span>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>????? ????? ???????</span>
+                                                        }
+
+                                                    }
+                                                    else if (guest.ConguratulationMsgId != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>??? ???????</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>?? ???? ???????</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                            {
+                                                                <span>?? ???? ???????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?????? ???????</span>
+                                                            }
+
+                                                        }
+                                                    }
+                                                </td>
+                                                    <td>
+
+                                                        @if (guest.TextRead == true || guest.TextDelivered == true || guest.TextSent == true)
+                                                        {
+
+                                                            if (@guest.Response == "Message Processed Successfully")
+                                                            {
+                                                                if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                                {
+                                                                <span> ???? ???? ???? ????? ?? ??????? ??????? ???? ????? ????????</span>
+                                                            }
+                                                            else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
+                                                            {
+                                                                if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                    <span>??????</span>
+                                                                }
+                                                                else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                                {
+                                                                    <span>?????</span>
+                                                                }
+
+                                                            }
+
+
+                                                            else
+                                                            {
+                                                                if (guest.whatsappMessageId != null)
+                                                                {
+                                                                    @if (!Convert.ToBoolean(guest.TextDelivered) && !Convert.ToBoolean(guest.TextRead))
+                                                                    {
+                                                                        <span>?? ????? ??????? ?? ??????</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span> ?????? ?? ???</span>
+                                                                    }
+                                                                    
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span> ?????? ?? ???</span>
+                                                                }
+                                                                
+                                                                }
+
+                                                            }
+                                                            else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            {
+                                                                <span>??????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>?????</span>
+                                                            }
+                                                            }
+                                                            else
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                <span>??????</span>
+                                                                }
+                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            {
+                                                                <span>?????</span>
+                                                            }
+                                                                else
+                                                                {
+                                                                    <span> @guest.Response</span>
+                                                                }
+                                                                
+                                                            
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (@guest.Response == "Message Processed Successfully")
+                                                            {
+                                                                if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                                {
+                                                                    <span> ???? ???? ???? ????? ?? ??????? ??????? ???? ????? ????????</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span> ??? ????? ???????</span>
+                                                                }
+
+                                                            }
+                                                            else
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            {
+                                                                <span>??????</span>
+                                                            }
+                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            {
+                                                                <span>?????</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span> @guest.Response</span>
+                                                            }
+                                                            }
+
+                                                       
+                                                        }
+                                                   
+                                                    </td>
+                                                    <td>@guest.WaresponseTime</td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                        <button type="button" class="btn btn-warning btn-sm dropdown-toggle" dir="ltr" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                Action
+                                                            </button>
+                                                            <div class="dropdown-menu" style="font-size: small">
+
+                                                                <a href="~/admin/InviteOnWhatsapp/@guest.GuestId" class=" dropdown-item"><i class="far fa-question-circle" style="color:red"></i>&nbsp;Send Confirmation</a>
+                                                                <a href="~/admin/SendQRCode/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send QR</a>
+                                                                <a href="~/admin/SendEventLocation/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Event Location</a>
+                                                            <a href="~/admin/SendReminderMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Reminder Message</a>
+                                                            <a href="~/admin/sendConguratilationMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Thanks Card</a>
+                                                            <div style="padding-left:15px;" class="dropdown ">
+                                                                <i class="far fa-comments" style="color:green"></i>&nbsp;Failed Message
+                                                                <div class="dropdown-content">
+                                                                    <a href="~/DefaultWhatsapp/sendMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Message</a>
+                                                                    <a href="~/DefaultWhatsapp/sendImage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Image</a>
+                                                                    <a href="~/DefaultWhatsapp/sendRminderMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Reminder Msg</a>
+                                                                    <a href="~/DefaultWhatsapp/sendCongratularionMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Congratulation Msg</a>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            @* <a href="~/admin/sendConguratilationMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:orangered"></i>&nbsp;Send Reminder</a> *@
+                                                                
+                                                                @{
+                                                                    var guestImage = @"\" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".png";
+                                                                }
+                                                                @{
+                                                                    var cardLink = "/Upload/preview/" + @"/" + guest.EventId + @"/" + guestImage;
+                                                                }
+
+                                                                <a href="@cardLink" target="_blank" download="@guestImage" class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card</a>
+                                                                @{
+                                                                    var imgLink = "/Upload/guestcode/" + guest.GuestId + ".png";
+                                                                }
+                                                                <a href="@imgLink" target="_blank" download="barcode.png" class=" dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode</a>
+                                                               
+                                                                <a href="#" onclick="EditGuest('@guest.GuestId','@guest.FirstName','@guest.NoOfMembers','@guest.PrimaryContactNo','@guest.AdditionalText','@guest.SecondaryContactNo')" class="dropdown-item"><i class="nav-icon fas fa-pen-nib" style="color:cornflowerblue"></i>&nbsp; Edit</a>
+                                                                <a href="#" onclick="SetGuestIdForDelete(@guest.GuestId)" class="dropdown-item" data-toggle="modal" data-target="#deleteConfirmation"><i class="nav-icon fas fa-recycle" style="color:cornflowerblue"></i>&nbsp; Delete</a>
+                                                            @if (User.IsInRole("Administrator") && !User.IsInRole("Operator"))
+                                                            {
+                                                               
+                                                                        <a href="~/admin/SendQRCodeWithEditingResponse/@guest.GuestId" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send QR and Set Accept Response</a>
+                                                                        <a href="~/admin/SetDeclineResponse/@guest.GuestId" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Set Decline Response</a>
+                                                                        <a href="~/admin/SetAcceptResponse/@guest.GuestId" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Set Accept Response</a>
+                 
+                                                            }
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            }
+                                        </tbody>
+                                 </table>
+
+                             </div>
+                            
+                    
+                               <div class="card-body p-0" id="englishTable">
+                                <table id="searchableTable_double" class="table table-bordered table-hover text-center" style="padding:5px;">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Event</th>
+                                                    <th>Name</th>
+                                                    <th>Mobile No</th>
+                                                    <th>Scanned</th>
+                                                    <th>Inv-Status</th>
+                                                    <th>QR-Status</th>
+                                                    <th>Event-location Status</th>
+                                                    <th>Reminder-Message Status</th>
+                                                    <th>congatulation-message Status</th>
+                                                    <th>Response</th>
+                                                    <th>Response Time</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                        <tbody>
+                                            @{
+                                                 srNo = 0;
+                                            }
+                                            @foreach (var guest in ViewBag.GuestList)
+                                            {
+                                                srNo++;
+                                                <tr>
+                                                    <td>@srNo</td>
+                                                    <td>
+                                                        @{
+                                                            var ecode = "E00000" + @guest.EventId;
+                                                        } @ecode
+                                                    </td>
+                                                    <td>@guest.FirstName</td>
+
+                                                <td class="@((guest.IsPhoneNumberValid == false) ? "phone-number-invalid" : "phone-number-valid")">
+                                                    <a href="tel:+@guest.SecondaryContactNo@guest.PrimaryContactNo">+@guest.SecondaryContactNo@guest.PrimaryContactNo</a>
+                                                </td>
+
+                                                    <td>@guest.Scanned of @guest.NoOfMembers</td>
+
+                                                    <td>
+                                                        @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                        {
+                                                            <span>Inv-Failed</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.TextRead))
+                                                        {
+                                                            <span>Inv-Read</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.TextDelivered))
+                                                        {
+                                                            <span>Inv-Delivered</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.TextSent))
+                                                        {
+                                                        if (guest.whatsappMessageId != null)
+                                                        {
+                                                            
+                                                            <span>Inv-undeliverable</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Inv-sent</span>
+                                                        }
+                                                        }
+                                                        else if (guest.MessageId != null)
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>Whatsapp Not exists</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Inv-Intiated</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>Whatsapp Not exists</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Inv-Pending</span>
+                                                            }
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        @if (guest.ImgFailed != null && Convert.ToBoolean(guest.ImgFailed))
+                                                        {
+                                                            <span>QR-Failed</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.ImgRead))
+                                                        {
+                                                            <span>QR-Read</span>
+                                                        }
+                                                        else if (Convert.ToBoolean(guest.ImgDelivered))
+                                                        {
+                                                        <span>QR-Delivered</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ImgSent))
+                                                    {
+                                                        if (guest.whatsappMessageImgId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>QR-sent</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>QR-undeliverable</span>
+                                                            }
+                                                           
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>QR-sent</span>
+                                                        }
+                                                        
+                                                        }
+                                                        else if (guest.ImgSentMsgId != null)
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>Whatsapp Not exists</span>
+                                                            }
+                                                            else
+                                                            {
+                                                            <span>QR-Intiated</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (guest.Response == "Whatsapp Not exists")
+                                                            {
+                                                                <span>QR-Failed</span>
+                                                            }
+                                                            else
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                    <span>Not sent because The guest decliened the invitaion</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                                    {
+                                                                        <span>QR-Failed</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span>QR-Pending</span>
+                                                                    }
+
+                                                                }
+
+                                                            }
+                                                        }
+                                                    </td>
+                                                <td>
+                                                    @if (guest.EventLocationFailed != null && Convert.ToBoolean(guest.EventLocationFailed))
+                                                    {
+                                                        <span>Event-location Failed</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.EventLocationRead))
+                                                    {
+                                                        <span>Event-location Read</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.EventLocationDelivered))
+                                                    {
+                                                        <span>Event-location Delivered</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.EventLocationSent))
+                                                    {
+                                                        if (guest.whatsappWatiEventLocationId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>Event-location Sent</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Event-location undeliverable</span>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Event-location Sent</span>
+                                                        }
+
+                                                    }
+                                                    else if (guest.waMessageEventLocationForSendingToAll != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Event-location Intiated</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Event-location Failed</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                            {
+                                                                <span>Event-location Failed</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Event-location Pending</span>
+                                                            }
+
+                                                        }
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (guest.ReminderMessageFailed != null && Convert.ToBoolean(guest.ReminderMessageFailed))
+                                                    {
+                                                        <span>Reminder-Message Failed</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ReminderMessageRead))
+                                                    {
+                                                        <span>Reminder-Message Read</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ReminderMessageDelivered))
+                                                    {
+                                                        <span>Reminder-Message Delivered </span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ReminderMessageSent))
+                                                    {
+
+                                                        if (guest.ReminderMessageWatiId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>Reminder-Message sent</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Reminder-Message undeliverable </span>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Reminder-Message sent </span>
+                                                        }
+
+                                                    }
+                                                    else if (guest.ReminderMessageId != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Reminder-Message Intiated</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Reminder-Message Failed</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (guest.ReminderMessageFailed != null && Convert.ToBoolean(guest.ReminderMessageFailed))
+                                                            {
+                                                                <span>Reminder-Message Failed</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Reminder-Message Pending</span>
+                                                            }
+
+                                                        }
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (guest.ConguratulationMsgFailed != null && Convert.ToBoolean(guest.ConguratulationMsgFailed))
+                                                    {
+                                                        <span>cong-message Failed</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ConguratulationMsgRead))
+                                                    {
+                                                        <span>cong-message Read</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ConguratulationMsgDelivered))
+                                                    {
+                                                        <span>cong-message Delivered</span>
+                                                    }
+                                                    else if (Convert.ToBoolean(guest.ConguratulationMsgSent))
+                                                    {
+                                                        if (guest.WatiConguratulationMsgId != null)
+                                                        {
+                                                            if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
+                                                            {
+                                                                <span>cong-message Sent</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>cong-message undeliverable</span>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>cong-message Sent</span>
+                                                        }
+
+                                                    }
+                                                    else if (guest.ConguratulationMsgId != null)
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>Whatsapp Not exists</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>cong-message Intiated</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (guest.Response == "Whatsapp Not exists")
+                                                        {
+                                                            <span>cong-message Failed</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                            {
+                                                                <span>cong-message Failed</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>cong-message Pending</span>
+                                                            }
+
+                                                        }
+                                                    }
+                                                </td>
+                                                    <td>
+
+                                                        @if (guest.TextRead == true || guest.TextDelivered == true || guest.TextSent == true)
+                                                        {
+
+                                                            if (@guest.Response == "Message Processed Successfully")
+                                                            {
+                                                                if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                                {
+                                                                <span> The Guest can't recieve the message because whatsapp policy</span>
+                                                            }
+                                                            else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
+                                                            {
+                                                                if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                    <span>Decline</span>
+                                                                }
+                                                                else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                                {
+                                                                    <span>Accept</span>
+                                                                }
+                                                                
+                                                            }
+                                                                else
+                                                                {
+                                                                if (guest.whatsappMessageId != null)
+                                                                {
+                                                                    @if (!Convert.ToBoolean(guest.TextDelivered) && !Convert.ToBoolean(guest.TextRead))
+                                                                    {
+                                                                        <span>Message can't be received</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span>No answer yet</span>
+                                                                    }
+                                                                    
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span>No answer yet</span>
+                                                                }
+                                                                   
+                                                                }
+
+                                                            }
+                                                            else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
+                                                            {
+
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            {
+                                                                <span>Decline</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>Accept</span>
+                                                            }
+                                                            }
+                                                            else
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                <span>Decline</span>
+                                                                }
+                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            {
+                                                                <span>Accept</span>
+                                                            }
+                                                                else
+                                                                {
+                                                                    <span> @guest.Response</span>
+                                                                }
+                                                                
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (@guest.Response == "Message Processed Successfully")
+                                                            {
+                                                                if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
+                                                                {
+                                                                    <span> The Guest can't recieve the message because whatsapp policy</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span> Processing the invitaion</span>
+                                                                }
+
+                                                            }
+                                                            else
+                                                            {
+                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                {
+                                                                <span>Decline</span>
+                                                                }
+                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            {
+                                                                <span>Accept</span>
+                                                            }
+                                                                else
+                                                                {
+                                                                    <span> @guest.Response</span>
+                                                                }
+                                                            }
+
+
+                                                        }
+
+                                                    </td>
+                                                    <td>@guest.WaresponseTime</td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-warning btn-sm dropdown-toggle" dir="ltr" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            Action
+                                                        </button>
+                                                        <div class="dropdown-menu" style="font-size: small">
+
+                                                            <a href="~/admin/InviteOnWhatsapp/@guest.GuestId" class=" dropdown-item"><i class="far fa-question-circle" style="color:red"></i>&nbsp;Send Confirmation</a>
+                                                            <a href="~/admin/SendQRCode/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send QR</a>
+                                                            <a href="~/admin/SendEventLocation/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Event Location</a>
+                                                            <a href="~/admin/SendReminderMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Reminder Message</a>
+                                                            <a href="~/admin/sendConguratilationMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send Thanks Card</a>
+                                                            @* <a href="~/admin/sendConguratilationMessage/@guest.GuestId" class=" dropdown-item"><i class="far fa-comments" style="color:orangered"></i>&nbsp;Send Reminder</a> *@
+
+                                                            @{
+                                                                var guestImage = @"\" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".png";
+                                                            }
+                                                            @{
+                                                                var cardLink = "/Upload/preview/" + @"/" + guest.EventId + @"/" + guestImage;
+                                                            }
+
+                                                            <a href="@cardLink" target="_blank" download="@guestImage" class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card</a>
+                                                            @{
+                                                                var imgLink = "/Upload/guestcode/" + guest.GuestId + ".png";
+                                                            }
+                                                            <a href="@imgLink" target="_blank" download="barcode.png" class=" dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode</a>
+
+                                                            <a href="#" onclick="EditGuest('@guest.GuestId','@guest.FirstName','@guest.NoOfMembers','@guest.PrimaryContactNo','@guest.AdditionalText','@guest.SecondaryContactNo')" class="dropdown-item"><i class="nav-icon fas fa-pen-nib" style="color:cornflowerblue"></i>&nbsp; Edit</a>
+                                                            <a href="#" onclick="SetGuestIdForDelete(@guest.GuestId)" class="dropdown-item" data-toggle="modal" data-target="#deleteConfirmation"><i class="nav-icon fas fa-recycle" style="color:cornflowerblue"></i>&nbsp; Delete</a>
+                                                            @if (User.IsInRole("Administrator") && !User.IsInRole("Operator"))
+                                                            {
+
+                                                                <a href="~/admin/SendQRCodeWithEditingResponse/@guest.GuestId" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Send QR and Set Accept Response</a>
+                                                                <a href="~/admin/SetDeclineResponse/@guest.GuestId" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Set Decline Response</a>
+                                                                <a href="~/admin/SetAcceptResponse/@guest.GuestId" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp;Set Accept Response</a>
+
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                </tr>
+
+                                            }
+                                        </tbody>
+                                 </table>
+                            </div> 
+                            <!-- /.card-body -->
+                        </div>
+                    </div>
+                    <!-- /.card -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Modal -->
+<div class="modal fade" id="deleteConfirmation" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Confirmation - <label id="selectedGuest"></label></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure want to delete this guest, once deleted you will not able to recover this.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <a href="#" id="deleteGuest" class="btn btn-warning btn-sm">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-guest">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><lablel id="modalTitle">Add Guest</lablel></h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("Guest", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+                    @Html.HiddenFor(Model => Model.EventId)
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Full Name</label>
+                            @Html.HiddenFor(Model => Model.GuestId)
+                            @Html.TextBoxFor(model => model.FirstName, new { @required = "required", @class = "form-control", @name = "Name", @type = "text", @placeholder = "Full Name" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">No. of Member</label>
+                            @Html.TextBoxFor(model => model.NoOfMembers, new { @required = "required", @class = "form-control", @name = "NOM", @type = "number", @placeholder = "No. of Member" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Country Code</label>
+                            @Html.TextBoxFor(model => model.SecondaryContactNo, new { @required = "required", @class = "form-control", @name = "Country Code", @type = "text", @placeholder = "Country Code" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Contact No</label>
+                            @Html.TextBoxFor(model => model.PrimaryContactNo, new { @required = "required", @class = "form-control", @name = "Contact No", @type = "text", @placeholder = "Contact No" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Additional Text</label>
+                            @Html.TextBoxFor(model => model.AdditionalText, new { @required = "required", @class = "form-control", @name = "Additional Text", @type = "text", @placeholder = "Additional Text" })
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-uploadguest">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Upload Guest</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("Upload", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    <div class="card-body">
+                        <input type="hidden" name="UploadEventId" value="@ViewBag.EventId" />
+                        <div class="form-group">
+                            @Html.TextBoxFor(Model => Model.Address, new { @required = "required", @class = "form-control", @name = "file", @type = "file", @placeholder = "Excel file" })
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="submit">Upload</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+ @section Scripts{
+<script>
+
+    const buttonList = document.getElementById('buttonList');
+        const downList = document.getElementById('dropList');
+
+    buttonList.addEventListener('click', showOrHide);
+
+        function showOrHide()
+        {
+            downList.hidden = !downList.hidden;
+        }
+                                               
+    function RefreshALl(eventID) {
+        $.ajax({
+            type: 'GET',
+            url: '@Url.Action("RefreshAll", "admin")' + '/' + eventID,
+            cache: false,
+            beforeSend: function (xhr) {
+                $("#Spinn").css("display", "block");
+            },
+            success: function (response) {
+                console.log(response);
+                if (response.succeeded == true) {
+                    Swal.fire({
+                        position: "top-end",
+                        icon: "success",
+                        title: "Refresh All succeeded!"
+                    });
+                }
+                else {
+                    Swal.fire({
+                        position: "top-end",
+                        icon: "error",
+                        title: "Oops...Something went wrong! Please try again later!",
+                        text: "Error:" + response.result,
+
+                    });
+                }
+            },
+            error: function (request, status, error) {
+                Swal.fire({
+                    position: "top-end",
+                    icon: "error",
+                    title: "Oops...Something went wrong! Please try again later!",
+                    text: "Error:" +request.responseText
+                       
+                    
+                })
+            },
+                    complete: function () {
+                        $("#Spinn").css("display", "none");
+                    },
+        });
+    };
+
+    function myConfirmatin(msg) {
+        return confirm(msg);
+    }
+
+    var arabicTable = document.getElementById("arabicTable");
+    var englishTable = document.getElementById("englishTable");
+
+   arabicTable.style.display = "block";
+   englishTable.style.display = "none";
+
+        function changeLanguage() {
+            var arabicTable = document.getElementById("arabicTable");
+            var englishTable = document.getElementById("englishTable");
+
+            if (document.getElementById('arabicButton').checked) {
+        @language = document.getElementById('arabicButton').value;
+                arabicTable.style.display = "block";
+                englishTable.style.display = "none";
+            }
+            if (document.getElementById('englishButton').checked) {
+        @language = document.getElementById('englishButton').value;
+                englishTable.style.display = "block";
+                arabicTable.style.display = "none";
+            }
+            console.log(@language);
+        }
+        document.querySelectorAll('.rotate-icon').forEach(function (element) {
+            element.addEventListener('click', function () {
+                element.classList.add('rotating');
+
+                // Automatically remove the class after the animation ends
+                setTimeout(function () {
+                    element.classList.remove('rotating');
+                }, 600); // Match the duration of the animation (0.6s)
+            });
+        });
+</script>
+}
+
+<style>
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        padding: 12px 16px;
+        z-index: 1;
+        left: -200px;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    .dropdown-content:hover {
+        background-color: #ccc;
+    }
+</style>

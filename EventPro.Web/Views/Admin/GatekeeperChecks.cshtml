@@ -1,0 +1,291 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+@{
+    ViewData["Title"] = "EventByGatekeeper";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if(TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="card card-default color-palette-box">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-tag"></i>
+                   GateKeeper checks
+                </h3>
+
+            </div>
+            @using(Html.BeginForm(null,null,FormMethod.Post))
+            {
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+
+                                <label for="GKId">Gatekeeper(@ViewBag.gkId)</label>
+                                @Html.DropDownList("" , ViewBag.Users as SelectList, "--Select--", new { id = "GKId", @class = "form-control select2", @name = "GKId" })
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+
+                                <label for="Address">Event Address</label>
+                                @Html.DropDownList("", ViewBag.Address as SelectList, "--Select--",new { id = "Address", @class = "form-control select2", @name = "Address" })
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="type">Type</label>
+                                <br>
+                                @Html.DropDownList("type",
+                            new List<SelectListItem>()
+                            {
+                            new SelectListItem { Text="Check In", Value = "In"},
+                            new SelectListItem { Text="Check Out", Value = "Out"}
+                            }, "--Select--",new {  id = "type", @class = "form-control select2", @name = "type"})
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="startFrom">Event Start from</label>
+                            <input type="date" id="startFrom" name="startFrom" value="@ViewBag.startFrom" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="startTo">Event Start from To</label>
+                            <input type="date" id="startTo" name="startTo" value="@ViewBag.startTo" class="form-control" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="col-md-3" style="float:right">
+                        <button type="submit" style="width:100px" class="btn btn-primary btn-sm">Search</button>
+                        <button type="submit" style="width:100px" class="btn btn-warning btn-sm" id="RefreshPage">Reset</button>
+                    </div>
+                </div>
+
+
+                @if(ViewBag.gkId != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#GKId").val('@ViewBag.gkId');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.cityId != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#Address").val('@ViewBag.cityId');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.startFrom != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#startFrom").val('@ViewBag.startFrom');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.startTo != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#startTo").val('@ViewBag.startTo');
+                        });
+                    </script>
+                }
+
+                @if(ViewBag.type != null)
+                {
+                    <script type="text/javascript">
+                        $(function () {
+                            $(this).find("#type").val('@ViewBag.type');
+                        });
+                    </script>
+                }
+
+            }
+            <!-- /.card-body -->
+        </div>
+        <div class="row">
+
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid">
+                        <!-- /.card-header -->
+                        <div class="card-body p-0" style="margin-top:10px">
+                            <table id="searchableTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Link</th>
+                                        <th>Title</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                        <th>Venue</th>
+                                        <th>Location</th>
+
+                                        <th>GK Id</th>
+                                        <th>GK</th>
+                                        <th>Type</th>
+                                        <th>Log Date</th> 
+                                        <th>Check Location</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(var ev in ViewBag.Events)
+                                    {
+                                        <tr>
+                                            <td>@ev.Id</td>
+                                            <td> @(ev.linkedTo == null ? "--" : ev.linkedTo)</td>
+                                            <td>@ev.EventTitle</td>
+                                            <td align="right">@Convert.ToDateTime(ev.EventFrom).ToString("dd-MMM-yyyy")</td>
+                                            <td align="right">@Convert.ToDateTime(ev.EventTo).ToString("dd-MMM-yyyy")</td>
+
+                                            <td>@ev.EventVenue</td>
+                                            <td>@ev.Location</td>
+                                            <td>@ev.GatekeeperId</td>
+                                            <td>@ev.GatekeeperName</td>
+
+                                            <td>                                               
+                                                @if(ev.CheckType == "In")
+                                                {
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right-circle-fill" viewBox="0 0 16 16">
+                                                        <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0M4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5z" />
+                                                    </svg>
+                                                }
+                                                else if(ev.CheckType == "Out")
+                                                {
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-circle" viewBox="0 0 16 16">
+                                                        <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z" />
+                                                    </svg>
+                                                }
+                                                @(string.Empty + ev.CheckType)
+                                            </td>
+                                            <td>@ev.LogDate</td>
+                                            <td>
+                                                <a href="http://maps.google.com/?q= @ev.latitude, @ev.longitude" target="_blank">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+                                                        <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6" />
+                                                    </svg>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Assign Gatekeeper</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using(Html.BeginForm(null,null,FormMethod.Post,new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Category Name</label>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-default">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">New Category</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using(Html.BeginForm(null,null,FormMethod.Post,new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="Name">Category Name</label>
+                        </div>
+                        <div class="form-group">
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+
+            $('#RefreshPage').click(function () {
+                document.getElementById("GKId").disabled = false;
+                $("#GKId")[0].selectedIndex = 0;
+                $("#Address")[0].selectedIndex = 0;
+                $("#type")[0].selectedIndex = 0;                
+                $("#startFrom").value = "";
+                $("#startTo").value = "";
+                $('#startFrom').val('').attr('type', 'text').attr('type', 'date');
+                $('#startTo').val('').attr('type', 'text').attr('type', 'date');
+
+                window.location.reload();
+            });
+           
+        });
+       
+    </script>
+}

@@ -1,0 +1,18 @@
+﻿-------------------------------------
+alter table events
+add FailedSendingConfiramtionMessagesLinksLanguage nvarchar(40) default null,
+ShowFailedSendingEventLocationLink bit default 1
+_____________________________________
+update events 
+set ShowFailedSendingEventLocationLink = 1
+----------------------------------------
+update events 
+set FailedSendingConfiramtionMessagesLinksLanguage = 'Arabic'
+----------------------------------------
+---------------------------------------
+----------------------------------------
+alter table events
+add ShowFailedSendingCongratulationLink bit default 1
+----------------------------------------
+update events 
+set ShowFailedSendingCongratulationLink = 1

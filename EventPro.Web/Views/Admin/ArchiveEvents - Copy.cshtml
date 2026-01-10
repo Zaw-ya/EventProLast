@@ -1,0 +1,86 @@
+@model EventPro.DAL.Models.EventCategory
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using EventPro.Web.Common
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        @if (TempData["message"] != null)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> @TempData["message"].
+            </div>
+        }
+    </div>
+
+    <div class="container-fluid">
+        <div class="card card-default color-palette-box">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-tag"></i>
+                    Archive Events
+                </h3>
+                <div class="col-md-6" style="float: inline-start; left: 20px;">
+                @*     <span class="accent-indigo">@AppSession.GetSession(this.Context, SesionConstant.TempData)</span> *@
+                </div>
+
+            </div>
+         
+        </div>
+        <div class="row">
+
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="container-fluid">
+
+                        <!-- /.card-header -->
+                        <div class="card-body p-0" style="margin-top:10px">
+                            <table id="EventsTable" class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Id</th>
+                                        <th>Linked To</th>
+                                        <th>Title</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Venue</th>
+                                        <th>Created On</th>
+                                        <th>Created By</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<script>
+    //pass Role user to JS
+    window.isAgent = @User.IsInRole("Agent").ToString().ToLower();
+    window.isSupervisor = @User.IsInRole("Supervisor").ToString().ToLower();
+    window.isAdmin = @User.IsInRole("Admin").ToString().ToLower();
+
+</script>
+
+
+    @section Scripts {
+    <script src="~/assets/plugins/datatables/js/jquery.datatables.min.js"></script>
+    <script src="~/assets/plugins/datatables/js/jquery.datatables.js"></script>
+    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.min.js"></script>
+    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.js"></script>
+    <script src="~/assets/js/ArchiveEventsDataTable.js"></script>
+    }
+
+

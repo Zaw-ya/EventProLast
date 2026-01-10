@@ -1,0 +1,9 @@
+﻿-------------
+alter table [dbo].[Events] 
+add WhatsappProviderName nvarchar(48) default 'Default' not null
+--------------------
+
+-------------
+alter table [dbo].[Guest]
+add waMessageEventLocationForSendingToAll nvarchar(100) default null 
+--------------------

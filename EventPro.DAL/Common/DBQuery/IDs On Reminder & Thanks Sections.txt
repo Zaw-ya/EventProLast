@@ -1,0 +1,5 @@
+ALTER TABLE Events
+ADD 
+	ReminderTempId NVARCHAR(50) NULL,
+	ThanksTempId NVARCHAR(50) NULL
+

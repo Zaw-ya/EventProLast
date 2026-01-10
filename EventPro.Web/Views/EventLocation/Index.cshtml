@@ -1,0 +1,47 @@
+@using EventPro.DAL.Models;
+@model List<EventLocation>
+
+@{
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<!-- Content Wrapper. Contains page content -->
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <a class="btn btn-primary" href="~/EventLocation/Create">Add New Location</a>
+        <br />
+        <br />
+        <table id="searchableTable" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>City</th>
+                    <th>Governorate</th>
+                    <th>Country</th>
+                    <th>Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var eventLocation in Model)
+                {
+                    <tr>
+                        <td>@eventLocation.Id</td>
+                        <td>@eventLocation.City</td>
+                        <td>@eventLocation.Governorate</td>
+                        <td>@eventLocation.Country</td>
+                        <td>
+                            @if(@eventLocation.City != "Other")
+                            {
+                                <a href="/EventLocation/Edit/@eventLocation.Id" class="btn btn-primary">Edit</a>
+                                <a href="/EventLocation/Delete/@eventLocation.Id" class="btn btn-primary">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div><!-- /.container-fluid -->
+</section>
+<!-- /.content -->
+<!-- /.content-wrapper -->

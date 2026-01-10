@@ -1,0 +1,299 @@
+@model EventPro.DAL.Models.AppSettings
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+
+<style>
+    .sendingMessage span {
+        z-index: 2;
+        position: fixed;
+        top: 50%;
+        left: 55%;
+        transform: translate(-50%, -50%);
+        width: 20%;
+        height: 20%;
+        color: black;
+        margin: 5px;
+        background-color: white;
+        width: 150px;
+        height: 40px;
+        text-align: center;
+        box-shadow: 1px -1px 19px -4px rgba(0,0,0,0.75);
+    }
+</style>
+
+<div class="sendingMessage" hidden id="sendingMessage" syle="background-color: lightgreen">
+    <span>...???? ????? ???????</span>
+</div>
+
+<section>
+    <div class="card m-4 ">
+        <div class="m-4 p-2 pt-0 mt-2" >
+            <form method="post" id="SaveChanges">
+                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+                <input asp-for="@Model.Id" hidden />
+                <div >
+                    <div class="pb-2">
+                        <h2 class="text-primary">App settings</h2>
+                        <hr />
+                    </div>
+                    <h3 style="color:red">Gate keeper notifications Options</h3>
+                    <br />
+                    <div class="mb-3 d-flex justify-content-between row" >
+                        <div class="col-10">
+                            <h4>GateKeeper notifications number</h4>
+                            <span>Number for receveing WhatsApp messages when gate keeper make check in or check out </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.GateKeeperCheckNotificationsNumber" class="form-control text-center" />
+                        </div>
+
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row" >
+                        <div class="col-10">
+                            <h4>GateKeeper reminder notificaton period</h4>
+                            <span>period to determine when to send the event's reminder notification to the gate keeper (In days) </span>
+                        </div>
+                        <div class="col-2" >
+                            <input asp-for="@Model.GateKeeperReminderPeriodForEvent" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <hr style="border: 1px solid gray; margin: 20px 0;">
+                    <h3 style="color:red">Sending Options</h3>
+                    <br />
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Bulk sending limit</h4>
+                            <span> maximum number of guests we can send to in one sending bulk </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.BulkSendingLimit" class="form-control text-center" />
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Number of operator to send bulk messages in parallel</h4>
+                            <span> maximum number of operator allowed to send bulk messages on the same time </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.NumberOfOpertorToSendBulkOnSameTime" class="form-control text-center" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Whatsapp Service Provider</h4>
+                            <span> Our whatsapp service provider who is resposible of (sending and receiving) messages to/from whatsapp bussiness </span>
+                        </div>
+                        <div class="col-2">
+                            <select class="form-control text-center" asp-for="@Model.WhatsappServiceProvider">
+                                <option>Wati</option>
+                                <option>Twilio</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Whatsapp default twilio profile</h4>
+                            <span> select default twilio profile to use </span>
+                        </div>
+                        <div class="col-2">
+                            <select class="form-control text-center" asp-for="@Model.WhatsappDefaultTwilioProfile" asp-items="ViewBag.Profiles">
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Twilio Balance Alert Limit </h4>
+                            <span> An email notification will be sent when your Twilio account balance drops below or equal this amount. </span>
+                        </div>
+                        <div class="col-2">
+                            <input asp-for="@Model.TwilioBalanceEmailAlertThreshold" class="form-control text-center" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Whatsapp Profiles </h4>
+                            <span>  Whatsapp Profiles Settings </span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-primary" style="cursor:pointer; width:100%;" href="~/AppSettings/DefaultTemplates">profiles</a>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Default Whatsapp </h4>
+                            <span> Default Whatsapp (failed) Settings </span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-primary" style="cursor:pointer; width:100%;" href="~/AppSettings/DefautlWhatsApp">Default Whatsapp</a>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Confirmation Message Keywords</h4>
+                            <span> Confirmation Message Resonses Keywords</span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-primary" style="cursor:pointer; width:100%;" asp-controller="ConfirmationMessageResponsesKeywords" asp-action="Index">Responses Keywords</a>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Force start to process webHook messages</h4>
+                            <span> start processing webHook messages <b>Force Mode</b> </span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-danger" style="cursor:pointer;width:100%;" onclick="ForceStartConsumer()">Force start</a>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Force stop to process webHook messages and stop sending new bulk messages</h4>
+                            <span> stop processing webHook messages and prevent sending new bulk messages <b>Force Mode</b> </span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-danger" style="cursor:pointer; width:100%;" onclick="ForceStopConsumer()">Force stop</a>
+                        </div>
+                    </div>
+                    <hr style="border: 1px solid gray; margin: 20px 0;">
+                    <h3 style="color:red">Storage Options</h3>
+                    <br />
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Delete past events existed cards</h4>
+                            <span> Delete all guests cards belong to past events </span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-danger" style="cursor:pointer; width:100%;" onclick="deletePastEventsGuestsCards()">Delete</a>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-flex justify-content-between row">
+                        <div class="col-10">
+                            <h4>Delete selilog data</h4>
+                            <span> Delete serilog data that monitoring the system actions </span>
+                        </div>
+                        <div class="col-2">
+                            <a class="btn btn-danger" style="cursor:pointer;width:100%;" onclick="deleteSerilogData()">Delete</a>
+                        </div>
+                    </div>
+
+                    <br />
+                    <br />
+                    <div>
+                        <a class="btn btn-secondary" asp-controller="Admin" asp-action="Index">Back to Dashboard</a>
+                        <a onclick="SaveChanges()" class="btn btn-primary" style="width:220px;float:right; ">Save Changes</a>
+                    </div>
+
+
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+@section scripts{
+
+    <script>
+        const sendingMessage = document.getElementById('sendingMessage');
+        async function deletePastEventsGuestsCards()
+        {
+            sendingMessage.hidden = false;
+            var result = await fetch(`/admin/DeletePastEventsCards`);
+            var data = await result.json();
+            sendingMessage.hidden = true;
+            if (data.success) {
+                Swal.fire("??? ????? ????? ");
+            }
+            else {
+                Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+            }
+        }
+
+        async function deleteSerilogData() {
+            sendingMessage.hidden = false;
+            var result = await fetch(`/admin/DeleteSerilogData`);
+            var data = await result.json();
+            sendingMessage.hidden = true;
+            if (data.success) {
+                Swal.fire("??? ????? ????? ");
+            }
+            else {
+                Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+            }
+        }
+
+        async function ForceStartConsumer() {
+            Swal.fire({
+                title: "?? ???? ??? ?????? ???????? ???? ?????? ?????????",
+                text: "!?????: ??? ???? ????? ??? ??????? ??? ?? ????? ????? ???????? ??????? ?????? ????????",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                cancelButtonText: "????? ?????",
+                confirmButtonText: "???, ???? ???"
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    sendingMessage.hidden = false;
+                    var result = await fetch(`/admin/ForceStartConsumer`);
+                    var data = await result.json();
+                    sendingMessage.hidden = true;
+                    if (data.success) {
+                        Swal.fire("?? ??? ?????? ???????? ??????? ");
+                    }
+                    else {
+                        Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+                    }
+                }
+            });
+           
+        }
+
+        async function ForceStopConsumer() {
+
+            Swal.fire({
+                title: "?? ???? ????? ?????? ???????? ???? ?????? ?????????",
+                text: "!?????: ?? ??? ?????? ???????? ??????? ? ?? ?????? ??? ???????? ??????? ??? ?? ????? ??????? ???? ???? ",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                cancelButtonText: "????? ?????",
+                confirmButtonText: "???, ???? ???"
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    sendingMessage.hidden = false;
+                    var result = await fetch(`/admin/ForceStopConsumer`);
+                    var data = await result.json();
+                    sendingMessage.hidden = true;
+                    if (data.success) {
+                        Swal.fire("?? ????? ?????? ???????? ??????? ");
+                    }
+                    else {
+                        Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+                    }
+                }
+            });
+           
+        }
+
+        async function SaveChanges() {
+
+            var posting = $.post("/AppSettings/Update", $("#SaveChanges").serialize());
+            posting.done(function (data) {
+                if (data.success) {
+                        Swal.fire(` ?? ????? ????????? `);
+
+                } else {
+                    Swal.fire(` !??? ??? ?? `);
+                }
+
+            });
+        }
+
+    </script>
+}

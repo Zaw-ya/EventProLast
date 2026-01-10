@@ -1,0 +1,351 @@
+@model EventPro.DAL.Models.Invoices
+@{
+    ViewData["Title"] = "EventCatgory";
+    Layout = "~/Views/Shared/_Admin.cshtml";
+}
+<link rel="stylesheet" href="@Url.Content("~")/lte/assets/plugins/summernote/summernote-bs4.css"
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="callout callout-info">
+                    <h5><i class="fas fa-info"></i> Note:</h5>
+                    Generate bill for client in just few clicks
+                </div>
+
+
+                <!-- Main content -->
+                <div class="invoice p-3 mb-3">
+                    <!-- title row -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h4>
+                                <i class="fas fa-globe"></i> My Invite.
+                                <small class="float-right">Date: @Model.InvoiceDate.Value.ToString("yyyy-MMM-dd")</small>
+                            </h4>
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <!-- info row -->
+                    <div class="row invoice-info">
+                        <div class="col-sm-4 invoice-col">
+                            <strong>
+                                Event Title
+                            </strong><br />
+                            @ViewBag.EventInfo.EventTitle
+                        </div>
+
+                        <!-- /.col -->
+                        <div class="col-sm-4 invoice-col">
+                            Bill To
+                            <address>
+                                <strong>@Model.BillTo</strong><br>
+                                @Model.BillingAddress<br />
+                                Phone:  @Model.BillingContactNo<br>
+                            </address>
+                        </div>
+                        <!-- /.col -->
+                        <div class="col-sm-4 invoice-col">
+                            <b>Invoice @Model.Id</b><br>
+                            <br>
+                            <b>Order ID:</b>  @Model.EventCode<br>
+                            <b>Payment Due:</b> @Model.InvoiceDate<br>
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <!-- /.row -->
+                    <div class="row invoice-info">
+                        <div class="col-sm-4 invoice-col">
+                            <address>
+                                <strong>Event Place</strong><br>
+                                @Model.EventPlace
+                            </address>
+                        </div>
+                        <!-- /.col -->
+                        <div class="col-sm-4 invoice-col">
+                            <strong> Event Location   </strong><br />
+                            @ViewBag.EventInfo.EventVenue
+                        </div>
+                        <!-- /.col -->
+                        <div class="col-sm-4 invoice-col">
+                            <strong>Event Date  </strong><br />
+                            @ViewBag.EventInfo.EventFrom
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <div class="row no-print">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-success btn-sm float-right" style="margin-right: 5px;" data-toggle="modal" data-target="#modal-header">
+                                <i class="fas fa-edit"></i> Edit Headers
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm float-right" onclick="editLineItems('', '', '', '0')" style="margin-right: 5px;" data-toggle="modal" data-target="#modal-line-items">
+                                <i class="fas fa-download"></i> Add Items
+                            </button>
+                        </div>
+                    </div>
+                    <hr />
+                    <!-- Table row -->
+                    <div class="row">
+                        <div class="col-12 table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Sr.</th>
+                                        <th>Product</th>
+                                        <th>Description</th>
+                                        <th>Qty</th>
+                                        <th>Rate</th>
+                                        <th>Total</th>
+                                        <td>Action</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ int iSr = 0;}
+                                    @foreach (var detail in ViewBag.InvoiceDetails)
+                                    {
+                                        iSr++;
+                                        <tr>
+                                            <td>@detail.Idid</td>
+                                            <td>@detail.Product</td>
+                                            <td>@detail.NoFguest</td>
+                                            <td align="right">@detail.Qty.ToString("#.00")</td>
+                                            <td align="right">@detail.Rate.ToString("#.00")</td>
+                                            <td align="right">@detail.Total.ToString("#.00")</td>
+
+                                            <td>
+                                                <a href="~/admin/DeleteItem/@detail.Idid"><i class="nav-icon fas fa-archive" style="color:gray; "></i></a>&nbsp;
+                                                <a href="#" data-toggle="modal" data-target="#modal-line-items" onclick="editLineItems('@detail.Product', '@detail.NoFguest', '@detail.Rate.ToString("#.00")', '@detail.Idid')"><i class="nav-icon fas fa-edit" style="color:gray; "></i></a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <!-- /.row -->
+
+                    <div class="row">
+                        <!-- accepted payments column -->
+                        <div class="col-6">
+
+                        </div>
+                        <!-- /.col -->
+                        <div class="col-6">
+                            <p class="lead">Amount Due @Model.DueDate.Value.ToString("yyyy-MMM-dd")</p>
+
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <th style="width:50%">Subtotal:</th>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Tax (@Model.TaxPer.Value.ToString("0.00")) %</th>
+                                            <td align="right">@ViewBag.Tax.ToString("0.00")</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Total:</th>
+                                            <td align="right">@Model.NetDue.Value.ToString("0.00")</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <!-- /.row -->
+                    <!-- this row will not appear when printing -->
+                    <div class="row no-print">
+                        <div class="col-12">
+                            <a href="~/admin/GeneratePDF/@Model.EventId" style="margin-right: 5px;" class="btn btn-primary btn-sm float-right"><i class="fas fa-refresh"></i>Generate/Refresh PDF</a>&nbsp;&nbsp;&nbsp;
+                            @{ var fileName = Model.EventId + ".pdf?" + DateTime.Now;
+                                bool fileExist = System.IO.File.Exists(ViewBag.FilePath + "/" + fileName);
+
+                            }&nbsp;&nbsp;&nbsp;
+                            @if (@ViewBag.InvoiceExist)
+                            {
+                                <a href="~/Upload/Invoice/@fileName" target="_blank" class="btn btn-warning btn-sm float-right"><i class="nav-icon fas fa-download"></i>&nbsp; Download Invoice</a>
+                                <a href="#" data-toggle="modal" data-target="#modal-preiew"><i class="nav-icon fas fa-download"></i>&nbsp; Preview Invoice</a>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+                <!-- /.invoice -->
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</section>
+
+<div class="modal fade" id="modal-preiew">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Preview</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                @Html.ValidationSummary(true)
+                <div class="card-body">
+                    <iframe src="~/Upload/Invoice/@fileName" width="100%" height="500px">
+                    </iframe>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-line-items">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Line Items</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("AddItems", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="Name">#</label>
+                                    <input type="text" class="form-control" id="lineId" readonly name="lineId" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="Name">Invoice Id</label>
+                                    <input type="text" class="form-control" id="id" readonly name="InvoiceId" value="@Model.Id" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="Name">Event Id</label>
+                                    <input type="text" class="form-control" id="eventId" readonly name="EventId" value="@Model.EventId" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="Name">Product Name</label>
+                                    <input type="text" class="form-control" id="productName" name="Product" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="Name">No. of Guest</label>
+                                    <input type="text" class="form-control" id="nog" name="nog" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="Name">Rate</label>
+                                    <input type="number" class="form-control" id="rate" name="rate" />
+                                </div>
+                            </div>
+                        </div>
+
+
+
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-header">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">New Items</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+
+                    @Html.ValidationSummary(true)
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label for="Name">Commercial No</label>
+                            @Html.HiddenFor(Model => Model.Id)
+                            @Html.HiddenFor(Model => Model.EventId)
+                            @Html.TextBoxFor(Model => Model.EventName, new { @required = "required", @class = "form-control", @type = "text" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Bill To</label>
+                            @Html.TextBoxFor(Model => Model.BillTo, new { @required = "required", @class = "form-control", @type = "text" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Billing Address</label>
+                            @Html.TextAreaFor(Model => Model.BillingAddress, new { @required = "required", @class = "form-control", @type = "text" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Contact No</label>
+                            @Html.TextBoxFor(Model => Model.BillingContactNo, new { @required = "required", @class = "form-control", @type = "text" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Tax</label>
+                            @Html.TextBoxFor(Model => Model.TaxPer, new { @required = "required", @class = "form-control", @type = "number" })
+                        </div>
+                        <div class="form-group">
+                            <label for="Name">Event Address</label>
+                            @Html.TextAreaFor(Model => Model.EventPlace, new { @required = "required", @class = "form-control", @type = "text" })
+                        </div>
+
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="submit">Save changes</button>
+                    </div>
+                </div>
+            }
+            <!-- /.modal-content -->
+            <!-- /.modal-dialog -->
+        </div>
+    </div>
+</div>
+<script>
+    function editLineItems(product, nog, rate, lineid) {
+        $('#lineId').val(lineid)
+        $('#productName').val(product)
+        $('#nog').val(nog)
+        $('#rate').val(rate)
+    }
+</script>
