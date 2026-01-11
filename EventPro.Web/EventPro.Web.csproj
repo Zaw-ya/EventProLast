@@ -16,7 +16,7 @@
     <PackageReference Include="Hangfire" Version="1.8.7" />
     <PackageReference Include="itext7" Version="8.0.2" />
     <PackageReference Include="itextsharp.xmlworker" Version="5.5.13.3" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="7.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="7.0.14" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
@@ -30,7 +30,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.11" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.11" />
     <PackageReference Include="PinnacleApiWrapper" Version="2.21.308.2" />
     <PackageReference Include="Polly" Version="8.4.0" />
@@ -40,9 +40,9 @@
     <PackageReference Include="RestSharp" Version="111.3.0" />
     <PackageReference Include="Selenium.WebDriver" Version="4.13.1" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
-    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="7.0.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="7.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="7.0.0" />
     <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="6.3.0" />
     <PackageReference Include="SpecFlow" Version="3.9.74" />
     <PackageReference Include="StackExchange.Redis" Version="2.8.24" />
@@ -50,7 +50,7 @@
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.3" />
-    <PackageReference Include="System.Threading.RateLimiting" Version="9.0.0" />
+    <PackageReference Include="System.Threading.RateLimiting" Version="7.0.0" />
     <PackageReference Include="Twilio" Version="6.14.0" />
   </ItemGroup>
 
