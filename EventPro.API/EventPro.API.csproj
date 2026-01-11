@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EventPro.Business\EventPro.Business.csproj" />
     <ProjectReference Include="..\EventPro.DAL\EventPro.DAL.csproj" />
+    <ProjectReference Include="..\EventPro.Services\EventPro.Services.csproj" />
   </ItemGroup>
 
 

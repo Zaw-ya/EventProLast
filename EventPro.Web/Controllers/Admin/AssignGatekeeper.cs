@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EventPro.DAL.Models;
 using EventPro.DAL.ViewModels;
+using EventPro.DAL.Common;
 using EventPro.Web.Common;
 using EventPro.Web.Filters;
 using EventPro.Web.Services;
@@ -41,7 +42,7 @@ namespace EventPro.Web.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-            IQueryable<Users> allGateKeepers = db.Users.Where(e => e.Role == 3 && e.IsActive.Value && e.Approved.Value)
+            IQueryable<Users> allGateKeepers = db.Users.Where(e => e.Role == RoleIds.GateKeeper && e.IsActive.Value && e.Approved.Value)
                 .AsNoTracking();
 
             if (!string.IsNullOrEmpty(searchValue))

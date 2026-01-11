@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using EventPro.DAL.Enum;
 using EventPro.DAL.Models;
 using EventPro.DAL.ViewModels;
+using EventPro.DAL.Common;
 using EventPro.Web.Extensions;
 using EventPro.Web.Filters;
 using EventPro.Web.Models;
@@ -142,7 +143,7 @@ namespace EventPro.Web.Controllers
                          .Select(x => new SelectListItem { Text = x.ToDescription(), Value = ((int)x).ToString() }).ToList()
             , "Value", "Text");
 
-          var users = await db.Users.Where(p => (p.Role == 1 || p.Role == 4) &&
+          var users = await db.Users.Where(p => (p.Role == RoleIds.Administrator || p.Role == RoleIds.Operator) &&
                                        p.IsActive == true &&
                                        p.Approved == true)
                                        .OrderByDescending(e => e.UserId)
@@ -196,7 +197,7 @@ namespace EventPro.Web.Controllers
             ViewBag.startFrom = dateFrom;
             ViewBag.startTo = dateTo;
 
-            var users = await db.Users.Where(p => (p.Role == 1 || p.Role == 4) &&
+            var users = await db.Users.Where(p => (p.Role == RoleIds.Administrator || p.Role == RoleIds.Operator) &&
                              p.IsActive == true &&
                              p.Approved == true)
                              .OrderByDescending(e => e.UserId)

@@ -1,4 +1,5 @@
 using EventPro.DAL.Models;
+using EventPro.DAL.Common;
 
 namespace EventPro.DAL.ViewModels
 {
@@ -18,13 +19,13 @@ namespace EventPro.DAL.ViewModels
 
         private string GetRoleName(int? roleId)
         {
-            if (roleId == 1) return "Administrator";
-            if (roleId == 2) return "Client";
-            if (roleId == 3) return "GateKeeper";
-            if (roleId == 4) return "Operator";
-            if (roleId == 5) return "Agent";
-            if (roleId == 6) return "Supervisor";
-            if (roleId == 7) return "Accounting";
+            if (roleId == RoleIds.Administrator) return "Administrator";
+            if (roleId == RoleIds.Client) return "Client";
+            if (roleId == RoleIds.GateKeeper) return "GateKeeper";
+            if (roleId == RoleIds.Operator) return "Operator";
+            if (roleId == RoleIds.Agent) return "Agent";
+            if (roleId == RoleIds.Supervisor) return "Supervisor";
+            if (roleId == RoleIds.Accounting) return "Accounting";
 
             return "null";
         }

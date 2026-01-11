@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EventPro.DAL.Extensions;
 using EventPro.DAL.Models;
+using EventPro.DAL.Common;
 using EventPro.DAL.ViewModels;
 using EventPro.Web.Common;
 using EventPro.Web.Extensions;
@@ -1087,13 +1088,13 @@ namespace EventPro.Web.Controllers
                     .Distinct()
                 .ToListAsync();
                 clients = await db.Users.Where(p => (createdForIds.Contains(p.UserId) || p.CreatedBy == userId) &&
-                p.Role == 2)
+                p.Role == RoleIds.Client)
                     .OrderByDescending(e => e.UserId)
                     .ToListAsync();
             }
             else
             {
-                clients = await db.Users.Where(p => p.Role == 2)
+                clients = await db.Users.Where(p => p.Role == RoleIds.Client)
                     .OrderByDescending(e => e.UserId)
                     .ToListAsync();
             }
@@ -1161,48 +1162,45 @@ namespace EventPro.Web.Controllers
             }
 
             var files = Request.Form.Files;
-            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             string filename = string.Empty;
-            string extension = string.Empty;
             bool hasFile = false;
+
             foreach (var file in files)
             {
-                if (file.ContentType.Contains("image") && file.Length > 5 * 1024 * 1024)
+                try
                 {
-                    ModelState.AddModelError(string.Empty, "Image size must be less than 5 MB");
-                    return View("EditEvent - Copy", events);
-                }
-                else if (file.ContentType.Contains("image"))
-                {
-                    extension = file.ContentType.ToLower().Replace(@"image/", "");
-                }
-
-                if (file.ContentType.Contains("video") && file.Length > 15 * 1024 * 1024)
-                {
-                    ModelState.AddModelError(string.Empty, "Video size must be less than 15 MB");
-                    return View("EditEvent - Copy", events);
-                }
-                else if (file.ContentType.Contains("video"))
-                {
-                    extension = file.ContentType.ToLower().Replace(@"video/", "");
-                }
-
-                // Check for PDF files
-                if (file.ContentType.Contains("application/pdf"))
-                {
-                    extension = "pdf";
-                    if (file.Length > 15 * 1024 * 1024)
+                    using (var stream = file.OpenReadStream())
                     {
-                        ModelState.AddModelError(string.Empty, "PDF size must be less than 15 MB");
-                        return View("EditEvent - Copy", events);
+                        if (file.ContentType.Contains("image"))
+                        {
+                            filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
+                        }
+                        else if (file.ContentType.Contains("video"))
+                        {
+                            filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
+                        }
+                        else if (file.ContentType.Contains("application/pdf"))
+                        {
+                            filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
+                        }
+                        
+                        if (!string.IsNullOrEmpty(filename))
+                        {
+                            hasFile = true;
+                        }
                     }
                 }
-
-                filename = Guid.NewGuid() + "." + extension;
-                using (var fileStream = new FileStream(path + @"\" + filename, FileMode.Create))
+                catch (Exception ex)
                 {
-                    hasFile = true;
-                    file.CopyTo(fileStream);
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    // Re-populate ViewBag data
+                    ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
+                    ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
+                    ViewBag.Icon = "nav-icon fas fa-calendar";
+                    ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
+                    ViewBag.EventLocations = new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync()).Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName }), "Id", "Location");
+                    SetBreadcrum("Events", "/admin");
+                    return View("EditEvent - Copy", events);
                 }
             }
             events.SendingConfiramtionMessagesLinksLanguage = "Arabic";
@@ -1223,7 +1221,7 @@ namespace EventPro.Web.Controllers
             events.ShowFailedSendingCongratulationLink = true;
             events.ChoosenNumberWithinCountry = 1;
             var settings = await db.AppSettings.FirstOrDefaultAsync();
-            events.choosenSendingWhatsappProfile = settings.WhatsappDefaultTwilioProfile;
+           // events.choosenSendingWhatsappProfile = settings.WhatsappDefaultTwilioProfile;
             City city = await db.City.Where(e => e.Id == events.CityId)
                 .Include(e => e.Country)
                 .FirstOrDefaultAsync();
@@ -1361,91 +1359,61 @@ namespace EventPro.Web.Controllers
             var files = Request.Form.Files;
             if (files.Count != 0)
             {
-                string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-                string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
                 string filename = string.Empty;
                 bool hasFile = false;
-                string extension = string.Empty;
                 foreach (var file in files)
                 {
-                    if (file.ContentType.Contains("image") && file.Length > 5 * 1024 * 1024)
+                    try
                     {
-                        await SetControls(events);
-                        ModelState.AddModelError(string.Empty, "Image size must be less than 5 MB");
-                        return View("EditEvent", events);
-                    }
-                    else if (file.ContentType.Contains("image"))
-                    {
-                        extension = file.ContentType.ToLower().Replace(@"image/", "");
-                    }
-
-                    if (file.ContentType.Contains("video") && file.Length > 15 * 1024 * 1024)
-                    {
-                        await SetControls(events);
-                        ModelState.AddModelError(string.Empty, "Video size must be less than 15 MB");
-                        return View("EditEvent", events);
-                    }
-                    else if (file.ContentType.Contains("video"))
-                    {
-                        extension = file.ContentType.ToLower().Replace(@"video/", "");
-                    }
-
-                    // Check for PDF files
-                    if (file.ContentType.Contains("application/pdf"))
-                    {
-                        extension = "pdf";
-
-                        if (file.Length > 15 * 1024 * 1024)
+                        using (var stream = file.OpenReadStream())
                         {
-                            await SetControls(events);
-                            ModelState.AddModelError(string.Empty, "PDF size must be less than 15 MB");
-                            return View("EditEvent", events);
+                            if (file.ContentType.Contains("image"))
+                            {
+                                filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
+                            }
+                            else if (file.ContentType.Contains("video"))
+                            {
+                                filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
+                            }
+                            else if (file.ContentType.Contains("application/pdf"))
+                            {
+                                filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
+                            }
+
+                            if (!string.IsNullOrEmpty(filename))
+                            {
+                                hasFile = true;
+
+                                if (file.Name.Equals("MessageHeaderImage"))
+                                {
+                                    evt.MessageHeaderImage = filename;
+                                }
+                                else if (file.Name.Equals("ReminderMsgHeaderImg"))
+                                {
+                                    evt.ReminderMsgHeaderImg = filename;
+                                }
+                                else if (file.Name.Equals("CongratulationMsgHeaderImg"))
+                                {
+                                    evt.CongratulationMsgHeaderImg = filename;
+                                }
+                                else if (file.Name.Equals("ResponseInterestedOfMarketingMsgHeaderImage"))
+                                {
+                                    evt.ResponseInterestedOfMarketingMsgHeaderImage = filename;
+                                }
+                                else if (file.Name.Equals("ResponseNotInterestedOfMarketingMsgHeaderImage"))
+                                {
+                                    evt.ResponseNotInterestedOfMarketingMsgHeaderImage = filename;
+                                }
+                            }
                         }
                     }
-
-                    filename = Guid.NewGuid() + "." + extension;
-
-                    using var stream = file.OpenReadStream();
-                    await _blobStorage.UploadAsync(stream, extension, environment + path + "/" + filename, cancellationToken: default);
-                    hasFile = true;
-
-                    if (extension != "mp4" && extension != "png" && extension != "jpg" && extension != "jpeg" && extension != "pdf")
+                    catch (Exception ex)
                     {
                         await SetControls(events);
-                        ModelState.AddModelError(string.Empty, $"the file extension is not supported");
+                        ModelState.AddModelError(string.Empty, ex.Message);
                         return View("EditEvent", events);
                     }
-
-                    if (file.Name.Equals("MessageHeaderImage"))
-                    {
-                        evt.MessageHeaderImage = filename;
-
-                    }
-
-                    if (file.Name.Equals("ReminderMsgHeaderImg"))
-                    {
-                        evt.ReminderMsgHeaderImg = filename;
-
-                    }
-
-                    if (file.Name.Equals("CongratulationMsgHeaderImg"))
-                    {
-                        evt.CongratulationMsgHeaderImg = filename;
-
-                    }
-                    if (file.Name.Equals("ResponseInterestedOfMarketingMsgHeaderImage"))
-                    {
-                        evt.ResponseInterestedOfMarketingMsgHeaderImage = filename;
-
-                    }
-                    if (file.Name.Equals("ResponseNotInterestedOfMarketingMsgHeaderImage"))
-                    {
-                        evt.ResponseNotInterestedOfMarketingMsgHeaderImage = filename;
-
-                    }
-
                 }
-
             }
             evt.CustomConfirmationTemplateWithVariables = events.CustomConfirmationTemplateWithVariables;
             evt.CustomCardTemplateWithVariables = events.CustomCardTemplateWithVariables;

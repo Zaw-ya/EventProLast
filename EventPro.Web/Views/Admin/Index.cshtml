@@ -6,17 +6,13 @@
 <!-- Main content -->
 <section class="content">
     <div class="container-fluid">
-@*         <p>
-            Current Pinacle Balance: <span id="pinaclePara">Loading..</span>
-        </p> *@
         <!-- Small boxes (Stat box) -->
         <div class="row">
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-info">
                     <div class="inner">
-                        <h3>@ViewBag.CategoryCount</h3>
-
+                        <h3>@(ViewBag.CategoryCount != null ? ViewBag.CategoryCount : 0)</h3>
                         <p>Event Category</p>
                     </div>
                     <div class="icon">
@@ -31,8 +27,7 @@
                 <!-- small box -->
                 <div class="small-box bg-warning">
                     <div class="inner">
-                        <h3>@ViewBag.UsersCount</h3>
-
+                        <h3>@(ViewBag.UsersCount != null ? ViewBag.UsersCount : 0)</h3>
                         <p>User</p>
                     </div>
                     <div class="icon">
@@ -47,8 +42,7 @@
                 <!-- small box -->
                 <div class="small-box bg-success">
                     <div class="inner">
-                        <h3>@ViewBag.EventsCount<sup style="font-size: 20px"></sup></h3>
-
+                        <h3>@(ViewBag.EventsCount != null ? ViewBag.EventsCount : 0)<sup style="font-size: 20px"></sup></h3>
                         <p>Events</p>
                     </div>
                     <div class="icon">
@@ -61,14 +55,13 @@
                 <!-- small box -->
                 <div class="small-box bg-danger">
                     <div class="inner">
-                        <h3>@ViewBag.GatekeeperCount</h3>
-
+                        <h3>@(ViewBag.GatekeeperCount != null ? ViewBag.GatekeeperCount : 0)</h3>
                         <p>Gate Keepers</p>
                     </div>
                     <div class="icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <a  href="~/admin/users?type=gatekeeper" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    <a href="~/admin/users?type=gatekeeper" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
             <!-- ./col -->
@@ -81,48 +74,61 @@
             <div class="card  col-md-4">
                 <div class="card-header">
                     <h3 class="card-title">Past Events</h3>
-
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                             <i class="fas fa-minus"></i>
                         </button>
-                        @*<button type="button" class="btn btn-tool" data-card-widget="remove">
-                                <i class="fas fa-times"></i>
-                            </button>*@
                     </div>
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body p-0">
-                    <ul class="products-list product-list-in-card pl-2 pr-2">
+                    @if (ViewBag.PastEvents != null && ViewBag.PastEvents.Count > 0)
+                    {
+                        <ul class="products-list product-list-in-card pl-2 pr-2">
+                            @foreach (var evt in ViewBag.PastEvents)
+                            {
+                                <li class="item">
+                                    <div class="product-img">
+                                        @if (evt.Icon != null)
+                                        {
+                                            <img src="~/upload/card/@evt.Icon" class="grid-icon" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/upload/card/default.png" class="grid-icon" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                                            @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                                            @if (evt.EventFrom != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
 
-                        @foreach (var evt in ViewBag.PastEvents)
-                        {
-                            <li class="item">
-                                <div class="product-img">
-                                    @if (@evt.Icon != null)
-                                    {
-                                        <img src="~/upload/card/@evt.Icon" class="grid-icon" />
-                                    }
-
-                                    else
-                                    {
-                                        <img src="~/upload/card/default.png" class="grid-icon" />
-                                    }
-                                </div>
-                                <div class="product-info">
-                                    <a href="~/admin/viewevent/@evt.Id" class="product-title">
-                                        @evt.GmapCode - @evt.SystemEventTitle
-                                        <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span><br />
-                                        <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
-                                    </a>
-                                    <span class="product-description">
-                                        @evt.EventVenue, @evt.FirstName  @evt.LastName
-                                    </span>
-                                </div>
-                            </li>
-                        }
-
-                    </ul>
+                                                <br />
+                                            }
+                                            @if (evt.EventTo != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
+                                            }
+                                        </a>
+                                        @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                        {
+                                            <span class="product-description">
+                                                @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
+                                            </span>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center">
+                            <p>No past events found</p>
+                        </div>
+                    }
                 </div>
                 <!-- /.card-body -->
                 <div class="card-footer text-center">
@@ -130,51 +136,65 @@
                 </div>
                 <!-- /.card-footer -->
             </div>
+
             <div class="card  col-md-4">
                 <div class="card-header">
                     <h3 class="card-title">In Progress Events</h3>
-
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                             <i class="fas fa-minus"></i>
                         </button>
-                        @*<button type="button" class="btn btn-tool" data-card-widget="remove">
-                                <i class="fas fa-times"></i>
-                            </button>*@
                     </div>
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body p-0">
-                    <ul class="products-list product-list-in-card pl-2 pr-2">
+                    @if (ViewBag.InProgressEvents != null && ViewBag.InProgressEvents.Count > 0)
+                    {
+                        <ul class="products-list product-list-in-card pl-2 pr-2">
+                            @foreach (var evt in ViewBag.InProgressEvents)
+                            {
+                                <li class="item">
+                                    <div class="product-img">
+                                        @if (evt.Icon != null)
+                                        {
+                                            <img src="~/upload/card/@evt.Icon" class="grid-icon" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/upload/card/default.png" class="grid-icon" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                                            @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                                            @if (evt.EventFrom != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
 
-                        @foreach (var evt in ViewBag.InProgressEvents)
-                        {
-                            <li class="item">
-                                <div class="product-img">
-                                    @if (@evt.Icon != null)
-                                    {
-                                        <img src="~/upload/card/@evt.Icon" class="grid-icon" />
-                                    }
-
-                                    else
-                                    {
-                                        <img src="~/upload/card/default.png" class="grid-icon" />
-                                    }
-                                </div>
-                                <div class="product-info">
-                                    <a href="~/admin/viewevent/@evt.Id" class="product-title">
-                                        @evt.GmapCode - @evt.SystemEventTitle
-                                        <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span><br />
-                                        <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
-                                    </a>
-                                    <span class="product-description">
-                                        @evt.EventVenue, @evt.FirstName  @evt.LastName
-                                    </span>
-                                </div>
-                            </li>
-                        }
-
-                    </ul>
+                                                <br />
+                                            }
+                                            @if (evt.EventTo != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
+                                            }
+                                        </a>
+                                        @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                        {
+                                            <span class="product-description">
+                                                @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
+                                            </span>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center">
+                            <p>No in-progress events found</p>
+                        </div>
+                    }
                 </div>
                 <!-- /.card-body -->
                 <div class="card-footer text-center">
@@ -182,51 +202,65 @@
                 </div>
                 <!-- /.card-footer -->
             </div>
+
             <div class="card  col-md-4">
                 <div class="card-header">
                     <h3 class="card-title">Upcoming Events</h3>
-
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                             <i class="fas fa-minus"></i>
                         </button>
-                        @*<button type="button" class="btn btn-tool" data-card-widget="remove">
-                                <i class="fas fa-times"></i>
-                            </button>*@
                     </div>
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body p-0">
-                    <ul class="products-list product-list-in-card pl-2 pr-2">
+                    @if (ViewBag.UpcomingEvents != null && ViewBag.UpcomingEvents.Count > 0)
+                    {
+                        <ul class="products-list product-list-in-card pl-2 pr-2">
+                            @foreach (var evt in ViewBag.UpcomingEvents)
+                            {
+                                <li class="item">
+                                    <div class="product-img">
+                                        @if (evt.Icon != null)
+                                        {
+                                            <img src="~/upload/card/@evt.Icon" class="grid-icon" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/upload/card/default.png" class="grid-icon" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                                            @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                                            @if (evt.EventFrom != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
 
-                        @foreach (var evt in ViewBag.UpcomingEvents)
-                        {
-                            <li class="item">
-                                <div class="product-img">
-                                    @if (@evt.Icon != null)
-                                    {
-                                        <img src="~/upload/card/@evt.Icon" class="grid-icon" />
-                                    }   
-
-                                    else
-                                    {
-                                        <img src="~/upload/card/default.png" class="grid-icon" />
-                                    }
-                                </div>
-                                <div class="product-info">
-                                    <a href="~/admin/viewevent/@evt.Id" class="product-title">
-                                        @evt.GmapCode - @evt.SystemEventTitle
-                                        <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span><br />
-                                        <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
-                                    </a>
-                                    <span class="product-description">
-                                        @evt.EventVenue, @evt.FirstName  @evt.LastName
-                                    </span>
-                                </div>
-                            </li>
-                        }
-
-                    </ul>
+                                                <br />
+                                            }
+                                            @if (evt.EventTo != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
+                                            }
+                                        </a>
+                                        @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                        {
+                                            <span class="product-description">
+                                                @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
+                                            </span>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center">
+                            <p>No upcoming events found</p>
+                        </div>
+                    }
                 </div>
                 <!-- /.card-body -->
                 <div class="card-footer text-center">
@@ -234,25 +268,8 @@
                 </div>
                 <!-- /.card-footer -->
             </div>
-            <!-- /.Left col -->
-            <!-- right col (We are only adding the ID to make the widgets sortable)-->
-            <!-- right col -->
         </div>
-        
-        <!-- /.card -->
         <!-- /.row (main row) -->
     </div><!-- /.container-fluid -->
 </section>
 <!-- /.content -->
-<!-- /.content-wrapper -->
-@* @section scriptPinacle{
-    <script>
-        async function GetBalance(){
-            var response = await fetch("/Admin/GetBalance");
-            return response.json();
-        }
-        GetBalance().then((data) => {
-            document.getElementById("pinaclePara").textContent = data + " INR";
-        })
-    </script>
-} *@

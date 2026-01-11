@@ -20,6 +20,10 @@ using Serilog;
 using Serilog.Events;
 using StackExchange.Redis;
 using System.Text;
+using EventPro.Services.UnitOFWorkService;
+using EventPro.Services.UnitOFWorkService.Implementation;
+using EventPro.Services.Repository;
+using EventPro.Services.Repository.Interface;
 
 namespace EventPro.API
 {
@@ -95,6 +99,8 @@ namespace EventPro.API
             services.AddScoped<IWatiService, WatiService>();
             services.AddSingleton<UrlProtector>();
             services.AddScoped<IWhatsappSendingProviderService, WhatsappSendingProvidersService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             // Configure Redis
             // Get Redis connection string from configuration
             var redisConnectionString = Configuration.GetSection("Database")["RedisCache"];
@@ -106,6 +112,7 @@ namespace EventPro.API
                 new BlobServiceClient(Configuration.GetSection("Database")["BlobStorage"])
             );
             services.AddSingleton<IBlobStorage, BlobStorage>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
 
             services.AddControllersWithViews()
                 .AddNewtonsoftJson(options =>

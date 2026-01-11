@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using EventPro.Business.EventService;
 using EventPro.Business.MemoryCacheStore.Implementaiion;
 using EventPro.Business.MemoryCacheStore.Interface;
@@ -36,8 +37,11 @@ using EventPro.Services.AuditLogService.Interface;
 using EventPro.Services.NotificationService.Implementation;
 using EventPro.Services.TwilioService;
 using EventPro.Services.TwilioService.Interface;
+using EventPro.Services.UnitOFWorkService;
 using EventPro.Services.UnitOFWorkService.Implementation;
 using EventPro.Services.UnitOFWorkService.Interface;
+using EventPro.Services.Repository;
+using EventPro.Services.Repository.Interface;
 using EventPro.Services.WatiService.Implementation;
 using EventPro.Services.WatiService.Interface;
 using EventPro.Web.Controllers.Admin;
@@ -57,7 +61,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Mime;
+using EventPro.Web.Seeds;
 
 
 namespace EventPro.Web
@@ -109,12 +113,42 @@ namespace EventPro.Web
                 return factory.CreateDbContext();
             });
 
-            var redis = ConnectionMultiplexer.Connect(redisConnectionString);
-            services.AddSingleton<IConnectionMultiplexer>(redis);
-            services.AddSingleton<ITicketStore>(new RedisTicketStore(redisConnectionString));
-            services.AddDataProtection()
-                .SetApplicationName("EventPro.cc")
-                .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
+            IConnectionMultiplexer redis = null;
+            bool redisConnected = false;
+            try
+            {
+                redis = ConnectionMultiplexer.Connect(redisConnectionString);
+                redisConnected = redis.IsConnected;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not connect to Redis at {ConnectionString}. Using fallback providers.", redisConnectionString);
+            }
+
+            if (redisConnected)
+            {
+                services.AddSingleton<IConnectionMultiplexer>(redis);
+                services.AddSingleton<ITicketStore>(new RedisTicketStore(redisConnectionString));
+                services.AddDataProtection()
+                    .SetApplicationName("EventPro.cc")
+                    .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
+
+                services.AddSingleton<RedLockFactory>(sp =>
+                {
+                    return RedLockFactory.Create(new List<RedLockMultiplexer> { new RedLockMultiplexer(redis) });
+                });
+            }
+            else
+            {
+                services.AddDistributedMemoryCache();
+                // Fallback: If Redis is down, we don't set a SessionStore, 
+                // ASP.NET will use the default cookie-based store.
+                services.AddDataProtection()
+                    .SetApplicationName("EventPro.cc");
+
+                // Mock RedLock setup if needed, or just let users know
+            }
+
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
      .AddCookie(options =>
@@ -134,15 +168,20 @@ namespace EventPro.Web
                 var serviceProvider = services.BuildServiceProvider();
 
                 var dataProtectionProvider = serviceProvider.GetRequiredService<IDataProtectionProvider>();
-                var ticketStore = serviceProvider.GetRequiredService<ITicketStore>();
+                var ticketStore = serviceProvider.GetService<ITicketStore>();
 
-                options.SessionStore = ticketStore;
+                if (ticketStore != null)
+                {
+                    options.SessionStore = ticketStore;
+                }
+
                 options.TicketDataFormat = new SecureDataFormat<AuthenticationTicket>(
                     new TicketSerializer(),
                     dataProtectionProvider.CreateProtector(
                         "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationMiddleware",
                         CookieAuthenticationDefaults.AuthenticationScheme,
                         "v2"));
+
             });
 
 
@@ -179,9 +218,11 @@ namespace EventPro.Web
             services.AddScoped<TwilioRoutingRuleForVms>();
             services.AddHttpClient();
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
-          //  services.AddScoped<EventProContext>();
+            //  services.AddScoped<EventProContext>();
             services.AddScoped<IWatiService, WatiService>();
             services.AddScoped<ITwilioService, TwilioService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             services.AddScoped<IUnitOFWorkService, UnitOFWorkService>();
             services.AddScoped<IFirbaseAPI, FirbaseAPI>();
             services.AddScoped<IAuditLogService, AuditLogService>();
@@ -214,14 +255,28 @@ namespace EventPro.Web
                 new BlobServiceClient(Configuration.GetSection("Database")["BlobStorage"])
             );
             services.AddSingleton<IBlobStorage, BlobStorage>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
 
-            FirebaseApp.Create(new AppOptions()
+            var firebasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "myinvite-1b0ca-firebase-adminsdk-yp15k-b2881aed59.json");
+            if (File.Exists(firebasePath))
             {
-                Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EventPro-1b0ca-firebase-adminsdk-yp15k-b2881aed59.json")),
-            });
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile(firebasePath),
+                });
+            }
+            else
+            {
+                Log.Warning("Firebase admin SDK file not found at {Path}. Firebase features will be disabled.", firebasePath);
+            }
+
             services.AddScoped<IEmailSender, NotificationService>();
 
-            services.AddSingleton<IMemoryCacheStoreService, MemoryCacheStoreService>();
+            services.AddSingleton<IMemoryCacheStoreService>(sp =>
+            {
+                var redis = sp.GetService<IConnectionMultiplexer>();
+                return new MemoryCacheStoreService(redis);
+            });
             services.AddHttpContextAccessor();
 
             services.AddAntiforgery(options =>
@@ -232,11 +287,6 @@ namespace EventPro.Web
                 options.Cookie.HttpOnly = true;
             });
 
-            services.AddSingleton<RedLockFactory>(sp =>
-            {
-                return RedLockFactory.Create(new List<RedLockMultiplexer> { new RedLockMultiplexer(redis) });
-            });
-
             services.AddSingleton<DistributedLockHelper>();
         }
 
@@ -245,10 +295,12 @@ namespace EventPro.Web
                                  IUnitOFWorkService unitOFWorkService, INotificationTokenService notifyService)
         {
             IUnitOFWorkService _unitOfWorkService = unitOFWorkService;
+            Seeding.SeedAll(Configuration);
             app.UseResponseCompression();
             app.UseExceptionHandler("/Home/Error");
             app.UseMiddleware<StaticFileCacheMiddleware>();
             app.UseStaticFiles();
+
             // app.UseAutomaticFreeupSpace(_unitOfWorkService.FreeupSpace);
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -276,6 +328,8 @@ namespace EventPro.Web
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+                /* 
+                // BLOB STORAGE FALLBACK (Disabled for Local File System Usage)
                 endpoints.MapGet("upload/{**fileName}", async (IBlobStorage blobStorage, string fileName) =>
                 {
                     fileName = Configuration.GetSection("Uploads")["environment"] + "/" + fileName;
@@ -298,6 +352,7 @@ namespace EventPro.Web
                         return Results.NotFound();
                     }
                 });
+                */
             });
 
             app.UseHangfireDashboard("/Admin/Notifications", new DashboardOptions

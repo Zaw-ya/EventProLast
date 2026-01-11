@@ -46,10 +46,13 @@
                                 <label>Role</label>
                                 <select name="role" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="1" tabindex="-1" aria-hidden="true">
                                     <option>All</option>
-                                    <option>Administrator</option>
-                                    <option>Client</option>
-                                    <option>Gatekeeper</option>
-                                    <option>Operator</option>
+                                    @if (ViewBag.Roles != null)
+                                    {
+                                        @foreach (var role in ViewBag.Roles)
+                                        {
+                                            <option>@role.RoleName</option>
+                                        }
+                                    }
                                 </select>
                             </div>
                         </div>

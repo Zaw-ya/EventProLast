@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EventPro.DAL.Models;
 using EventPro.DAL.ViewModels;
+using EventPro.DAL.Common;
 using EventPro.Web.Common;
 using EventPro.Web.Filters;
 using EventPro.Web.Services;
@@ -19,30 +20,32 @@ namespace EventPro.Web.Controllers
     public partial class AdminController : Controller
     {
         [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor")]
-        public IActionResult Users()
+        public async Task<IActionResult> Users()
         {
             ViewBag.SelectedRole = -1;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
             var operatorRole = HttpContext.User.FindFirst("Operator")?.Value;
+
             if (operatorRole != "Operator" && operatorRole != "Supervisor")
             {
-                ViewBag.ReminderMessageTempName = new SelectList(
-                     new List<SelectListItem>
-                     {
-                                                new SelectListItem { Text = "All", Value = "-1"},
-                                                new SelectListItem { Text = "Administrator", Value = "1"},
-                                                new SelectListItem { Text = "Client", Value = "2"},
-                                                new SelectListItem { Text = "Gatekeeper", Value = "3"},
-                                                new SelectListItem { Text = "Operator", Value = "4"},
-                                                new SelectListItem { Text = "Agent", Value = "5"},
-                                                new SelectListItem { Text = "Supervisor", Value = "6"},
-                                                new SelectListItem { Text = "Accounting", Value = "7"}
+                // Get roles from database with proper ordering
+                var roleOrder = new[] { "Administrator", "Operator", "Agent", "Supervisor", "Accounting", "Client", "GateKeeper" };
+                var rolesFromDb = await db.Roles.ToListAsync();
+                var orderedRoles = rolesFromDb.OrderBy(r => Array.IndexOf(roleOrder, r.RoleName)).ToList();
 
+                var roleSelectList = new List<SelectListItem> { new SelectListItem { Text = "All", Value = "-1" } };
+                roleSelectList.AddRange(orderedRoles.Select(r => new SelectListItem
+                {
+                    Text = r.RoleName,
+                    Value = r.Id.ToString()
+                }));
 
-                     }, "Value", "Text", ViewBag.SelectedRole);
+                ViewBag.ReminderMessageTempName = new SelectList(roleSelectList, "Value", "Text", ViewBag.SelectedRole);
             }
+
             ViewBag.Icon = "nav-icon fas fa-user";
             SetBreadcrum("Users", "/");
+            ViewBag.Roles = await db.Roles.ToListAsync();
 
             return View("Users - Copy");
         }
@@ -79,42 +82,15 @@ namespace EventPro.Web.Controllers
                     .ToListAsync();
 
                 users = users.Where(p => createdForIds.Contains(p.UserId) || p.CreatedBy == userId);
-                users = users.Where(p => p.Role == 2);
+                users = users.Where(p => p.Role == RoleIds.Client);
             }
-
-            if (HasSupervisorRole())
+            else if (HasSupervisorRole())
             {
-                users = users.Where(p => p.Role == 2);
+                users = users.Where(p => p.Role == RoleIds.Client);
             }
-
-
-            else if (roleId == 1)
+            else if (roleId > 0)
             {
-                users = users.Where(p => p.Role == 1);
-            }
-            else if (roleId == 2)
-            {
-                users = users.Where(p => p.Role == 2);
-            }
-            else if (roleId == 3)
-            {
-                users = users.Where(p => p.Role == 3);
-            }
-            else if (roleId == 4)
-            {
-                users = users.Where(p => p.Role == 4);
-            }
-            else if (roleId == 5)
-            {
-                users = users.Where(p => p.Role == 5);
-            }
-            else if (roleId == 6)
-            {
-                users = users.Where(p => p.Role == 6);
-            }
-            else if (roleId == 7)
-            {
-                users = users.Where(p => p.Role == 7);
+                users = users.Where(p => p.Role == roleId);
             }
 
             users = users.OrderByDescending(p => p.UserId);
@@ -159,11 +135,11 @@ namespace EventPro.Web.Controllers
                     .ToListAsync();
 
                 users = users.Where(p => createdForIds.Contains(p.UserId) || p.CreatedBy == userId);
-                users = users.Where(p => p.Role == 2);
+                users = users.Where(p => p.Role == RoleIds.Client);
             }
             else
             {
-                users = users.Where(p => p.Role == 2);
+                users = users.Where(p => p.Role == RoleIds.Client);
             }
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -367,13 +343,19 @@ namespace EventPro.Web.Controllers
             ViewBag.Icon = "nav-icon fas fa-pencil-square-o";
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
             string role = userRole;
+
+            // Define role order
+            var roleOrder = new[] { "Administrator", "Operator", "Agent", "Supervisor", "Accounting", "Client", "GateKeeper" };
+
             if (role == "Operator" || role == "Supervisor")
             {
-                ViewBag.UserRole = new SelectList(await db.Roles.Where(p => p.RoleName == "Client").ToListAsync(), "Id", "RoleName");
+                ViewBag.UserRole = new SelectList(await db.Roles.Where(p => p.RoleName == "Client" || p.Id == RoleIds.Client).ToListAsync(), "Id", "RoleName");
             }
             else
             {
-                ViewBag.UserRole = new SelectList(await db.Roles.ToListAsync(), "Id", "RoleName");
+                var roles = await db.Roles.ToListAsync();
+                var orderedRoles = roles.OrderBy(r => Array.IndexOf(roleOrder, r.RoleName)).ToList();
+                ViewBag.UserRole = new SelectList(orderedRoles, "Id", "RoleName");
             }
             ViewBag.UserGender = new SelectList(new string[] { "M", "F" });
             ViewBag.Approved = new SelectList(new string[] { "True", "False" });

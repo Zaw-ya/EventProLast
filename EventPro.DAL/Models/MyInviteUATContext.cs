@@ -236,13 +236,11 @@ namespace EventPro.DAL.Models
                 entity.HasKey(e => e.EventId)
                     .HasName("PK__EventCat__7944C810DB34F5B1");
 
-                entity.Property(e => e.Category).HasMaxLength(500);
+                entity.Property(e => e.Category).HasMaxLength(100);
 
                 entity.Property(e => e.CreatedOn).HasColumnType("datetime");
 
-                entity.Property(e => e.Icon)
-                    .HasMaxLength(40)
-                    .IsUnicode(false);
+                entity.Property(e => e.Icon).HasMaxLength(500);
 
                 entity.HasOne(d => d.CreatedByNavigation)
                     .WithMany(p => p.EventCategory)
@@ -1119,6 +1117,27 @@ namespace EventPro.DAL.Models
                     .HasMaxLength(200)
                     .IsUnicode(false);
             });
+
+            modelBuilder.Entity<BulkOperatorEvents>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.OperatorAssignedFrom)
+                    .WithMany()
+                    .HasForeignKey(e => e.OperatorAssignedFromId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.OperatorAssignedTo)
+                    .WithMany()
+                    .HasForeignKey(e => e.OperatorAssignedToId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.AssignedBy)
+                    .WithMany()
+                    .HasForeignKey(e => e.AssignedById)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
             OnModelCreatingPartial(modelBuilder);
         }
 

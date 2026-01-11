@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EventPro.DAL.Models;
 using EventPro.DAL.ViewModels;
+using EventPro.DAL.Common;
 using EventPro.Web.Filters;
 using EventPro.Web.Services;
 using System;
@@ -39,7 +40,7 @@ namespace EventPro.Web.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
-            IQueryable<Users> allOperators = db.Users.Where(e => e.Role == 4 && e.IsActive.Value && e.Approved.Value)
+            IQueryable<Users> allOperators = db.Users.Where(e => e.Role == RoleIds.Operator && e.IsActive.Value && e.Approved.Value)
                 .AsNoTracking();
 
             if (!string.IsNullOrEmpty(searchValue))

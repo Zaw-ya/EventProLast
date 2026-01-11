@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using EventPro.DAL.Models;
 using EventPro.DAL.ViewModels;
+using EventPro.DAL.Common;
 using EventPro.Web.Filters;
 using EventPro.Web.Services;
 using System;
@@ -30,7 +31,7 @@ namespace EventPro.Web.Controllers
             ViewBag.Icon = "nav-icon fas fa-tasks";
             SetBreadcrum("Shared Operator Events", "/admin");
 
-            var users = await db.Users.Where(p => p.Role == 4 &&
+            var users = await db.Users.Where(p => p.Role == RoleIds.Operator &&
             p.IsActive == true &&
             p.Approved == true)
               .OrderByDescending(e => e.UserId)
