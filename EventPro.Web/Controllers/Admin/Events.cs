@@ -1,20 +1,3 @@
-using FirebaseAdmin;
-using FirebaseAdmin.Messaging;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using EventPro.DAL.Extensions;
-using EventPro.DAL.Models;
-using EventPro.DAL.Common;
-using EventPro.DAL.ViewModels;
-using EventPro.Web.Common;
-using EventPro.Web.Extensions;
-using EventPro.Web.Filters;
-using EventPro.Web.Models;
-using EventPro.Web.Services;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,6 +7,29 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
+using EventPro.DAL.Common;
+using EventPro.DAL.Extensions;
+using EventPro.DAL.Models;
+using EventPro.DAL.ViewModels;
+using EventPro.Web.Common;
+using EventPro.Web.Extensions;
+using EventPro.Web.Filters;
+using EventPro.Web.Models;
+using EventPro.Web.Services;
+
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+
+using Google.Apis.Auth.OAuth2;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+using Serilog;
 
 namespace EventPro.Web.Controllers
 {
@@ -51,6 +57,9 @@ namespace EventPro.Web.Controllers
             var sortColumn = Request.Form[string.Concat("columns[", Request.Form["order[0][column]"], "][name]")];
             var sortColumnDirection = Request.Form["order[0][dir]"];
 
+            // Read the VwEvents view for events that are not deleted and with filtering
+            // From the database view called Vw_Events (see DAL.Models.VwEvents)
+            // The filtering is done based on the search value provided in the request
             IQueryable<VwEvents> events_ = db.VwEvents.Where(e => (e.EventTo >= DateTime.Now && e.IsDeleted != true) && (
             string.IsNullOrEmpty(searchValue) ? true
             : (e.Id.ToString().Contains(searchValue))
@@ -82,24 +91,36 @@ namespace EventPro.Web.Controllers
                 events_ = events_.OrderBy(string.Concat(sortColumn, " ", sortColumnDirection)).Reverse();
             }
 
-            var result = await events_.Skip(skip).Take(pageSize).ToListAsync();
-            List<EventVM> eventsVM = new();
-
-            foreach (var evnt in result)
+            try
             {
-                EventVM eventVM = new(evnt);
-                eventsVM.Add(eventVM);
+                var result = await events_.Skip(skip).Take(pageSize).ToListAsync();
+                // Prepare the view models to be sent to the client
+                // result is the list of database models (VwEvents)
+                List<EventVM> eventsVM = new(); // view models
+                foreach (var evnt in result)
+                {
+                    EventVM eventVM = new(evnt); // from the database model to the view model
+                    eventsVM.Add(eventVM);
+                }
+
+                var recordsTotal = await events_.CountAsync();
+                // draw is a parameter sent by DataTables to ensure each response corresponds to the correct request
+                var draw = Request.Form["draw"].FirstOrDefault();
+                var jsonData = new
+                {
+                    draw = draw,
+                    recordsFiltered = recordsTotal,
+                    recordsTotal,
+                    data = eventsVM
+                };
+                return Ok(jsonData);
             }
-
-            var recordsTotal = await events_.CountAsync();
-            var jsonData = new
+            catch (Exception ex)
             {
-                recordsFiltered = recordsTotal,
-                recordsTotal,
-                data = eventsVM
-            };
-
-            return Ok(jsonData);
+                // Ghrabawy : TODO : Log the exception
+                // Return a 500 Internal Server Error response with the exception details
+                return StatusCode(500, new { message = ex.Message, stack = ex.StackTrace });
+            }
         }
 
         // /Admin/DeleteEvent/
@@ -1118,6 +1139,7 @@ namespace EventPro.Web.Controllers
             return View("EditEvent - Copy", new Events());
         }
 
+        // Add a new event - POST
         [HttpPost]
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> _Events(Events events)
@@ -1183,7 +1205,7 @@ namespace EventPro.Web.Controllers
                         {
                             filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
                         }
-                        
+
                         if (!string.IsNullOrEmpty(filename))
                         {
                             hasFile = true;
@@ -1195,6 +1217,7 @@ namespace EventPro.Web.Controllers
                     ModelState.AddModelError(string.Empty, ex.Message);
                     // Re-populate ViewBag data
                     ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
+                    // Gharabawy : Here we use the "VwUsers" to get only the clients
                     ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
                     ViewBag.Icon = "nav-icon fas fa-calendar";
                     ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
@@ -1221,7 +1244,7 @@ namespace EventPro.Web.Controllers
             events.ShowFailedSendingCongratulationLink = true;
             events.ChoosenNumberWithinCountry = 1;
             var settings = await db.AppSettings.FirstOrDefaultAsync();
-           // events.choosenSendingWhatsappProfile = settings.WhatsappDefaultTwilioProfile;
+            // events.choosenSendingWhatsappProfile = settings.WhatsappDefaultTwilioProfile;
             City city = await db.City.Where(e => e.Id == events.CityId)
                 .Include(e => e.Country)
                 .FirstOrDefaultAsync();
@@ -1252,6 +1275,7 @@ namespace EventPro.Web.Controllers
             await db.EventOperator.AddAsync(eventOperator);
             await db.SaveChangesAsync();
 
+            // Audit Log
             await _auditLogService.AddAsync(userId, events.Id);
 
             try
@@ -1299,6 +1323,8 @@ namespace EventPro.Web.Controllers
 
             await CreateReminderIcsFileAsync(events);
             Log.Information($"Event with ID: {events.Id} created by:{userId}");
+
+            // Redirect to Events Page 
             return RedirectToAction(AppAction.Events, AppController.Admin);
         }
 

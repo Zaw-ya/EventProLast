@@ -19,6 +19,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using EventPro.Business.Storage.Interface;
 
 namespace EventPro.Web.Controllers
 {
@@ -96,6 +97,7 @@ namespace EventPro.Web.Controllers
             return fonts.OrderBy(p => p.Name).ToList();
         }
 
+        // Post the card info 
         [HttpPost]
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> QRSettings(CardInfo info)
@@ -106,6 +108,8 @@ namespace EventPro.Web.Controllers
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             string filename = string.Empty;
             bool hasFile = false;
+            string backgroundImageUrl = string.Empty;
+            // Process uploaded files for the card
             foreach (var file in files)
             {
                 if (file.Length > 1000 * 1024)
@@ -125,7 +129,9 @@ namespace EventPro.Web.Controllers
                 filename = Guid.NewGuid() + "." + extension;
 
                 using var stream = file.OpenReadStream();
-                await _blobStorage.UploadAsync(stream, extension, environment + path + "/" + filename, cancellationToken: default);
+                // Gharabawy : Here we have to replace with the cloudinary
+                backgroundImageUrl = await _cloudinaryService.UploadImageAsync(stream, environment + path + "/" + filename, path);
+                //await _blobStorage.UploadAsync(stream, extension, environment + path + "/" + filename, cancellationToken: default);
                 hasFile = true;
             }
             CardInfo card = new CardInfo();
@@ -147,9 +153,11 @@ namespace EventPro.Web.Controllers
             card.DefaultFont = info.DefaultFont;
 
             if (hasFile)
-                card.BackgroundImage = filename;
+                // Gharabawy : Here we have to replace with the cloudinary and save the URL not the file name
+                card.BackgroundImage = backgroundImageUrl;
             await db.SaveChangesAsync();
 
+            // Generate QR Code
             string barcodePath = _configuration.GetSection("Uploads").GetSection("Barcode").Value;
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
             QRCodeData qrCodeData = qrGenerator.CreateQrCode("My Invite.", QRCodeGenerator.ECCLevel.Q);
@@ -171,15 +179,17 @@ namespace EventPro.Web.Controllers
 
             string cardPreview = _configuration.GetSection("Uploads").GetSection("environment").Value +
                 _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-
-            await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
+            // Delete existing barcode if any
+            await _cloudinaryService.DeleteAsync(environment + barcodePath + "/" + info.EventId + ".png");
+            //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
 
             using (MemoryStream ms = new MemoryStream())
             {
                 // ?? Change to PNG format (supports transparency)
+                // Convert the QR code to PNG format and upload it
                 qrCodeImage.Save(ms, ImageFormat.Png);
-
-                await _blobStorage.UploadAsync(ms, "png", environment + barcodePath + "/" + info.EventId + ".png", cancellationToken: default);
+                await _cloudinaryService.UploadImageAsync(ms, environment + barcodePath + "/" + info.EventId + ".png",null);
+                //await _blobStorage.UploadAsync(ms, "png", environment + barcodePath + "/" + info.EventId + ".png", cancellationToken: default);
             }
 
             qrCodeImage.Dispose();
@@ -195,6 +205,7 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, info.EventId,DAL.Enum.ActionEnum.UpdateQRCode);
+            // redirect to the CardPreview view
             return RedirectToAction("CardPreview", "admin", new { id = info.EventId });
         }
 
@@ -221,7 +232,17 @@ namespace EventPro.Web.Controllers
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Card").Value;
 
 
-            if (!await _blobStorage.FileExistsAsync(environment + cardPreview + "/" + cardInfo.BackgroundImage))
+            // Gharabawy : check if the filename is not null and construct the same
+            // structure : environment + path(code) + / + fileName(BackgroundImage)
+
+            // Gharabawy TODO 12/1 : Think to store the URL not the file name
+            // !await _cloudinaryService.FileExistsAsync(environment + cardPreview + "/" + cardInfo.BackgroundImage)
+            // if (!await _blobStorage.FileExistsAsync(environment + cardPreview + "/" + cardInfo.BackgroundImage))
+            //{
+            //    TempData["entry-error"] = "Background image not uploaded, please upload background image to proceed with designer";
+            //    return RedirectToAction("QRSettings", "admin", new { id = id });
+            //}
+            if (cardInfo.BackgroundImage == null)
             {
                 TempData["entry-error"] = "Background image not uploaded, please upload background image to proceed with designer";
                 return RedirectToAction("QRSettings", "admin", new { id = id });
@@ -230,10 +251,15 @@ namespace EventPro.Web.Controllers
 
             using HttpClient client = new HttpClient();
 
-            var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/upload" + cardPreview + @"/" + cardInfo.BackgroundImage;
+            #region Old Code for local uploads we dont need it any more 
+            //var request = _httpContextAccessor.HttpContext.Request;
+            //var baseUrl = $"{request.Scheme}://{request.Host}";
+            //var imageUrl = $"{baseUrl}/upload" + cardPreview + @"/" + cardInfo.BackgroundImage;
+            //byte[] imageData = await client.GetByteArrayAsync(imageUrl);
+            #endregion
+            var imageUrl = cardInfo.BackgroundImage;
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
+
             using MemoryStream ms = new MemoryStream(imageData);
             Image img = Image.FromStream(ms);
 
@@ -428,9 +454,10 @@ namespace EventPro.Web.Controllers
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
             using HttpClient client = new HttpClient();
-            var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
+            //var request = _httpContextAccessor.HttpContext.Request;
+            //var baseUrl = $"{request.Scheme}://{request.Host}";
+            //var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
+            var imageUrl =info.BackgroundImage;
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
             using MemoryStream ms = new MemoryStream(imageData);
             Image img = Image.FromStream(ms);
@@ -452,21 +479,20 @@ namespace EventPro.Web.Controllers
             TempData["message2"] = "Template save successfully.";
 
             string cardPreviews = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
+            //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, info.EventId, DAL.Enum.ActionEnum.UpdateCardDesign);
             return View(cardInfo);
         }
 
-
-
         private async Task GenerateCardAsync(CardInfo cardInfo, string barcodePath, string cardPreview, string path, float zoomRatio, int guestId = 0)
         {
             using HttpClient client = new HttpClient();
-            var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
+            //var request = _httpContextAccessor.HttpContext.Request;
+            //var baseUrl = $"{request.Scheme}://{request.Host}";
+            //var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
+            var imageUrl = cardInfo.BackgroundImage;
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
             using MemoryStream ms = new MemoryStream(imageData);

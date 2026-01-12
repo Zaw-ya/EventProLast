@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.RabbitMQMessaging.Interface;
 using EventPro.Business.Storage.Interface;
@@ -12,6 +18,7 @@ using EventPro.Services.UnitOFWorkService;
 using EventPro.Services.WatiService.Interface;
 using EventPro.Web.Common;
 using EventPro.Web.Filters;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,11 +26,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace EventPro.Web.Controllers
 {

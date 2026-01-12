@@ -29,6 +29,10 @@
     {
       "library": "pdf-lib@1.17.1",
       "destination": "wwwroot/lib/pdf-lib/"
+    },
+    {
+      "library": "jquery@3.7.1",
+      "destination": "wwwroot/lib/jquery/"
     }
   ]
 }

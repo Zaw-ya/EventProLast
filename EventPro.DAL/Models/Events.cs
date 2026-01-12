@@ -50,6 +50,8 @@ namespace EventPro.DAL.Models
         public string? MessageHeaderImage { get; set; }
         public string? MessageHeaderText { get; set; }
         public string GmapCode { get; set; }
+        public string Glocation { get; set; }
+        public string Icon { get; set; } // Event Icon URL
         [Required]
         public string EventDescription { get; set; }
         public int? CreatedBy { get; set; }

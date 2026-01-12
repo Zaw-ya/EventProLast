@@ -54438,13 +54438,7 @@ var defaultClientFonts = {
 		bold: 'Roboto-Medium.ttf',
 		italics: 'Roboto-Italic.ttf',
 		bolditalics: 'Roboto-MediumItalic.ttf'
-	},
-    arial: {
-        normal: 'arial-Regular.ttf',
-        bold: 'arial-Regular.ttf',
-        italics: 'arial-Regular.ttf',
-        bolditalics: 'arial-Regular.ttf'
-    }
+	}
 };
 
 function Document(docDefinition, tableLayouts, fonts, vfs) {
