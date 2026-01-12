@@ -1780,9 +1780,9 @@ namespace EventPro.Web.Controllers
         private async Task RefreshQRCode(Guest guest, CardInfo card)
         {
             int guestId = guest.GuestId;
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string barcodePath = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
-            string imagePath = barcodePath + "/" + guest.GuestId + ".png";
+            int eventId = guest.EventId ?? 0;
+
+            // Generate QR code for guest
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
             QRCodeData qrCodeData = qrGenerator.CreateQrCode(EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guestId)), QRCodeGenerator.ECCLevel.Q);
             QRCode qrCode = new QRCode(qrCodeData);
@@ -1791,25 +1791,28 @@ namespace EventPro.Web.Controllers
             if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
             {
                 qrCodeImage = qrCode.GetGraphic(
-                5,
-                    ColorTranslator.FromHtml(card.BackgroundColor), // Convert hex string to Color
-                    Color.Transparent, // Use Color.Transparent directly (if supported)
+                    5,
+                    ColorTranslator.FromHtml(card.BackgroundColor),
+                    Color.Transparent,
                     false
                 );
             }
             else
             {
                 qrCodeImage = qrCode.GetGraphic(5
-                , card.BackgroundColor
-                , card.ForegroundColor
-                , false);
+                    , card.BackgroundColor
+                    , card.ForegroundColor
+                    , false);
             }
 
+            // Upload to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
+            string qrFolderPath = $"QR/{eventId}";
+            string qrFileName = $"{guestId}.png";
 
             using (MemoryStream ms = new MemoryStream())
             {
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                await _blobStorage.UploadAsync(ms, "png", environment + imagePath, cancellationToken: default);
+                await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
             }
             qrCodeImage.Dispose();
         }
@@ -1819,27 +1822,44 @@ namespace EventPro.Web.Controllers
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             int guestId = guest.GuestId;
             int nos = Convert.ToInt32(guest.NoOfMembers);
-            using HttpClient client = new HttpClient();
-            var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
-            byte[] imageData = await client.GetByteArrayAsync(imageUrl);
-            using MemoryStream fs = new MemoryStream(imageData);
-            Image img = Image.FromStream(fs);
-            ViewBag.ImageWidth = img.Width;
-            ViewBag.ImageHeight = img.Height;
+
+            // Load template image from local storage (generated in CardPreview)
+            string templatePath = Path.Combine(webHostEnvironment.WebRootPath, "upload", "cardpreview", $"{eventId}.png");
+
+            Image img;
+            if (System.IO.File.Exists(templatePath))
+            {
+                // Use local template
+                img = Image.FromFile(templatePath);
+            }
+            else
+            {
+                // Fallback: Load background from Cloudinary if template doesn't exist
+                using HttpClient client = new HttpClient();
+                var imageUrl = cardInfo.BackgroundImage;
+                byte[] imageData = await client.GetByteArrayAsync(imageUrl);
+                using MemoryStream fs = new MemoryStream(imageData);
+                img = Image.FromStream(fs);
+            }
+
             double zoomRatio = 1;
             if (img.Width > 900)
             {
                 zoomRatio = Convert.ToDouble(img.Width) / Convert.ToDouble(900);
             }
-            var barcodeUrl = $"{baseUrl}/upload" + guestcode + @"/" + guest.GuestId + ".png";
-            byte[] barcodeData = await client.GetByteArrayAsync(barcodeUrl);
+
+            // Load guest QR code from Cloudinary
+            using HttpClient clientQR = new HttpClient();
+            string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
+            var barcodeUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{eventId}/{guestId}.png";
+            byte[] barcodeData = await clientQR.GetByteArrayAsync(barcodeUrl);
             using MemoryStream fsBarcode = new MemoryStream(barcodeData);
             Image barcode = Image.FromStream(fsBarcode);
-            Image background = Image.FromStream(fs);
-            Bitmap myBitmap = new Bitmap(Image.FromStream(fs));
+
+            Bitmap myBitmap = new Bitmap(img);
             Graphics grap = Graphics.FromImage(myBitmap);
+
+            // Draw guest QR code
             if (cardInfo.BarcodeXaxis != null && cardInfo.BarcodeYaxis != null)
             {
                 grap.DrawImage(barcode, (int)(cardInfo.BarcodeXaxis * zoomRatio), (int)(cardInfo.BarcodeYaxis * zoomRatio), (int)(cardInfo.BarcodeWidth * zoomRatio), (int)(cardInfo.BarcodeWidth * zoomRatio));
@@ -1973,8 +1993,6 @@ namespace EventPro.Web.Controllers
             img.Dispose();
             myBitmap.Dispose();
             barcode.Dispose();
-            background.Dispose();
-
         }
 
         private static void GenerateBarcode(CardInfo card, string imagePath, string barcodeText)
