@@ -179,18 +179,27 @@ namespace EventPro.Web.Controllers
 
             string cardPreview = _configuration.GetSection("Uploads").GetSection("environment").Value +
                 _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+
+            //Ali hani // Create folder structure: QR/{eventId}/{eventId}.png
+            string qrFolderPath = $"QR/{info.EventId}";
+            string qrFileName = $"{info.EventId}.png";
+
             // Delete existing barcode if any
-            await _cloudinaryService.DeleteAsync(environment + barcodePath + "/" + info.EventId + ".png");
+            await _cloudinaryService.DeleteAsync($"{qrFolderPath}/{qrFileName}");
             //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
 
+            string qrCodeUrl = string.Empty;
             using (MemoryStream ms = new MemoryStream())
             {
                 // ?? Change to PNG format (supports transparency)
                 // Convert the QR code to PNG format and upload it
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                await _cloudinaryService.UploadImageAsync(ms, environment + barcodePath + "/" + info.EventId + ".png",null);
+                qrCodeUrl = await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
                 //await _blobStorage.UploadAsync(ms, "png", environment + barcodePath + "/" + info.EventId + ".png", cancellationToken: default);
             }
+
+            // Ali hani // Store the QR code URL in the card info
+            card.BarcodeColorCode = qrCodeUrl;
 
             qrCodeImage.Dispose();
             SetBreadcrum("QR Settings", "/admin");
@@ -223,7 +232,6 @@ namespace EventPro.Web.Controllers
             }
 
             ViewBag.Icon = "nav-icon fas fa-qrcode";
-            ViewBag.Barcode = id + ".png";
             SetBreadcrum("Card Preview", "/admin");
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             var cardInfo = db.CardInfo.Where(p => p.EventId == id).FirstOrDefault();
@@ -271,6 +279,19 @@ namespace EventPro.Web.Controllers
             ViewBag.ImageWidth = img.Width;
             ViewBag.ImageHeight = img.Height;
             ViewBag.Fonts = new SelectList(GetFonts(), "Name", "Name");
+
+            //Ali hani // Set QR code URL - if not stored in database, construct Cloudinary URL
+            if (!string.IsNullOrEmpty(cardInfo.BarcodeColorCode))
+            {
+                ViewBag.Barcode = cardInfo.BarcodeColorCode;
+            }
+            else
+            {
+              //Ali hani    // Construct Cloudinary URL for existing QR codes with folder structure: QR/{eventId}/{eventId}.png
+                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
+                ViewBag.Barcode = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{id}/{id}.png";
+            }
+
             return View(cardInfo);
         }
 

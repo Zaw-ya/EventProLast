@@ -204,10 +204,7 @@
                         <div class="col-md-9">
                             <div id="mainBody">
                                 <div id="mydiv">
-                                    @{
-                                        var barCode = "/upload/barcode/" + @ViewBag.Barcode;
-                                    }
-                                    <img id="mydivheader" src="@barCode?v=@DateTime.UtcNow.Ticks" width=@Model.BarcodeWidth height=@Model.BarcodeHeight>
+                                    <img id="mydivheader" src="@ViewBag.Barcode?v=@DateTime.UtcNow.Ticks" width=@Model.BarcodeWidth height=@Model.BarcodeHeight>
                                 </div>
                                 <div id="text1">
                                     Guest Name
@@ -309,7 +306,7 @@
 }
 <script>
     $(document).ready(function () {
-        SetCardBackground('@Url.Content("~")/upload/card/@Model.BackgroundImage');
+        SetCardBackground('@Model.BackgroundImage');
         setCardPosition();
         LoadPlaceholder();
         ToggleLang();
