@@ -1227,7 +1227,7 @@ namespace EventPro.Web.Controllers
                 }
             }
             events.SendingConfiramtionMessagesLinksLanguage = "Arabic";
-            events.LinkGuestsCardText = "????? ?????? ?????? ???";
+            events.LinkGuestsCardText = "بطاقة الضيوف للحفلة هنا";
             events.ConfirmationButtonsType = "QuickReplies";
             events.IsDeleted = false;
             events.MessageHeaderImage = filename;
@@ -1248,11 +1248,11 @@ namespace EventPro.Web.Controllers
             City city = await db.City.Where(e => e.Id == events.CityId)
                 .Include(e => e.Country)
                 .FirstOrDefaultAsync();
-            if (city.Country.CountryName.Contains("??????"))
+            if (city.Country.CountryName.Contains("الكويت"))
             {
                 events.choosenSendingCountryNumber = "KUWAIT";
             }
-            else if (city.Country.CountryName.Contains("???????"))
+            else if (city.Country.CountryName.Contains("البحرين"))
             {
                 events.choosenSendingCountryNumber = "BAHRAIN";
             }
@@ -1905,20 +1905,20 @@ namespace EventPro.Web.Controllers
         {
             var location = "https://maps.app.goo.gl/" + evnt.GmapCode;
 
-            // ??????? ????? ????? ?????? (UTC+3)
+            // المنطقة الزمنية للدول العربية (UTC+3)
             TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
 
-            // ??? ??? ????? ????? (20:00 ?? 8 ?????)
+            // وقت بدء الحفلة المبدئي (20:00 أو 8 مساءا)
             DateTime eventDate = evnt.EventFrom.Value.Date;
             DateTime eventStartTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 20, 0, 0);
 
-            // ??? ????? ????? (23:00 ?? 11 ?????)
+            // وقت انتهاء الحفلة (23:00 أو 11 مساءا)
             DateTime eventEndTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 23, 0, 0);
 
-            // ??? ??????? ??? ?????
+            // وقت التنبيهات قبل يومين
             TimeSpan alertOffset = TimeSpan.FromDays(2);
 
-            // ??????? ?????? UTC
+            // التاريخ الحالي UTC
             DateTime utcNow = DateTime.UtcNow;
 
             var sb = new StringBuilder();
@@ -1930,16 +1930,16 @@ namespace EventPro.Web.Controllers
             sb.AppendLine($"UID:{Guid.NewGuid()}");
             sb.AppendLine($"DTSTAMP:{utcNow:yyyyMMddTHHmmssZ}");
 
-            // ??? ??????? ???????? ?????? ????? ??????
+            // وقت البداية والنهاية بتنسيق التقويم القياسي
             sb.AppendLine($"DTSTART;TZID=Arab Standard Time:{eventStartTime:yyyyMMddTHHmmss}");
             sb.AppendLine($"DTEND;TZID=Arab Standard Time:{eventEndTime:yyyyMMddTHHmmss}");
 
             sb.AppendLine($"SUMMARY:{evnt.SystemEventTitle}");
             sb.AppendLine($"LOCATION:{evnt.EventVenue}");
 
-            // ????? ??? ?????
+            // تذكير قبل يومين
             sb.AppendLine("BEGIN:VALARM");
-            sb.AppendLine($"TRIGGER:-P2D"); // P2D = ??? ?????
+            sb.AppendLine($"TRIGGER:-P2D"); // P2D = قبل يومين
             sb.AppendLine("ACTION:DISPLAY");
             sb.AppendLine("DESCRIPTION:Reminder");
             sb.AppendLine("END:VALARM");
