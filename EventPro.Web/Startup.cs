@@ -1,21 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+
 using Azure.Storage.Blobs;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using Hangfire;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
+
 using EventPro.Business.EventService;
 using EventPro.Business.MemoryCacheStore.Implementaiion;
 using EventPro.Business.MemoryCacheStore.Interface;
@@ -29,39 +18,57 @@ using EventPro.Business.WhatsAppMessagesWebhook.Implementation;
 using EventPro.Business.WhatsAppMessagesWebhook.Interface;
 using EventPro.DAL.Common;
 using EventPro.DAL.Common.Interfaces;
-using EventPro.DAL.Dto;
 using EventPro.DAL.Models;
 using EventPro.Kernal.StaticFiles;
 using EventPro.Services.AuditLogService.implementation;
 using EventPro.Services.AuditLogService.Interface;
 using EventPro.Services.NotificationService.Implementation;
+using EventPro.Services.Repository;
+using EventPro.Services.Repository.Interface;
 using EventPro.Services.TwilioService;
 using EventPro.Services.TwilioService.Interface;
 using EventPro.Services.UnitOFWorkService;
 using EventPro.Services.UnitOFWorkService.Implementation;
 using EventPro.Services.UnitOFWorkService.Interface;
-using EventPro.Services.Repository;
-using EventPro.Services.Repository.Interface;
 using EventPro.Services.WatiService.Implementation;
 using EventPro.Services.WatiService.Interface;
 using EventPro.Web.Controllers.Admin;
 using EventPro.Web.CustomMiddleware;
 using EventPro.Web.Filters;
+using EventPro.Web.Seeds;
 using EventPro.Web.Services;
 using EventPro.Web.Services.DefaultWhatsappService.Implementation;
 using EventPro.Web.Services.DefaultWhatsappService.Interface;
 using EventPro.Web.Services.Interface;
+
+using FirebaseAdmin;
+
+using Google.Apis.Auth.OAuth2;
+
+using Hangfire;
+
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 using RabbitMQ.Client;
+
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
+
 using Serilog;
 using Serilog.Events;
+
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using EventPro.Web.Seeds;
 
 
 namespace EventPro.Web

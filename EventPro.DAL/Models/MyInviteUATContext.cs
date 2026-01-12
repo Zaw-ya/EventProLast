@@ -50,7 +50,7 @@ namespace EventPro.DAL.Models
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<VwEventCategory> VwEventCategory { get; set; }
         public virtual DbSet<VwEventGatekeeper> VwEventGatekeeper { get; set; }
-        public virtual DbSet<VwEvents> VwEvents { get; set; }
+        public DbSet<VwEvents> VwEvents { get; set; }
         public virtual DbSet<VMDashboardCount> VMDashboardCount { get; set; }
         public virtual DbSet<VwGateKeeperData> VwGateKeeperData { get; set; }
         public virtual DbSet<VwGateKeeperScheduled> VwGateKeeperScheduled { get; set; }
@@ -74,15 +74,6 @@ namespace EventPro.DAL.Models
         public virtual DbSet<ScanSummary> ScanSummary { get; set; }
         public virtual DbSet<MobileLog> MobileLog { get; set; }
         public virtual DbSet<AuditLog> AuditLog { get; set; }
-
-        //        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //        {
-        //            if (!optionsBuilder.IsConfigured)
-        //            {
-        //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-        //                optionsBuilder.UseSqlServer("Server=GALAXY\\GALAXYDB;database=EventProUAT;integrated security=SSPI");
-        //            }
-        //        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -744,9 +735,11 @@ namespace EventPro.DAL.Models
                     .HasMaxLength(40)
                     .IsUnicode(false);
 
-                entity.Property(e => e.IconUrl)
-                    .HasMaxLength(76)
-                    .IsUnicode(false);
+                // Ghrabawy : Deleted IconUrl property from Events table, as it is not used anywhere.
+                // We used the Icon property to store the Event Icon URL.
+                //entity.Property(e => e.IconUrl)
+                //    .HasMaxLength(76)
+                //    .IsUnicode(false);
 
                 entity.Property(e => e.LastName).HasMaxLength(30);
 
@@ -1140,7 +1133,7 @@ namespace EventPro.DAL.Models
 
             OnModelCreatingPartial(modelBuilder);
         }
-
+            
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
