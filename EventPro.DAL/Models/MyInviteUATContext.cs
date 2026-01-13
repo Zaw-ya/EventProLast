@@ -791,6 +791,68 @@ namespace EventPro.DAL.Models
                 entity.Property(e => e.IsActive).HasColumnName("isActive");
             });
 
+            modelBuilder.Entity<vwGuestInfo>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("vw_GuestInfo");
+
+                entity.Property(e => e.Address).HasMaxLength(1000);
+                entity.Property(e => e.AdditionalText).HasMaxLength(500);
+                entity.Property(e => e.CreatedOn).HasColumnType("datetime");
+                entity.Property(e => e.Cypertext)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+                entity.Property(e => e.EmailAddress)
+                    .HasMaxLength(80)
+                    .IsUnicode(false);
+                entity.Property(e => e.FirstName).HasMaxLength(100);
+                entity.Property(e => e.LastName).HasMaxLength(100);
+                entity.Property(e => e.MessageId)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+                entity.Property(e => e.ModeOfCommunication)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+                entity.Property(e => e.PrimaryContactNo).HasMaxLength(40);
+                entity.Property(e => e.SecondaryContactNo)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+                entity.Property(e => e.Source)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.WaresponseTime).HasColumnType("datetime");
+                entity.Property(e => e.WhatsappStatus)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+                entity.Property(e => e.whatsappMessageId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.whatsappMessageImgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.whatsappWatiEventLocationId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.ConguratulationMsgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.WatiConguratulationMsgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.ReminderMessageId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.ReminderMessageWatiId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.Response).HasMaxLength(400);
+                entity.Property(e => e.ImgSentMsgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.waMessageEventLocationForSendingToAll)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+            });
             modelBuilder.Entity<VwGuestList>(entity =>
             {
                 entity.HasNoKey();

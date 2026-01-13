@@ -1,16 +1,3 @@
-using ExcelDataReader;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EventPro.DAL;
-using EventPro.DAL.Enum;
-using EventPro.DAL.Models;
-using EventPro.DAL.ViewModels;
-using EventPro.Web.Common;
-using EventPro.Web.Filters;
-using EventPro.Web.Services;
-using QRCoder;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -24,6 +11,23 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
+using EventPro.DAL;
+using EventPro.DAL.Enum;
+using EventPro.DAL.Models;
+using EventPro.DAL.ViewModels;
+using EventPro.Web.Common;
+using EventPro.Web.Filters;
+
+using ExcelDataReader;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+using QRCoder;
+
+using Serilog;
 
 namespace EventPro.Web.Controllers
 {
@@ -92,7 +96,6 @@ namespace EventPro.Web.Controllers
             : (e.GuestId.ToString().Contains(searchValue))
             || (e.CreatedOn.ToString().Contains(searchValue))
             || (e.EventId.ToString().Contains(searchValue))
-            || (e.WaresponseTime.ToString().Contains(searchValue))
             || (string.Concat(e.FirstName, " ", e.LastName).Contains(searchValue))
             || (string.Concat("+", e.SecondaryContactNo, e.PrimaryContactNo).Contains(searchValue))
             )).AsNoTracking();
@@ -334,12 +337,28 @@ namespace EventPro.Web.Controllers
             guests = guests.OrderByDescending(e => e.GuestId);
             recordsTotal = await guests.CountAsync();
 
-
-
-            pageSize = pageSize == -1 ? recordsTotal : pageSize;
             var result = new List<vwGuestInfo>();
-            result = await guests.Skip(skip).Take(pageSize).ToListAsync();
+            try
+            {
+                pageSize = pageSize == -1 ? recordsTotal : pageSize;
 
+                result = await guests
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                var error = new
+                {
+                    Message = ex.Message,
+                    Inner = ex.InnerException?.Message,
+                    StackTrace = ex.StackTrace,
+                    Source = ex.Source
+                };
+
+                return StatusCode(500, error);
+            }
 
             List<GuestVM> guestsVM = new();
 
@@ -360,6 +379,82 @@ namespace EventPro.Web.Controllers
             return Ok(jsonData);
         }
 
+        // Add new Guest
+        [HttpPost]
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> Guest(Guest guest)
+        {
+            var AddedOrModified = 0;
+
+            try
+            {
+                AddedOrModified = await AddOrModifyGuest(guest);
+                return Json(new { success = true, addedOrModified = AddedOrModified });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false });
+            }
+        }
+
+        // Add or modify guest (Upsert)
+        public async Task<int> AddOrModifyGuest(Guest guest)
+        {
+            int guestId = 0;
+            int eventId = Convert.ToInt32(guest.EventId);
+            var addedOrModified = 0;
+
+            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            string guestcode = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
+            string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
+            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            // If we send the GuestId it means we update
+            if (guest.GuestId > 0)
+            {
+                guestId = guest.GuestId;
+                Guest gst = await db.Guest.Where(p => p.GuestId == guest.GuestId).FirstOrDefaultAsync();
+                gst.FirstName = guest.FirstName;
+                gst.NoOfMembers = guest.NoOfMembers;
+                gst.AdditionalText = guest.AdditionalText;
+                gst.PrimaryContactNo = guest.PrimaryContactNo;
+                gst.SecondaryContactNo = guest.SecondaryContactNo;
+                gst.IsPhoneNumberValid = true;
+                gst.GuestArchieved = false;
+                eventId = Convert.ToInt32(gst.EventId);
+                guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
+                await _auditLogService.AddAsync(userId, eventId, ActionEnum.UpdateGuest, guestId, gst.FirstName);
+                await db.SaveChangesAsync();
+                addedOrModified = 2;
+            }
+            else
+            {
+                // It means we create
+                guest.CreatedBy = userId;
+                guest.CreatedOn = DateTime.Now;
+                guest.IsPhoneNumberValid = true;
+                guest.GuestArchieved = false;
+                guest.Source = "Entry";
+                // Gharabawy needed to understand this cypher text
+                guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
+                var newGuest = await db.Guest.AddAsync(guest);
+                await db.SaveChangesAsync();
+                addedOrModified = 1;
+                guest = newGuest.Entity;
+                guestId = newGuest.Entity.GuestId;
+                await _auditLogService.AddAsync(userId, eventId, ActionEnum.AddGuest, guestId, guest.FirstName);
+            }
+
+            Log.Information("Event {eId} guest {gId} added/modified by {uId}", eventId, guestId, userId);
+            var card = await db.CardInfo.Where(p => p.EventId == eventId).FirstOrDefaultAsync();
+            await RefreshQRCode(guest, card);
+            await RefreshCard(guest, eventId, card, cardPreview, guestcode, path);
+            await db.SaveChangesAsync();
+
+            return addedOrModified;
+        }
+
+
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> InviteOnWhatsapp(int id)
         {
@@ -375,7 +470,7 @@ namespace EventPro.Web.Controllers
             var _event = await db.Events.Where(p => p.Id == guest.EventId)
                 .FirstOrDefaultAsync();
 
-            if(_event.ConfirmationButtonsType == "Links")
+            if (_event.ConfirmationButtonsType == "Links")
             {
                 if (string.IsNullOrEmpty(_event.LinkGuestsLocationEmbedSrc))
                     return Json(new { success = false, message = "رابط الموقع غير موجود" });
@@ -634,6 +729,7 @@ namespace EventPro.Web.Controllers
 
             return "No Matching Template Found";
         }
+
         public async Task<IActionResult> GetCardSendingData(int id, int remainingMessages)
         {
             if (remainingMessages == 0)
@@ -712,48 +808,6 @@ namespace EventPro.Web.Controllers
             }
 
             return Json(new { success = true });
-        }
-
-        private async Task<bool> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
-            {
-                return false;
-            }
-
-            foreach (var guest in guests)
-            {
-                string imagePath = cardPreview + "/" + guest.EventId + "/" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
-                if (!await _blobStorage.FileExistsAsync(environment + imagePath))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private bool CheckGuestsNumbersExist(List<Guest> guests)
-        {
-            if (guests.Any(e => string.IsNullOrEmpty(e.PrimaryContactNo) ||
-            string.IsNullOrEmpty(e.SecondaryContactNo)))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckEventLocationExists(Events _event)
-        {
-            if (_event.GmapCode == null || _event.GmapCode.Length == 0)
-            {
-                return false;
-            }
-
-            return true;
         }
 
         public async Task<IActionResult> GetEventLocationSendingData(int id, int remainingMessages)
@@ -835,7 +889,6 @@ namespace EventPro.Web.Controllers
 
             return Json(new { success = true });
         }
-
 
         public async Task<IActionResult> GetReminderMessagesSendingDataToAll(int id, int remainingMessages)
         {
@@ -988,6 +1041,7 @@ namespace EventPro.Web.Controllers
             //await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.SendReminderToOnlyReceived);
             return Json(new { success = true });
         }
+        
         public async Task<IActionResult> GetReminderMessagesSendingDataToOnlyAccepted(int id, int remainingMessages)
         {
             if (remainingMessages == 0)
@@ -1604,37 +1658,7 @@ namespace EventPro.Web.Controllers
             }
             return RedirectToAction("Guests", "admin", new { id = guest.EventId });
         }
-
-        [HttpPost]
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> Guest(Guest guest)
-        {
-            var AddedOrModified = 0;
-
-            try
-            {
-                AddedOrModified = await AddOrModifyGuest(guest);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false });
-            }
-
-            return Json(new { success = true, addedOrModified = AddedOrModified });
-        }
-        public DataSet ReadExcel(string file, string tableName)
-        {
-
-            string strconnection = _configuration.GetSection("Database").GetSection("ExcelConnection").Value; //GetConfigValue("xlsxconnection");
-            strconnection = strconnection + "Data Source=" + file.ToString() + " ;Excel 12.0;HDR=Yes;IMEX=1";
-            OleDbConnection olecn = new OleDbConnection(strconnection);
-            OleDbCommand olecmd = new OleDbCommand("SELECT * from [" + tableName + "$]", olecn);
-            OleDbDataAdapter olead = new OleDbDataAdapter(olecmd);
-            DataSet ds = new DataSet();
-            olead.Fill(ds);
-            return ds;
-        }
-
+  
         [HttpPost]
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> Upload(int eventId, IFormCollection form)
@@ -1725,96 +1749,159 @@ namespace EventPro.Web.Controllers
             return Json(new { success = true, totalGuests = totalGuests, totalMembers = totalMembers });
         }
 
-        public async Task<int> AddOrModifyGuest(Guest guest)
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> StatusRefreshIndividually(int id, int eventid)
         {
-            int guestId = 0;
-            int eventId = Convert.ToInt32(guest.EventId);
-            var addedOrModified = 0;
+            var guest = await db.Guest
+                .FirstOrDefaultAsync(x => x.GuestId == id);
 
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            string guestcode = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
-            string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
-            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var events = await db.Events.Where(e => e.Id == eventid)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
 
-            if (guest.GuestId > 0)
-            {
-                guestId = guest.GuestId;
-                Guest gst = await db.Guest.Where(p => p.GuestId == guest.GuestId).FirstOrDefaultAsync();
-                gst.FirstName = guest.FirstName;
-                gst.NoOfMembers = guest.NoOfMembers;
-                gst.AdditionalText = guest.AdditionalText;
-                gst.PrimaryContactNo = guest.PrimaryContactNo;
-                gst.SecondaryContactNo = guest.SecondaryContactNo;
-                gst.IsPhoneNumberValid = true;
-                gst.GuestArchieved = false;
-                eventId = Convert.ToInt32(gst.EventId);
-                guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
-                await _auditLogService.AddAsync(userId, eventId, ActionEnum.UpdateGuest, guestId, gst.FirstName);
-                await db.SaveChangesAsync();
-                addedOrModified = 1;
-            }
-            else
-            {
-                guest.CreatedBy = userId;
-                guest.CreatedOn = DateTime.Now;
-                guest.IsPhoneNumberValid = true;
-                guest.GuestArchieved = false;
-                guest.Source = "Entry";
-                guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
-                var newGuest = await db.Guest.AddAsync(guest);
-                await db.SaveChangesAsync();
-                guest = newGuest.Entity;
-                guestId = newGuest.Entity.GuestId;
-                await _auditLogService.AddAsync(userId, eventId, ActionEnum.AddGuest, guestId, guest.FirstName);
-            }
+            if (guest == null)
+                BadRequest();
 
-            Log.Information("Event {eId} guest {gId} added/modified by {uId}", eventId, guestId, userId);
-            var card = await db.CardInfo.Where(p => p.EventId == eventId).FirstOrDefaultAsync();
-            await RefreshQRCode(guest, card);
-            await RefreshCard(guest, eventId, card, cardPreview, guestcode, path);
-            await db.SaveChangesAsync();
-
-            return addedOrModified;
+            var guests = new List<Guest>() { guest };
+            var whatsAppProvider = _WhatsappSendingProvider.SelectTwilioSendingProvider();
+            await whatsAppProvider.UpdateMessagesStatus(guests, events);
+            return Ok();
         }
 
-        private async Task RefreshQRCode(Guest guest, CardInfo card)
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> StatusRefreshForAllGuests(int id)
         {
-            int guestId = guest.GuestId;
-            int eventId = guest.EventId ?? 0;
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
 
-            // Generate QR code for guest
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guestId)), QRCodeGenerator.ECCLevel.Q);
-            QRCode qrCode = new QRCode(qrCodeData);
-            Bitmap qrCodeImage;
+            var events = await db.Events.Where(e => e.Id == id)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
 
-            if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+            if (guests.Count == 0)
+                return RedirectToAction("Guests", "admin", new { id = id });
+
+            try
             {
-                qrCodeImage = qrCode.GetGraphic(
-                    5,
-                    ColorTranslator.FromHtml(card.BackgroundColor),
-                    Color.Transparent,
-                    false
-                );
+                var whatsAppProvider = _WhatsappSendingProvider.SelectTwilioSendingProvider();
+                await whatsAppProvider.UpdateMessagesStatus(guests, events);
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
+
+            return Json(new { success = true });
+        }
+
+        public async Task<IActionResult> GetRefreshGuestsStatusData(int id, int remaningStatus)
+        {
+            if (remaningStatus == 0)
+            {
+                var allStatus = await db.Guest.Where(e => e.EventId == id).CountAsync();
+                return Json(new { remaningStatus = 0, allStatus = allStatus });
             }
             else
             {
-                qrCodeImage = qrCode.GetGraphic(5
-                    , card.BackgroundColor
-                    , card.ForegroundColor
-                    , false);
+                var sentMessagesCount = _MemoryCacheStoreService.Retrieve(id.ToString());
+
+                return Json(new { remaningStatus = sentMessagesCount, allStatus = remaningStatus });
             }
+        }
 
-            // Upload to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
-            string qrFolderPath = $"QR/{eventId}";
-            string qrFileName = $"{guestId}.png";
-
-            using (MemoryStream ms = new MemoryStream())
+        [HttpGet]
+        public IActionResult AddToCalender(string url)
+        {
+            if (string.IsNullOrEmpty(url))
             {
-                qrCodeImage.Save(ms, ImageFormat.Png);
-                await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
+                return BadRequest("Invalid calendar file URL.");
             }
-            qrCodeImage.Dispose();
+
+            try
+            {
+                //// Download the .ics file from the provided URL
+                //using (WebClient client = new WebClient())
+                //{
+                //    byte[] fileData = client.DownloadData(url); // Download file data
+
+                //    // Define a default or dynamic file name (you can extract from URL if needed)
+                //    string fileName = "event.ics";
+
+                //    // Return the .ics file with the correct MIME type and file name
+                //    return File(fileData, "text/calendar", fileName);
+                //}
+                return Redirect(url);
+            }
+            catch
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ForceStartConsumer()
+        {
+            _WebHookQueueConsumerService.ForceStart();
+            return Json(new { success = true });
+        }
+
+        [HttpGet]
+        public IActionResult ForceStopConsumer()
+        {
+            _WebHookQueueConsumerService.ForceStop();
+            return Json(new { success = true });
+        }
+        public DataSet ReadExcel(string file, string tableName)
+        {
+
+            string strconnection = _configuration.GetSection("Database").GetSection("ExcelConnection").Value; //GetConfigValue("xlsxconnection");
+            strconnection = strconnection + "Data Source=" + file.ToString() + " ;Excel 12.0;HDR=Yes;IMEX=1";
+            OleDbConnection olecn = new OleDbConnection(strconnection);
+            OleDbCommand olecmd = new OleDbCommand("SELECT * from [" + tableName + "$]", olecn);
+            OleDbDataAdapter olead = new OleDbDataAdapter(olecmd);
+            DataSet ds = new DataSet();
+            olead.Fill(ds);
+            return ds;
+        }
+
+        private async Task<bool> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
+        {
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
+            {
+                return false;
+            }
+
+            foreach (var guest in guests)
+            {
+                string imagePath = cardPreview + "/" + guest.EventId + "/" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                if (!await _blobStorage.FileExistsAsync(environment + imagePath))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        private bool CheckGuestsNumbersExist(List<Guest> guests)
+        {
+            if (guests.Any(e => string.IsNullOrEmpty(e.PrimaryContactNo) ||
+            string.IsNullOrEmpty(e.SecondaryContactNo)))
+            {
+                return false;
+            }
+
+            return true;
+        }
+        private bool CheckEventLocationExists(Events _event)
+        {
+            if (_event.GmapCode == null || _event.GmapCode.Length == 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private async Task RefreshCard(Guest guest, int eventId, CardInfo cardInfo, string cardPreview, string guestcode, string path)
@@ -1994,7 +2081,6 @@ namespace EventPro.Web.Controllers
             myBitmap.Dispose();
             barcode.Dispose();
         }
-
         private static void GenerateBarcode(CardInfo card, string imagePath, string barcodeText)
         {
             var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", barcodeText, card.BarcodeWidth, card.BarcodeWidth);
@@ -2011,110 +2097,44 @@ namespace EventPro.Web.Controllers
             remoteStream.Close();
             readStream.Close();
         }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> StatusRefreshIndividually(int id, int eventid)
+        private async Task RefreshQRCode(Guest guest, CardInfo card)
         {
-            var guest = await db.Guest
-                .FirstOrDefaultAsync(x => x.GuestId == id);
+            int guestId = guest.GuestId;
+            int eventId = guest.EventId ?? 0;
 
-            var events = await db.Events.Where(e => e.Id == eventid)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
+            // Generate QR code for guest
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guestId)), QRCodeGenerator.ECCLevel.Q);
+            QRCode qrCode = new QRCode(qrCodeData);
+            Bitmap qrCodeImage;
 
-            if (guest == null)
-                BadRequest();
-
-            var guests = new List<Guest>() { guest };
-            var whatsAppProvider = _WhatsappSendingProvider.SelectTwilioSendingProvider();
-            await whatsAppProvider.UpdateMessagesStatus(guests, events);
-            return Ok();
-        }
-
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> StatusRefreshForAllGuests(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-
-            var events = await db.Events.Where(e => e.Id == id)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            if (guests.Count == 0)
-                return RedirectToAction("Guests", "admin", new { id = id });
-
-            try
+            if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
             {
-                var whatsAppProvider = _WhatsappSendingProvider.SelectTwilioSendingProvider();
-                await whatsAppProvider.UpdateMessagesStatus(guests, events);
-            }
-            catch
-            {
-                return Json(new { success = false });
-            }
-
-            return Json(new { success = true });
-        }
-
-
-
-        public async Task<IActionResult> GetRefreshGuestsStatusData(int id, int remaningStatus)
-        {
-            if (remaningStatus == 0)
-            {
-                var allStatus = await db.Guest.Where(e => e.EventId == id).CountAsync();
-                return Json(new { remaningStatus = 0, allStatus = allStatus });
+                qrCodeImage = qrCode.GetGraphic(
+                    5,
+                    ColorTranslator.FromHtml(card.BackgroundColor),
+                    Color.Transparent,
+                    false
+                );
             }
             else
             {
-                var sentMessagesCount = _MemoryCacheStoreService.Retrieve(id.ToString());
-
-                return Json(new { remaningStatus = sentMessagesCount, allStatus = remaningStatus });
+                qrCodeImage = qrCode.GetGraphic(5
+                    , card.BackgroundColor
+                    , card.ForegroundColor
+                    , false);
             }
-        }
 
-        [HttpGet]
-        public IActionResult AddToCalender(string url)
-        {
-            if (string.IsNullOrEmpty(url))
+            // Upload to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
+            string qrFolderPath = $"QR/{eventId}";
+            string qrFileName = $"{guestId}.png";
+
+            using (MemoryStream ms = new MemoryStream())
             {
-                return BadRequest("Invalid calendar file URL.");
+                qrCodeImage.Save(ms, ImageFormat.Png);
+                await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
             }
-
-            try
-            {
-                //// Download the .ics file from the provided URL
-                //using (WebClient client = new WebClient())
-                //{
-                //    byte[] fileData = client.DownloadData(url); // Download file data
-
-                //    // Define a default or dynamic file name (you can extract from URL if needed)
-                //    string fileName = "event.ics";
-
-                //    // Return the .ics file with the correct MIME type and file name
-                //    return File(fileData, "text/calendar", fileName);
-                //}
-                return Redirect(url);
-            }
-            catch
-            {
-                return BadRequest();
-            }
-        }
-
-        [HttpGet]
-        public IActionResult ForceStartConsumer()
-        {
-            _WebHookQueueConsumerService.ForceStart();
-            return Json(new { success = true });
-        }
-
-        [HttpGet]
-        public IActionResult ForceStopConsumer()
-        {
-            _WebHookQueueConsumerService.ForceStop();
-            return Json(new { success = true });
+            qrCodeImage.Dispose();
         }
 
     }
