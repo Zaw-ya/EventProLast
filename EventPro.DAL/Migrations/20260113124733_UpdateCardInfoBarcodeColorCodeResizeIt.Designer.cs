@@ -4,6 +4,7 @@ using EventPro.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventPro.DAL.Migrations
 {
     [DbContext(typeof(EventProContext))]
-    partial class EventProContextModelSnapshot : ModelSnapshot
+    [Migration("20260113124733_UpdateCardInfoBarcodeColorCodeResizeIt")]
+    partial class UpdateCardInfoBarcodeColorCodeResizeIt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

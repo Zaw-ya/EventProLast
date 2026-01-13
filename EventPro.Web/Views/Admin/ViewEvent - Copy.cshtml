@@ -15,7 +15,7 @@
                 <div class="card card-primary card-outline">
                     <div class="card-body box-profile">
                         <div class="text-center">
-                            <img class="profile-user-img img-fluid img-circle" src="~/Upload/card/@Model.Icon" alt="User profile picture">
+                            <img class="profile-user-img img-fluid img-circle" src='@(Url.Content($"~/Upload/cardpreview/{Model.Id}.png"))' alt="User profile picture">
                         </div>
 
                         <h3 class="profile-username text-center">
@@ -115,10 +115,10 @@
                                 <li class="nav-item"><a class="nav-link" href="#settings" data-toggle="tab">Settings</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#gatekeeper" data-toggle="tab">Gatekeeper</a></li>
                             }
-                            @if (!User.IsInRole("Agent") )
+@*                             @if (!User.IsInRole("Agent") )
                             {
                                 <li class="nav-item"><a class="nav-link" href="#invoice" data-toggle="tab">Invoice</a></li>
-                            }
+                            } *@
 
                         </ul>
                     </div><!-- /.card-header -->
@@ -151,10 +151,10 @@
                             <div class="tab-pane" id="timeline">
                                 <a href="~/admin/CardPreview/@Model.Id" class="btn btn btn-danger btn-sm">Card Designer</a>
                                 <hr />
-                                @{
+@*                                 @{
                                     var imageURL = "/upload/preview/" + ViewBag.CardImage + "?" + @DateTime.Now.Ticks;
-                                }
-                                <img id="mydivheader" src="@imageURL" style="width:100%; height:auto;">
+                                } *@
+                                <img id="mydivheader" src='@(Url.Content($"~/upload/cardpreview/{Model.Id}.png"))' style="width:100%; height:auto;">
                             </div>
                             <!-- /.tab-pane -->
 
@@ -184,7 +184,7 @@
                                             <div class="form-group">
                                                 <label>Barcode Preview</label><br />
                                                 @{ var img = Model.Id + ".png";}
-                                                <img src="~/Upload/barcode/@img?@DateTime.Now.Ticks" width="@ViewBag.CardInfo.BarcodeHeight px" height=" @ViewBag.CardInfo.BarcodeHeight px" />
+                                                <img src="@ViewBag.CardInfo.BarcodeColorCode" width="@ViewBag.CardInfo.BarcodeHeight px" height=" @ViewBag.CardInfo.BarcodeHeight px" />
                                             </div>
 
                                         </div>
@@ -207,7 +207,7 @@
                                     </table>
                                 </div>
                             </div>
-                            <div class="tab-pane" id="invoice" style="width:100%;height:900px;">
+                           @*  <div class="tab-pane" id="invoice" style="width:100%;height:900px;">
                                 @{ var fileName = Model.Id + ".pdf";}
                                 <embed src="~/Upload/Invoice/@fileName?@DateTime.Now"
                                        type="application/pdf"
@@ -217,7 +217,7 @@
                                        width="100%">
                                    </embed>
 
-                            </div>
+                            </div> *@
                         </div>
                         <!-- /.tab-content -->
                     </div><!-- /.card-body -->

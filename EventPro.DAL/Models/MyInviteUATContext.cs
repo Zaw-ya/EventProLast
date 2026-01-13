@@ -111,7 +111,7 @@ namespace EventPro.DAL.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.BarcodeColorCode)
-                    .HasMaxLength(10)
+                    .HasMaxLength(150)
                     .IsUnicode(false);
 
                 entity.Property(e => e.BarcodeXaxis).HasColumnName("BarcodeXAxis");

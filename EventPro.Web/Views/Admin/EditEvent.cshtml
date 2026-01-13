@@ -1,4 +1,4 @@
-@using System.Globalization;
+﻿@using System.Globalization;
 @model EventPro.DAL.Models.Events
 @{
     ViewData["Title"] = "EventCatgory";
@@ -374,7 +374,7 @@
                     <div class="section-container">
 
                         <h3 class="section-title">Event Details</h3>
-                        <h3 class="section-title-arabic">?????? ????????</h3>
+                        <h3 class="section-title-arabic">تفاصيل المناسبة</h3>
                         <div  class="textbox-container">
                             <div class="row">
                                 <div class="col-lg-6 col-md-6 col-sm-6">
@@ -495,7 +495,7 @@
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label class="section-title">Additional Details</label>
-                                <label class="section-title-arabic">?????? ????????</label>
+                                <label class="section-title-arabic">تفاصيل إضافية</label>
                                 <div class="custom-form-group row">
                                     <!-- Linked To -->
                                     <div class="col-md-12 col-lg-12">
@@ -617,7 +617,7 @@
 
                     <div class="section-container">
                         <h3 class="section-title">Sending Details</h3>
-                        <h3 class="section-title-arabic">?????? ???????</h3>
+                        <h3 class="section-title-arabic">تفاصيل المكان والتهنئة</h3>
 
                         <div class="custom-form-group">
                             @if (!string.IsNullOrEmpty(Model.MessageHeaderImage))
@@ -773,7 +773,7 @@
                                     <textarea readonly class="mt-2" id="templateText1"></textarea>
 
                                     <div class="container">
-                                        <h4>Template Tokens � click to copy</h4>
+                                        <h4>Template Tokens — click to copy</h4>
                                         <p class="lead">Click any token to copy it to the clipboard.</p>
 
                                         <div id="ConfirmationTokens" class="tokens" role="list">
@@ -814,7 +814,7 @@
 
                     <div class="section-container">
                         <h3 class="section-title">Card Invitation Details</h3>
-                        <h3 class="section-title-arabic">?????? ????? ?????? </h3>
+                        <h3 class="section-title-arabic">تفاصيل رابط المكان والتهنئة </h3>
                         <div class="custom-form-group">
                             <div class="row">
                                 <div class="col-md-6">
@@ -843,7 +843,7 @@
                                         <textarea readonly class="mt-2" id="templateText2"></textarea>
 
                                         <div class="container">
-                                            <h4>Template Tokens � click to copy</h4>
+                                            <h4>Template Tokens — click to copy</h4>
                                             <p class="lead">Click any token to copy it to the clipboard.</p>
 
                                             <div id="cardTokens" class="tokens" role="list">
@@ -883,7 +883,7 @@
 
                     <div class="section-container">
                         <h3 class="section-title">Reminder Details</h3>
-                        <h3 class="section-title-arabic">?????? ?????? ???????</h3>
+                        <h3 class="section-title-arabic">تفاصيل رابط المكان والتهنئة</h3>
                         <div class="custom-form-group">
                             <div class="row">
                                 @if ( string.IsNullOrEmpty(Model.ReminderMsgHeaderImg))
@@ -919,7 +919,7 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>Message Example</label>
-                                            @Html.TextAreaFor(Model => Model.ReminderMessage, new { @id = "reminderMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ??????? ???? \n ?????? ????? ??? ..", @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.ReminderMessage, new { @id = "reminderMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "هل ترغب بالحضور للحفل \n وشكرا تحيات لكم ..", @maxlength = "1500" })
                                         </div>
                                     </div>
                                     <div class="row template-section col-12" id="section3">
@@ -928,7 +928,7 @@
                                             <textarea readonly class="mt-2" id="templateText3"></textarea>
 
                                             <div class="container">
-                                                <h4>Template Tokens � click to copy</h4>
+                                                <h4>Template Tokens — click to copy</h4>
                                                 <p class="lead">Click any token to copy it to the clipboard.</p>
 
                                                 <div id="reminderTokens" class="tokens" role="list">
@@ -1001,7 +1001,7 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>Message Example</label>
-                                            @Html.TextAreaFor(Model => Model.ReminderMessage, new { @id = "reminderMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ??????? ???? \n ?????? ????? ??? ..", @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.ReminderMessage, new { @id = "reminderMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "هل ترغب بالحضور للحفل \n وشكرا تحيات لكم ..", @maxlength = "1500" })
                                         </div>
                                     </div>
                                     <div class="row template-section col-12" id="section3">
@@ -1010,7 +1010,7 @@
                                             <textarea readonly class="mt-2" id="templateText3"></textarea>
 
                                             <div class="container">
-                                                <h4>Template Tokens � click to copy</h4>
+                                                <h4>Template Tokens — click to copy</h4>
                                                 <p class="lead">Click any token to copy it to the clipboard.</p>
 
                                                 <div id="reminderTokens" class="tokens" role="list">
@@ -1054,7 +1054,7 @@
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label class="section-title">Thanks Card Details</label>
-                                <label class="section-title-arabic">?????? ????? ?????</label>
+                                <label class="section-title-arabic">تفاصيل بطاقة الشكر</label>
                                 <div class="custom-form-group row">
                                     <!-- Sent on Number -->
                                     @if (string.IsNullOrEmpty(Model.CongratulationMsgHeaderImg)){
@@ -1101,7 +1101,7 @@
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <label>Custom Message</label>
-                                                @Html.TextAreaFor(Model => Model.ThanksMessage, new { @id = "customMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ????? ???? \n ????? ??? ????? ????? .. ", @tabindex = 5, @maxlength = "1500" })
+                                                @Html.TextAreaFor(Model => Model.ThanksMessage, new { @id = "customMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "السلام : عليك ورحمة \n شكرا لكم لحضور حفلتي .. ", @tabindex = 5, @maxlength = "1500" })
                                             </div>
                                         </div>
                                         <div class="row template-section col-12" id="section4">
@@ -1110,7 +1110,7 @@
                                                 <textarea readonly class="mt-2" id="templateText4"></textarea>
 
                                                 <div class="container">
-                                                    <h4>Template Tokens � click to copy</h4>
+                                                    <h4>Template Tokens — click to copy</h4>
                                                     <p class="lead">Click any token to copy it to the clipboard.</p>
 
                                                     <div id="congTokens" class="tokens" role="list">
@@ -1195,7 +1195,7 @@
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <label>Custom Message</label>
-                                                @Html.TextAreaFor(Model => Model.ThanksMessage, new { @id = "customMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "?? ????? ????? ???? \n ????? ??? ????? ????? .. ", @tabindex = 5, @maxlength = "1500" })
+                                                @Html.TextAreaFor(Model => Model.ThanksMessage, new { @id = "customMessageTextarea", @class = "form-control", @style = "height: 200px;", @dir = "rtl", @placeholder = "السلام : عليك ورحمة \n شكرا لكم لحضور حفلتي .. ", @tabindex = 5, @maxlength = "1500" })
                                             </div>
                                         </div>
                                         <div class="row template-section col-12" id="section4">
@@ -1204,7 +1204,7 @@
                                                 <textarea readonly class="mt-2" id="templateText4"></textarea>
 
                                                 <div class="container">
-                                                    <h4>Template Tokens � click to copy</h4>
+                                                    <h4>Template Tokens — click to copy</h4>
                                                     <p class="lead">Click any token to copy it to the clipboard.</p>
 
                                                     <div id="congTokens" class="tokens" role="list">
@@ -1244,7 +1244,7 @@
                     </div>
                     <div class="row section-container">
                         <h3 class="section-title">Decline Response Template ID</h3>
-                        <h3 class="section-title-arabic">??? ?????? ?????? ???? ??? ?????? ?????</h3>
+                        <h3 class="section-title-arabic">نص بطاقة الدعوة برابط خارجي لشخص نفسه</h3>
                         <div class="col-md-12">
                             <div class="form-group">
                                 <div class="input-group mb-4 custom-input-group">
@@ -1261,7 +1261,7 @@
 
                     <div class="section-container">
                         <h3 class="section-title">Sending confirmation using links Details</h3>
-                        <h3 class="section-title-arabic">?????? ????? ??????? ???????? ??????? </h3>
+                        <h3 class="section-title-arabic">تفاصيل رابط المكان والتهنئة الجاهز للحضور </h3>
                         <div class="custom-form-group">
                             <div class="row">
                                 <div class="col-md-4">
@@ -1277,8 +1277,9 @@
                                     <div class="form-group">
                                         <label>Card message text</label>
                                         <div class="input-group  custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.LinkGuestsCardText, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.LinkGuestsCardText, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نص بطاقة الدعوة  ", @tabindex = 5, @maxlength = "1500" })
                                             <div class="input-group-append custom-input-group-append">
+
                                                 <div class="input-group-text custom-input-group-text">
                                                 </div>
                                             </div>
@@ -1289,8 +1290,9 @@
                                     <div class="form-group">
                                         <label>Event location url</label>
                                         <div class="input-group  custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.LinkGuestsLocationEmbedSrc, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "???? ???? ???????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.LinkGuestsLocationEmbedSrc, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نسخ رابط المكان لتفاصيل الارسال  ", @tabindex = 5, @maxlength = "1500" })
                                             <div class="input-group-append custom-input-group-append">
+
                                                 <div class="input-group-text custom-input-group-text">
                                                 </div>
                                             </div>
@@ -1302,7 +1304,7 @@
                     </div>
                     <div hidden class="section-container">
                         <h3 class="section-title">Marketing Messages Responses Details</h3>
-                        <h3 class="section-title-arabic">?????? ?? ??????? ???????? </h3>
+                        <h3 class="section-title-arabic">تفاصيل نص وحالة كرت المدعو </h3>
                         <div class="custom-form-group">
                             <div class="row">
                                 @if (string.IsNullOrEmpty(Model.ResponseInterestedOfMarketingMsgHeaderImage))
@@ -1424,7 +1426,7 @@
 
                 <div class="section-container">
                     <h3 class="section-title">Failed Sending Details</h3>
-                    <h3 class="section-title-arabic">?????? ????? ??????</h3>
+                    <h3 class="section-title-arabic">تفاصيل فشل الإرسال</h3>
                     <div class="custom-form-group">
                         <div class="row">
                                 <div class="col-md-6">
@@ -1452,31 +1454,31 @@
                         <div class="row" style="margin-top:25px;" >
                             <div class="col-md-4">
                                 <div class=" section-container">
-                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">???? ???? ???????? ????? ????? ??????</h3>
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">نسخ رابط المكان لتفاصيل فشل الارسال</h3>
                                     <div class="form-group">
                                         <div class="input-group mb-4 custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.FailedGuestsLocationEmbedSrc, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "???? ???? ???????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsLocationEmbedSrc, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نسخ رابط المكان لتفاصيل الارسال  ", @tabindex = 5, @maxlength = "1500" })
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class=" section-container">
-                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">??  ????? ?????? ????? ????? ??????</h3>
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">نص بطاقة الشكر لتفاصيل فشل الارسال</h3>
 
                                     <div class="form-group">
                                         <div class="input-group mb-4 custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.FailedGuestsCardText, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ?????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsCardText, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نص بطاقة الشكر لتفاصيل الارسال  ", @tabindex = 5, @maxlength = "1500" })
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class=" section-container">
-                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">?? ??????? ?????? ?????? ?????? ? ???????? ????? ??????</h3>
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">نص التهنئة للشخص المرسل المباشر والمهتمين بالاعلان للشخص نفسه</h3>
                                     <div class="form-group">
                                         <div class="input-group mb-4 custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.FailedGuestsMessag, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ????? ?????? ? ???????? ????? ?????? ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsMessag, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نص التهنئة للشخص المرسل المباشر والمهتمين بالاعلان للشخص نفسه ", @tabindex = 5, @maxlength = "1500" })
                                        </div>
                                     </div>
                                 </div>
@@ -1488,20 +1490,20 @@
                         <div class="row">
                             <div class=" col-md-6">
                                 <div class=" section-container">
-                                    <h3 style="display:block; margin-top:-30px;" class="section-title section-title-arabic">?? ????? ??????? ????? ????? ??????</h3>
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title section-title-arabic">نص التهنئة لتفاصيل فشل الارسال</h3>
                                     <div class=" form-group">
                                         <div class="input-group mb-4 custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.FailedGuestsCongratulationMsg, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ??????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsCongratulationMsg, new { @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نص التهنئة لتفاصيل الارسال  ", @tabindex = 5, @maxlength = "1500" })
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="section-container">
-                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">?? ????? ??????? ?????? ????? ??????</h3>
+                                    <h3 style="display:block; margin-top:-30px;" class="section-title-arabic">نص التذكير لتفاصيل فشل الارسال</h3>
                                     <div class="form-group">
                                         <div class="input-group mb-4 custom-input-group">
-                                            @Html.TextAreaFor(Model => Model.FailedGuestsReminderMessage, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "?? ????? ??????? ????? ??????  ", @tabindex = 5, @maxlength = "1500" })
+                                            @Html.TextAreaFor(Model => Model.FailedGuestsReminderMessage, new {  @class = "form-control", @style = "height: 200px; white-space: pre-wrap;", @dir = "rtl", @placeholder = "نص التذكير لتفاصيل الارسال  ", @tabindex = 5, @maxlength = "1500" })
                                         </div>
                                     </div>
                                 </div>
@@ -1537,25 +1539,25 @@
         $(document).ready(function () {
 
             var thanksTexts = {
-                'Template (1)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (2)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n????? ?????? / ????? ?????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (3)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n????? ?????? / ????? ?????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (4)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n???? ?????? / ???? ????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (5)': '??????? : ???? ??????? \n???? ??? ????? ?????? ???????? ????? ??? ????? ??????? ????? ??????? \n???? ?????? / ???? ????????\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (6)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (7)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n????? ?????? / ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (8)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n????? ?????? / ????? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (9)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n???? ?????? / ???? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..',
-                'Template (10)': '??????? : ???? ??????? \n????? ??????? ??????? ???????? ????? ??? ????? ??????? ????? ??????? .\n???? ?????? / ???? ??????? .\n\n?????? ????? ??????? ?????????? ??? ????? ????? ???? ?? ???? ????? ??? ???? ????? .\n\n????? ??? ???? ?????? ..'
+                'Template (1)': 'السلام : عليك ورحمة \nشكرا لكم لحضور حفلتي الزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه \n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (2)': 'السلام : عليك ورحمة \nشكرا لكم لحضور حفلتي الزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه \nالعريس الجميل / العروس الجميلة\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (3)': 'السلام : عليك ورحمة \nشكرا لكم لحضور حفلتي الزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه \nالعريس الجميل / العروس الجميلة\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (4)': 'السلام : عليك ورحمة \nشكرا لكم لحضور حفلتي الزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه \nاسم العريس / اسم الزوجية\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (5)': 'السلام : عليك ورحمة \nشكرا لكم لحضور حفلتي الزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه \nاسم العريس / اسم الزوجية\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (6)': 'السلام : عليك ورحمة \nشكرا للعائلة الكريمة لزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه .\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (7)': 'السلام : عليك ورحمة \nشكرا للعائلة الكريمة لزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه .\nالعريس الجميل / العروس الجميله .\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (8)': 'السلام : عليك ورحمة \nشكرا للعائلة الكريمة لزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه .\nالعريس الجميل / العروس الجميله .\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (9)': 'السلام : عليك ورحمة \nشكرا للعائلة الكريمة لزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه .\nاسم العريس / اسم العروسه .\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..',
+                'Template (10)': 'السلام : عليك ورحمة \nشكرا للعائلة الكريمة لزواجية ونتمنى لكم تواصل دائمي ومحبة تدوميه .\nاسم العريس / اسم العروسه .\n\nونتمنى حضور حفلاتي القادمية لان نحبكم وربنا يسقي من حبنا ماءكم لان نحبك وربنا .\n\nوشكرا لكم وبعد سلامية ..'
             };
 
             var reminderTexts = {
-                'Template (1)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..',
-                'Template (2)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n?????????? / ????? ?????????',
-                'Template (3)': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n??????? / ???? ????????',
-                'Template (1) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..',
-                'Template (2) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n?????????? / ????? ?????????',
-                'Template (3) With Calender ICS': '??????? : ???? ??????? \n??? ??????? ????? ????? ????? ??????? ( ????? ??????? / ???? ??????? ) ???? ??? ?????? ??????? ../../2024\n???? ????????????? \n?????? ????? ??? ..\n??????? / ???? ????????',
+                'Template (1)': 'السلام : عليك ورحمة \nهذه تذكيركم بموعد حفلتي الزواجيه ( العريس الجميله / اسم الزوجيه ) بتاريخ يوم وتاريخ الحفلة ../../2024\nمكان واسالزواجية \nوشكرا تحيات لكم ..',
+                'Template (2)': 'السلام : عليك ورحمة \nهذه تذكيركم بموعد حفلتي الزواجيه ( العريس الجميله / اسم الزوجيه ) بتاريخ يوم وتاريخ الحفلة ../../2024\nمكان واسالزواجية \nوشكرا تحيات لكم ..\nالعروسين / اسماء العروسين',
+                'Template (3)': 'السلام : عليك ورحمة \nهذه تذكيركم بموعد حفلتي الزواجيه ( العريس الجميله / اسم الزوجيه ) بتاريخ يوم وتاريخ الحفلة ../../2024\nمكان واسالزواجية \nوشكرا تحيات لكم ..\nعريسين / اسم الزوجية',
+                'Template (1) With Calender ICS': 'السلام : عليك ورحمة \nهذه تذكيركم بموعد حفلتي الزواجيه ( العريس الجميله / اسم الزوجيه ) بتاريخ يوم وتاريخ الحفلة ../../2024\nمكان واسالزواجية \nوشكرا تحيات لكم ..',
+                'Template (2) With Calender ICS': 'السلام : عليك ورحمة \nهذه تذكيركم بموعد حفلتي الزواجيه ( العريس الجميله / اسم الزوجيه ) بتاريخ يوم وتاريخ الحفلة ../../2024\nمكان واسالزواجية \nوشكرا تحيات لكم ..\nالعروسين / اسماء العروسين',
+                'Template (3) With Calender ICS': 'السلام : عليك ورحمة \nهذه تذكيركم بموعد حفلتي الزواجيه ( العريس الجميله / اسم الزوجيه ) بتاريخ يوم وتاريخ الحفلة ../../2024\nمكان واسالزواجية \nوشكرا تحيات لكم ..\nعريسين / اسم الزوجية',
             };
 
             $('#templateTypeDropdown').on('change', function () {
@@ -1888,53 +1890,53 @@
                     loadTemplate(result.typeId, result.message);
                 } else {
                     loadTemplate(result.typeId, "");
-                    Swal.fire("??? ??? ?? !");
+                    Swal.fire("تم بنجاح !");
                 }
             } catch (error) {
                 loadTemplate(result.typeId,"");
-                Swal.fire("??? ??? ?? !");
+                Swal.fire("تم بنجاح !");
             }
         }
     </script>
     <script>
         // tokens list - edit to add/remove keywords
         const ConfirmationTOKENS = [
-            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
-            { role: '??? ?????', keyword: 'FirstName' },
-            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
-            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
-            { role: '???? ?????', keyword: 'GuestCard' },
-            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' }
+            { role: 'الصورة العلوية', keyword: 'MessageHeaderImage' },
+            { role: 'اسم المدعو', keyword: 'FirstName' },
+            { role: 'عدد المرافقين المسموح', keyword: 'NoOfMembers' },
+            { role: 'نص إضافي خاص', keyword: 'AdditionalText' },
+            { role: 'كرت الدعوة', keyword: 'GuestCard' },
+            { role: 'عدد المرافقين', keyword: 'CountOfAdditionalInvitations' }
         ];
 
-        const cardTOKENS = [
-            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
-            { role: '??? ?????', keyword: 'FirstName' },
-            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
-            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
-            { role: '???? ?????', keyword: 'GuestCard' },
-            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' }
-        ];
+          const cardTOKENS = [
+            { role: 'الصورة العلوية', keyword: 'MessageHeaderImage' },
+            { role: 'اسم المدعو', keyword: 'FirstName' },
+            { role: 'عدد المرافقين المسموح', keyword: 'NoOfMembers' },
+            { role: 'نص إضافي خاص', keyword: 'AdditionalText' },
+            { role: 'كرت الدعوة', keyword: 'GuestCard' },
+            { role: 'عدد المرافقين', keyword: 'CountOfAdditionalInvitations' }
+          ];
 
-        const reminderTOKENS = [
-            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
-            { role: '??? ?????', keyword: 'FirstName' },
-            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
-            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
-            { role: '???? ?????', keyword: 'GuestCard' },
-            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' },
-            { role: '???? ????? ???????', keyword: 'ReminderHeaderImage' }
-        ];
+          const reminderTOKENS = [
+            { role: 'الصورة العلوية', keyword: 'MessageHeaderImage' },
+            { role: 'اسم المدعو', keyword: 'FirstName' },
+            { role: 'عدد المرافقين المسموح', keyword: 'NoOfMembers' },
+            { role: 'نص إضافي خاص', keyword: 'AdditionalText' },
+            { role: 'كرت الدعوة', keyword: 'GuestCard' },
+            { role: 'عدد المرافقين', keyword: 'CountOfAdditionalInvitations' },
+            { role: 'الصورة العالية للتذكير', keyword: 'ReminderHeaderImage' }
+          ];
 
-        const congratulationTOKENS = [
-            { role: '??????? ??????', keyword: 'MessageHeaderImage' },
-            { role: '??? ?????', keyword: 'FirstName' },
-            { role: '??? ?????? ?????', keyword: 'NoOfMembers' },
-            { role: '???? ??????? ?????', keyword: 'AdditionalText' },
-            { role: '???? ?????', keyword: 'GuestCard' },
-            { role: '??? ?????????', keyword: 'CountOfAdditionalInvitations' },
-            { role: '???? ????? ?????', keyword: 'CongratulationHeaderImage' }
-        ];
+          const congratulationTOKENS = [
+            { role: 'الصورة العلوية', keyword: 'MessageHeaderImage' },
+            { role: 'اسم المدعو', keyword: 'FirstName' },
+            { role: 'عدد المرافقين المسموح', keyword: 'NoOfMembers' },
+            { role: 'نص إضافي خاص', keyword: 'AdditionalText' },
+            { role: 'كرت الدعوة', keyword: 'GuestCard' },
+            { role: 'عدد المرافقين', keyword: 'CountOfAdditionalInvitations' },
+            { role: 'الصورة العالية للشكر', keyword: 'CongratulationHeaderImage' }
+          ];
 
         const confirmationContainer = document.getElementById('ConfirmationTokens');
         const cardContainer = document.getElementById('cardTokens');
