@@ -179,18 +179,27 @@ namespace EventPro.Web.Controllers
 
             string cardPreview = _configuration.GetSection("Uploads").GetSection("environment").Value +
                 _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+
+            //Ali hani // Create folder structure: QR/{eventId}/{eventId}.png
+            string qrFolderPath = $"QR/{info.EventId}";
+            string qrFileName = $"{info.EventId}.png";
+
             // Delete existing barcode if any
-            await _cloudinaryService.DeleteAsync(environment + barcodePath + "/" + info.EventId + ".png");
+            await _cloudinaryService.DeleteAsync($"{qrFolderPath}/{qrFileName}");
             //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
 
+            string qrCodeUrl = string.Empty;
             using (MemoryStream ms = new MemoryStream())
             {
                 // ?? Change to PNG format (supports transparency)
                 // Convert the QR code to PNG format and upload it
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                await _cloudinaryService.UploadImageAsync(ms, environment + barcodePath + "/" + info.EventId + ".png",null);
+                qrCodeUrl = await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
                 //await _blobStorage.UploadAsync(ms, "png", environment + barcodePath + "/" + info.EventId + ".png", cancellationToken: default);
             }
+
+            // Ali hani // Store the QR code URL in the card info
+            card.BarcodeColorCode = qrCodeUrl;
 
             qrCodeImage.Dispose();
             SetBreadcrum("QR Settings", "/admin");
@@ -223,7 +232,6 @@ namespace EventPro.Web.Controllers
             }
 
             ViewBag.Icon = "nav-icon fas fa-qrcode";
-            ViewBag.Barcode = id + ".png";
             SetBreadcrum("Card Preview", "/admin");
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             var cardInfo = db.CardInfo.Where(p => p.EventId == id).FirstOrDefault();
@@ -242,22 +250,32 @@ namespace EventPro.Web.Controllers
             //    TempData["entry-error"] = "Background image not uploaded, please upload background image to proceed with designer";
             //    return RedirectToAction("QRSettings", "admin", new { id = id });
             //}
-            if (cardInfo.BackgroundImage == null)
+            if (string.IsNullOrWhiteSpace(cardInfo.BackgroundImage))
             {
                 TempData["entry-error"] = "Background image not uploaded, please upload background image to proceed with designer";
                 return RedirectToAction("QRSettings", "admin", new { id = id });
             }
+
             List<int> fontSize = new List<int>();
 
             using HttpClient client = new HttpClient();
 
-            #region Old Code for local uploads we dont need it any more 
+            #region Old Code for local uploads we dont need it any more
             //var request = _httpContextAccessor.HttpContext.Request;
             //var baseUrl = $"{request.Scheme}://{request.Host}";
             //var imageUrl = $"{baseUrl}/upload" + cardPreview + @"/" + cardInfo.BackgroundImage;
             //byte[] imageData = await client.GetByteArrayAsync(imageUrl);
             #endregion
+
             var imageUrl = cardInfo.BackgroundImage;
+
+            // Validate that the URL is absolute
+            if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
+            {
+                TempData["entry-error"] = "Invalid background image URL. Please upload the background image again.";
+                return RedirectToAction("QRSettings", "admin", new { id = id });
+            }
+
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
 
             using MemoryStream ms = new MemoryStream(imageData);
@@ -271,6 +289,19 @@ namespace EventPro.Web.Controllers
             ViewBag.ImageWidth = img.Width;
             ViewBag.ImageHeight = img.Height;
             ViewBag.Fonts = new SelectList(GetFonts(), "Name", "Name");
+
+            //Ali hani // Set QR code URL - if not stored in database, construct Cloudinary URL
+            if (!string.IsNullOrEmpty(cardInfo.BarcodeColorCode))
+            {
+                ViewBag.Barcode = cardInfo.BarcodeColorCode;
+            }
+            else
+            {
+              //Ali hani    // Construct Cloudinary URL for existing QR codes with folder structure: QR/{eventId}/{eventId}.png
+                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
+                ViewBag.Barcode = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{id}/{id}.png";
+            }
+
             return View(cardInfo);
         }
 
@@ -448,16 +479,45 @@ namespace EventPro.Web.Controllers
             cardInfo.AddTextRightAxis = info.AddTextRightAxis;
 
             db.SaveChanges();
-            ViewBag.Barcode = cardInfo.EventId + ".png";
+
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             string barcodePath = _configuration.GetSection("Uploads").GetSection("Barcode").Value;
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
+
+            // Set QR code URL - if not stored in database, construct Cloudinary URL
+            if (!string.IsNullOrEmpty(cardInfo.BarcodeColorCode))
+            {
+                ViewBag.Barcode = cardInfo.BarcodeColorCode;
+            }
+            else
+            {
+                // Construct Cloudinary URL for existing QR codes with folder structure: QR/{eventId}/{eventId}.png
+                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
+                ViewBag.Barcode = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{cardInfo.EventId}/{cardInfo.EventId}.png";
+            }
+            // Validate background image URL from database
+            if (string.IsNullOrWhiteSpace(cardInfo.BackgroundImage))
+            {
+                TempData["message2"] = null;
+                TempData["message"] = "Background image not uploaded. Please upload background image in QR Settings first.";
+                return RedirectToAction("QRSettings", "admin", new { id = info.EventId });
+            }
+
             using HttpClient client = new HttpClient();
             //var request = _httpContextAccessor.HttpContext.Request;
             //var baseUrl = $"{request.Scheme}://{request.Host}";
             //var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
-            var imageUrl =info.BackgroundImage;
+            var imageUrl = cardInfo.BackgroundImage; // Use cardInfo.BackgroundImage which is from database
+
+            // Validate that the URL is absolute
+            if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
+            {
+                TempData["message2"] = null;
+                TempData["message"] = "Invalid background image URL. Please upload the background image again in QR Settings.";
+                return RedirectToAction("QRSettings", "admin", new { id = info.EventId });
+            }
+
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
             using MemoryStream ms = new MemoryStream(imageData);
             Image img = Image.FromStream(ms);
@@ -476,14 +536,16 @@ namespace EventPro.Web.Controllers
             ViewBag.FontSize = new SelectList(fontSize);
             await GenerateCardAsync(cardInfo, barcodePath, cardPreview, path, (float)zoomRatio);
             ViewBag.Fonts = new SelectList(GetFonts(), "Name", "Name");
-            TempData["message2"] = "Template save successfully.";
+            TempData["successMessage"] = "Card template saved successfully!";
 
             string cardPreviews = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + info.EventId + "/", cancellationToken: default);
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, info.EventId, DAL.Enum.ActionEnum.UpdateCardDesign);
-            return View(cardInfo);
+
+            // Redirect to Guests view with event id
+            return RedirectToAction("Guests", "Admin", new { id = info.EventId });
         }
 
         private async Task GenerateCardAsync(CardInfo cardInfo, string barcodePath, string cardPreview, string path, float zoomRatio, int guestId = 0)
@@ -521,7 +583,7 @@ namespace EventPro.Web.Controllers
                     }
 
 
-                    grap.DrawString("??? ?????", new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio))
+                    grap.DrawString("اسم الضيف", new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio))
                 , new SolidBrush(ColorTranslator.FromHtml(cardInfo.FontColor))
                 , new Point((int)(nameXAxis * zoomRatio)
                 , (int)(cardInfo.ContactNameYaxis * zoomRatio)), frmt);
@@ -542,7 +604,7 @@ namespace EventPro.Web.Controllers
                     }
 
 
-                    grap.DrawString("??? ????????", new Font(cardInfo.ContactNoFontName, (float)(cardInfo.ContactNoFontSize * 0.63 * zoomRatio))
+                    grap.DrawString("رقم الهاتف", new Font(cardInfo.ContactNoFontName, (float)(cardInfo.ContactNoFontSize * 0.63 * zoomRatio))
                     , new SolidBrush(ColorTranslator.FromHtml(cardInfo.ContactNoFontColor))
                     , new Point((int)(moXAxis * zoomRatio)
                     , (int)(cardInfo.ContactNoYaxis * zoomRatio)), frmt);
@@ -560,7 +622,7 @@ namespace EventPro.Web.Controllers
                     if (cardInfo.AddTextFontAlignment == "center")
                         frmt.Alignment = StringAlignment.Center;
 
-                    grap.DrawString("?? ?????", new Font(cardInfo.AltTextFontName, (float)(cardInfo.AltTextFontSize * 0.63 * zoomRatio))
+                    grap.DrawString("نص إضافي", new Font(cardInfo.AltTextFontName, (float)(cardInfo.AltTextFontSize * 0.63 * zoomRatio))
                     , new SolidBrush(ColorTranslator.FromHtml(cardInfo.AltTextFontColor))
                     , new Point((int)(atXAxis * zoomRatio)
                     , (int)(cardInfo.AltTextYaxis * zoomRatio)), frmt);
@@ -579,7 +641,7 @@ namespace EventPro.Web.Controllers
                         frmt.Alignment = StringAlignment.Center;
                     }
 
-                    grap.DrawString("???", new Font(cardInfo.NosfontName, (float)(cardInfo.NosfontSize * 0.63 * zoomRatio))
+                    grap.DrawString("رقم", new Font(cardInfo.NosfontName, (float)(cardInfo.NosfontSize * 0.63 * zoomRatio))
                  , new SolidBrush(ColorTranslator.FromHtml(cardInfo.NosfontColor))
                  , new Point((int)(nosXAxis * zoomRatio)
                  , (int)(cardInfo.Nosyaxis * zoomRatio)), frmt);
@@ -587,23 +649,17 @@ namespace EventPro.Web.Controllers
             }
 
 
-            if (guestId > 0)
+            // Save template locally
+            string localPath = Path.Combine(webHostEnvironment.WebRootPath, "upload", "cardpreview");
+            if (!Directory.Exists(localPath))
             {
-                using (MemoryStream mss = new MemoryStream())
-                {
-                    myBitmap.Save(mss, ImageFormat.Jpeg);
-                    await _blobStorage.UploadAsync(mss, "png", environment + cardPreview + @"\" + guestId + ".png", cancellationToken: default);
-                }
+                Directory.CreateDirectory(localPath);
             }
-            else
-            {
-                using (MemoryStream mss = new MemoryStream())
-                {
-                    myBitmap.Save(mss, ImageFormat.Jpeg);
-                    await _blobStorage.UploadAsync(mss, "png", environment + cardPreview + @"\" + cardInfo.EventId + ".png", cancellationToken: default);
-                }
 
-            }
+            string fileName = guestId > 0 ? $"{guestId}.png" : $"{cardInfo.EventId}.png";
+            string fullPath = Path.Combine(localPath, fileName);
+
+            myBitmap.Save(fullPath, ImageFormat.Png);
 
             grap.Dispose();
             myBitmap.Dispose();
@@ -614,9 +670,20 @@ namespace EventPro.Web.Controllers
         private async Task<Image> AddBarcodeAsync(CardInfo cardInfo, string barcodePath, Graphics grap, float zoomRatio)
         {
             using HttpClient client = new HttpClient();
-            var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/upload" + barcodePath + @"/" + cardInfo.EventId + ".png";
+
+            // Get QR code URL from database or construct Cloudinary URL
+            string imageUrl;
+            if (!string.IsNullOrEmpty(cardInfo.BarcodeColorCode))
+            {
+                imageUrl = cardInfo.BarcodeColorCode;
+            }
+            else
+            {
+                // Construct Cloudinary URL for existing QR codes
+                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
+                imageUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{cardInfo.EventId}/{cardInfo.EventId}.png";
+            }
+
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
             using MemoryStream ms = new MemoryStream(imageData);
 

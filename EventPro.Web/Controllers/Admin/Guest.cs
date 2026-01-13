@@ -99,7 +99,7 @@ namespace EventPro.Web.Controllers
 
             if (searchValue?.Length > 3)
             {
-                if (searchValue.Contains("?? ???? ???????") || searchValue.Contains("failed") || searchValue.Contains("????") || searchValue.Contains("?? ??? ???????") || searchValue.Contains("???? ???? ???? ????? ?? ??????? ??????? ???? ????? ????????"))
+                if (searchValue.Contains("لم ترسل الرسالة") || searchValue.Contains("failed") || searchValue.Contains("فشلت") || searchValue.Contains("لم تتم الرسالة") || searchValue.Contains("رسالة فشلت ولم ترسل من الواتس اب رسالة بسبب مشكلة تقنية"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && ((
                     ((p.ConguratulationMsgRead != true)
@@ -120,7 +120,7 @@ namespace EventPro.Web.Controllers
                     ).AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ???????"))
+                if (searchValue.Contains("قرأت الرسالة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                     p.ImgRead == true))
@@ -133,7 +133,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ???????"))
+                if (searchValue.Contains("وصلت الرسالة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                     p.ImgRead != true &&
@@ -141,7 +141,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("????? ???????"))
+                if (searchValue.Contains("معلقة الرسالة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.TextFailed != true &&
@@ -153,14 +153,14 @@ namespace EventPro.Web.Controllers
 
                 }
 
-                if (searchValue.Contains("???? ??????"))
+                if (searchValue.Contains("قرأت الصورة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.ImgRead == true))
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ??????"))
+                if (searchValue.Contains("قرأت الصورة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.ImgRead != true &&
@@ -168,7 +168,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("????? ??????"))
+                if (searchValue.Contains("معلقة الصورة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.ImgFailed != true &&
@@ -179,7 +179,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("?? ??? ??????"))
+                if (searchValue.Contains("لم تتم الصورة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      (p.ImgRead != true)
@@ -190,7 +190,7 @@ namespace EventPro.Web.Controllers
                 }
 
 
-                if (searchValue.Contains("??? ???? ????????"))
+                if (searchValue.Contains("تمت قراءة الموقع"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.EventLocationRead == true))
@@ -198,7 +198,7 @@ namespace EventPro.Web.Controllers
                 }
 
 
-                if (searchValue.Contains("??? ???? ????????"))
+                if (searchValue.Contains("تمت قراءة الموقع"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                     p.EventLocationRead != true &&
@@ -206,7 +206,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ???? ????????"))
+                if (searchValue.Contains("معلقة رسالة الموقع"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.EventLocationFailed != true &&
@@ -217,14 +217,14 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ??????? ?????????"))
+                if (searchValue.Contains("قرأت رسالة التذكير"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                       p.ReminderMessageRead == true))
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ??????? ?????????"))
+                if (searchValue.Contains("وصلت رسالة التذكير"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.ReminderMessageRead != true &&
@@ -232,7 +232,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("????? ??????? ?????????"))
+                if (searchValue.Contains("معلقة رسالة التذكير"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                       p.ReminderMessageFailed != true &&
@@ -243,7 +243,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("?? ??? ??????? ?????????"))
+                if (searchValue.Contains("لم ترسل رسالة التذكير"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      (p.ReminderMessageRead != true)
@@ -252,14 +252,14 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ????? ???????"))
+                if (searchValue.Contains("قرأت رسالة التهنئة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                       p.ConguratulationMsgRead == true))
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("???? ????? ???????"))
+                if (searchValue.Contains("وصلت رسالة التهنئة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.ConguratulationMsgRead != true &&
@@ -267,7 +267,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("????? ????? ???????"))
+                if (searchValue.Contains("معلقة رسالة التهنئة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      p.ConguratulationMsgFailed != true &&
@@ -278,7 +278,7 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("?? ??? ????? ???????"))
+                if (searchValue.Contains("لم ترسل رسالة التهنئة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      (p.ConguratulationMsgRead != true)
@@ -288,38 +288,38 @@ namespace EventPro.Web.Controllers
                 }
 
 
-                if (searchValue.Contains("??????") || searchValue.Contains("?? ??? ??????? ??????? ?????"))
+                if (searchValue.Contains("رفضوا") || searchValue.Contains("لم يتمكن بحضور الحفلة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      (p.Response.Equals("Decline") ||
-                        (p.Response.Equals("???????? ?? ??????")))))
+                        (p.Response.Equals("اعتذار عن الحضور")))))
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("?????"))
+                if (searchValue.Contains("حضور"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                      (p.Response.Equals("Confirm") ||
-                        (p.Response.Equals("???? ??????")))))
+                        (p.Response.Equals("تأكيد الحضور")))))
                         .AsNoTracking();
 
                 }
 
-                if (searchValue.Contains("????"))
-                {
-                    guests = db.vwGuestInfo.Where(p => (p.EventId == id) && 
-                        (p.Response.Equals("????")))
-                        .AsNoTracking();
-                }
-
-                if (searchValue.Contains("??? ????"))
+                if (searchValue.Contains("ربما"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) &&
-                        (p.Response.Equals("??? ????")))
+                        (p.Response.Equals("ربما")))
                         .AsNoTracking();
                 }
 
-                if (searchValue.Contains("??????"))
+                if (searchValue.Contains("تحت الانتظار"))
+                {
+                    guests = db.vwGuestInfo.Where(p => (p.EventId == id) &&
+                        (p.Response.Equals("تحت الانتظار")))
+                        .AsNoTracking();
+                }
+
+                if (searchValue.Contains("مرسلة"))
                 {
                     guests = db.vwGuestInfo.Where(p => (p.EventId == id) && (
                     (p.Response.Equals("Message Processed Successfully"))
@@ -378,20 +378,20 @@ namespace EventPro.Web.Controllers
             if(_event.ConfirmationButtonsType == "Links")
             {
                 if (string.IsNullOrEmpty(_event.LinkGuestsLocationEmbedSrc))
-                    return Json(new { success = false, message = "???? ???????? ??? ?????" });
+                    return Json(new { success = false, message = "رابط الموقع غير موجود" });
 
                 if (string.IsNullOrEmpty(_event.LinkGuestsCardText))
-                    return Json(new { success = false, message = "?? ?????? ??? ?????" });
+                    return Json(new { success = false, message = "نص الرسالة غير موجود" });
             }
 
             if (!CheckEventLocationExists(_event))
-                return Json(new { success = false, message = "???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "رابط الموقع غير موجود" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "??? ????? ??? ?????" });
+                return Json(new { success = false, message = "رقم الجوال غير موجود" });
 
             if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             try
             {
@@ -683,16 +683,16 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "?????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -806,16 +806,16 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (!CheckEventLocationExists(_event))
-                return Json(new { success = false, message = "???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "رابط الموقع غير موجود" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -879,7 +879,7 @@ namespace EventPro.Web.Controllers
             var guests = await db.Guest.Where(p => p.EventId == id &&
             (p.ReminderMessageId == null) &&
             (!p.Response.Equals("Decline")) &&
-            (!p.Response.Equals("???????? ?? ??????")))
+            (!p.Response.Equals("اعتذار عن الحضور")))
                 .Take(sendingBulkLimit).ToListAsync();
 
             var _event = await db.Events.Where(p => p.Id == id)
@@ -887,13 +887,13 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -946,7 +946,7 @@ namespace EventPro.Web.Controllers
                 guests = await db.Guest.Where(p => p.EventId == id && p.MessageId != null && p.TextFailed != true &&
                            (p.ReminderMessageId == null) &&
                            (!p.Response.Equals("Decline")) &&
-                           (!p.Response.Equals("???????? ?? ??????")))
+                           (!p.Response.Equals("اعتذار عن الحضور")))
                             .Take(sendingBulkLimit).ToListAsync();
             }
             else if (_event.WhatsappPush == true)
@@ -954,18 +954,18 @@ namespace EventPro.Web.Controllers
                 guests = await db.Guest.Where(p => p.EventId == id && p.ImgSentMsgId != null && p.ImgFailed != true &&
                             (p.ReminderMessageId == null) &&
                             (!p.Response.Equals("Decline")) &&
-                            (!p.Response.Equals("???????? ?? ??????")))
+                            (!p.Response.Equals("اعتذار عن الحضور")))
                              .Take(sendingBulkLimit).ToListAsync();
             }
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -999,7 +999,7 @@ namespace EventPro.Web.Controllers
 
                 var remainingMessagesCount = await db.Guest.Where(e => e.EventId == id && e.ReminderMessageId == null &&
                         ((e.Response.Equals("Confirm")) ||
-                        (e.Response.Equals("???? ??????")))).CountAsync();
+                        (e.Response.Equals("تأكيد الحضور")))).CountAsync();
                 remainingMessagesCount = remainingMessagesCount >= bulkSendingLimit ? bulkSendingLimit : remainingMessagesCount;
                 return Json(new { sentMessages = 0, remainingMessages = remainingMessagesCount });
             }
@@ -1031,7 +1031,7 @@ namespace EventPro.Web.Controllers
 
             var guests = await db.Guest.Where(p => p.EventId == id && (p.ReminderMessageId == null) &&
                         ((p.Response.Equals("Confirm")) ||
-                        (p.Response.Equals("???? ??????"))))
+                        (p.Response.Equals("تأكيد الحضور"))))
                         .Take(sendingBulkLimit).ToListAsync();
 
             var _event = await db.Events.Where(p => p.Id == id)
@@ -1039,13 +1039,13 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -1118,13 +1118,13 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -1159,7 +1159,7 @@ namespace EventPro.Web.Controllers
             var guests = new List<Guest> { guest };
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "??? ????? ??? ?????" });
+                return Json(new { success = false, message = "رقم الجوال غير موجود" });
 
             try
             {
@@ -1202,28 +1202,28 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (_event.ConfirmationButtonsType == "Links")
             {
                 if (string.IsNullOrEmpty(_event.LinkGuestsLocationEmbedSrc))
-                    return Json(new { success = false, message = "???? ???????? ??? ?????" });
+                    return Json(new { success = false, message = "رابط الموقع غير موجود" });
 
                 if (string.IsNullOrEmpty(_event.LinkGuestsCardText))
-                    return Json(new { success = false, message = "?? ?????? ??? ?????" });
+                    return Json(new { success = false, message = "نص الرسالة غير موجود" });
             }
 
             if (!CheckEventLocationExists(_event))
-                return Json(new { success = false, message = "???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "رابط الموقع غير موجود" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "?????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -1323,16 +1323,16 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????? ??????? ??????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
 
             if (_event.ConguratulationsMsgSentOnNumber == null)
-                return Json(new { success = false, message = "????? ????? ????? ???? ???? ???? ????? ??????? ?? ?????" });
+                return Json(new { success = false, message = "نسبة الضيف لارسل رقم الجوال الذي سيتم إرسال رسالة تأكيد الحضور منه غير محدد" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
-                return Json(new { success = false, message = "???? ??????? ???? , ???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
             try
             {
@@ -1365,10 +1365,10 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "??? ????? ??? ?????" });
+                return Json(new { success = false, message = "رقم الجوال غير موجود" });
 
             if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "????? ?????? ??? ??????" });
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             try
             {
@@ -1483,10 +1483,10 @@ namespace EventPro.Web.Controllers
             guests.Add(guest);
 
             if (!CheckEventLocationExists(_event))
-                return Json(new { success = false, message = "???? ???????? ??? ?????" });
+                return Json(new { success = false, message = "رابط الموقع غير موجود" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "??? ????? ??? ??????" });
+                return Json(new { success = false, message = "رقم الجوال غير موجود?" });
 
             try
             {
@@ -1521,10 +1521,10 @@ namespace EventPro.Web.Controllers
             var guests = new List<Guest>() { guest };
 
             if (_event.ConguratulationsMsgSentOnNumber == null)
-                return Json(new { success = false, message = "????? ????? ????? ???? ???? ???? ????? ??????? ?? ?????" });
+                return Json(new { success = false, message = "نسبة الضيف لارسل رقم الجوال الذي سيتم إرسال رسالة تأكيد الحضور منه غير محدد" });
 
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "??? ????? ??? ?????" });
+                return Json(new { success = false, message = "رقم الجوال غير موجود" });
 
             try
             {
@@ -1780,9 +1780,9 @@ namespace EventPro.Web.Controllers
         private async Task RefreshQRCode(Guest guest, CardInfo card)
         {
             int guestId = guest.GuestId;
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string barcodePath = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
-            string imagePath = barcodePath + "/" + guest.GuestId + ".png";
+            int eventId = guest.EventId ?? 0;
+
+            // Generate QR code for guest
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
             QRCodeData qrCodeData = qrGenerator.CreateQrCode(EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guestId)), QRCodeGenerator.ECCLevel.Q);
             QRCode qrCode = new QRCode(qrCodeData);
@@ -1791,25 +1791,28 @@ namespace EventPro.Web.Controllers
             if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
             {
                 qrCodeImage = qrCode.GetGraphic(
-                5,
-                    ColorTranslator.FromHtml(card.BackgroundColor), // Convert hex string to Color
-                    Color.Transparent, // Use Color.Transparent directly (if supported)
+                    5,
+                    ColorTranslator.FromHtml(card.BackgroundColor),
+                    Color.Transparent,
                     false
                 );
             }
             else
             {
                 qrCodeImage = qrCode.GetGraphic(5
-                , card.BackgroundColor
-                , card.ForegroundColor
-                , false);
+                    , card.BackgroundColor
+                    , card.ForegroundColor
+                    , false);
             }
 
+            // Upload to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
+            string qrFolderPath = $"QR/{eventId}";
+            string qrFileName = $"{guestId}.png";
 
             using (MemoryStream ms = new MemoryStream())
             {
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                await _blobStorage.UploadAsync(ms, "png", environment + imagePath, cancellationToken: default);
+                await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
             }
             qrCodeImage.Dispose();
         }
@@ -1819,27 +1822,44 @@ namespace EventPro.Web.Controllers
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             int guestId = guest.GuestId;
             int nos = Convert.ToInt32(guest.NoOfMembers);
-            using HttpClient client = new HttpClient();
-            var request = _httpContextAccessor.HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            var imageUrl = $"{baseUrl}/upload" + path + @"/" + cardInfo.BackgroundImage;
-            byte[] imageData = await client.GetByteArrayAsync(imageUrl);
-            using MemoryStream fs = new MemoryStream(imageData);
-            Image img = Image.FromStream(fs);
-            ViewBag.ImageWidth = img.Width;
-            ViewBag.ImageHeight = img.Height;
+
+            // Load template image from local storage (generated in CardPreview)
+            string templatePath = Path.Combine(webHostEnvironment.WebRootPath, "upload", "cardpreview", $"{eventId}.png");
+
+            Image img;
+            if (System.IO.File.Exists(templatePath))
+            {
+                // Use local template
+                img = Image.FromFile(templatePath);
+            }
+            else
+            {
+                // Fallback: Load background from Cloudinary if template doesn't exist
+                using HttpClient client = new HttpClient();
+                var imageUrl = cardInfo.BackgroundImage;
+                byte[] imageData = await client.GetByteArrayAsync(imageUrl);
+                using MemoryStream fs = new MemoryStream(imageData);
+                img = Image.FromStream(fs);
+            }
+
             double zoomRatio = 1;
             if (img.Width > 900)
             {
                 zoomRatio = Convert.ToDouble(img.Width) / Convert.ToDouble(900);
             }
-            var barcodeUrl = $"{baseUrl}/upload" + guestcode + @"/" + guest.GuestId + ".png";
-            byte[] barcodeData = await client.GetByteArrayAsync(barcodeUrl);
+
+            // Load guest QR code from Cloudinary
+            using HttpClient clientQR = new HttpClient();
+            string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
+            var barcodeUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{eventId}/{guestId}.png";
+            byte[] barcodeData = await clientQR.GetByteArrayAsync(barcodeUrl);
             using MemoryStream fsBarcode = new MemoryStream(barcodeData);
             Image barcode = Image.FromStream(fsBarcode);
-            Image background = Image.FromStream(fs);
-            Bitmap myBitmap = new Bitmap(Image.FromStream(fs));
+
+            Bitmap myBitmap = new Bitmap(img);
             Graphics grap = Graphics.FromImage(myBitmap);
+
+            // Draw guest QR code
             if (cardInfo.BarcodeXaxis != null && cardInfo.BarcodeYaxis != null)
             {
                 grap.DrawImage(barcode, (int)(cardInfo.BarcodeXaxis * zoomRatio), (int)(cardInfo.BarcodeYaxis * zoomRatio), (int)(cardInfo.BarcodeWidth * zoomRatio), (int)(cardInfo.BarcodeWidth * zoomRatio));
@@ -1973,8 +1993,6 @@ namespace EventPro.Web.Controllers
             img.Dispose();
             myBitmap.Dispose();
             barcode.Dispose();
-            background.Dispose();
-
         }
 
         private static void GenerateBarcode(CardInfo card, string imagePath, string barcodeText)
