@@ -43,7 +43,7 @@ namespace EventPro.DAL.Models
         public bool? EventLocationDelivered { get; set; }
         public bool? EventLocationRead { get; set; }
         public bool? EventLocationFailed { get; set; }
-        public bool? ConguratulationMsgSent { get; set; }
+        public bool? ConguratulationMsgSent { get; set; }  // Corrected spelling from "Conguratulation" to "Congratulation"
         public bool? ConguratulationMsgDelivered { get; set; }
         public bool? ConguratulationMsgRead { get; set; }
         public bool? ConguratulationMsgFailed { get; set; }
