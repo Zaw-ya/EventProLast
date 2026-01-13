@@ -15,7 +15,7 @@
                 <div class="card card-primary card-outline">
                     <div class="card-body box-profile">
                         <div class="text-center">
-                            <img class="profile-user-img img-fluid img-circle" src='@(Url.Content($"~/Upload/cardpreview/{Model.Id}.png"))' alt="User profile picture">
+                            <img class="profile-user-img img-fluid img-circle" src='@(Url.Content($"~/Upload/cardpreview/{Model.Id}.png?v={DateTime.UtcNow.Ticks}"))' alt="User profile picture">
                         </div>
 
                         <h3 class="profile-username text-center">
@@ -154,7 +154,7 @@
 @*                                 @{
                                     var imageURL = "/upload/preview/" + ViewBag.CardImage + "?" + @DateTime.Now.Ticks;
                                 } *@
-                                <img id="mydivheader" src='@(Url.Content($"~/upload/cardpreview/{Model.Id}.png"))' style="width:100%; height:auto;">
+                                <img id="mydivheader" src='@(Url.Content($"~/upload/cardpreview/{Model.Id}.png?v={DateTime.UtcNow.Ticks}"))' style="width:100%; height:auto;">
                             </div>
                             <!-- /.tab-pane -->
 
