@@ -306,7 +306,7 @@
 }
 <script>
     $(document).ready(function () {
-        SetCardBackground('@Model.BackgroundImage');
+        SetCardBackground('@Model.BackgroundImage' + '?v=' + new Date().getTime());
         setCardPosition();
         LoadPlaceholder();
         ToggleLang();

@@ -200,7 +200,8 @@ namespace EventPro.Web.Controllers
 
             // Ali hani // Store the QR code URL in the card info
             card.BarcodeColorCode = qrCodeUrl;
-
+            db.CardInfo.Update(card);
+            await db.SaveChangesAsync();
             qrCodeImage.Dispose();
             SetBreadcrum("QR Settings", "/admin");
 
