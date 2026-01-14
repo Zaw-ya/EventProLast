@@ -1,20 +1,32 @@
+using EventPro.DAL.Models;
+using EventPro.Web.Common;
+using EventPro.Web.Filters;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using iTextSharp.tool.xml;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using EventPro.DAL.Models;
-using EventPro.Web.Common;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-
 namespace EventPro.Web.Controllers
 {
     public partial class AdminController : Controller
     {
+        #region Invoice Management
+
+        /// <summary>
+        /// GET: Admin/GenerateInvoice
+        /// Displays the invoice generation page for a specific event
+        /// Shows event details, client information, and existing invoice data
+        /// Creates a new invoice record if one doesn't exist for the event
+        /// Calculates totals and tax amounts for display
+        /// </summary>
+        /// <param name="id">Event ID for which to generate the invoice</param>
+        /// <returns>Invoice generation view with event and invoice data</returns>
+        [AuthorizeRoles("Administrator")]
         public IActionResult GenerateInvoice(int id)
         {
             if (AppSession.GetSession(this.HttpContext, SesionConstant.UserId) == "")
@@ -60,6 +72,14 @@ namespace EventPro.Web.Controllers
             return View(invoices);
         }
 
+        /// <summary>
+        /// POST: Admin/GenerateInvoice
+        /// Updates invoice details such as billing information and tax percentage
+        /// Saves changes to the invoice record and redirects back to the invoice page
+        /// </summary>
+        /// <param name="inv">Invoice model with updated billing information</param>
+        /// <returns>Redirects to the invoice generation page</returns>
+        [AuthorizeRoles("Administrator")]
         [HttpPost]
         public IActionResult GenerateInvoice(Invoices inv)
         {
@@ -79,81 +99,16 @@ namespace EventPro.Web.Controllers
             db.SaveChanges();
             return RedirectToAction("GenerateInvoice", AppController.Admin, new { id = id });
         }
-        public IActionResult GeneratePDF(int id)
-        {
-            if (AppSession.GetSession(this.HttpContext, SesionConstant.UserId) == "")
-                return RedirectToAction(AppAction.Index, AppController.Login);
 
-            if (AppSession.GetCurrentUserRole(this.HttpContext) != "Administrator")
-                return RedirectToAction(AppAction.Index, AppController.Login);
-
-            var events = db.VwEvents.Where(p => p.Id == id).FirstOrDefault();
-            var client = db.VwUsers.Where(p => p.UserId == events.CreatedFor).FirstOrDefault();
-            var invoices = db.Invoices.Where(p => p.EventId == events.Id).FirstOrDefault();
-            var invoiceDetails = db.InvoiceDetails.Where(p => p.InvoiceId == invoices.Id).ToList();
-            string rawHTML = System.IO.File.ReadAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + "InvoiceTemplate.html");
-            string rawLine = System.IO.File.ReadAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + "RawLine.html");
-
-            rawHTML = rawHTML.Replace("{{InvoiceNo}}", events.GmapCode);
-            rawHTML = rawHTML.Replace("{{Location}}", events.EventVenue);
-            rawHTML = rawHTML.Replace("{{CommercialNo}}", invoices.EventName);
-            rawHTML = rawHTML.Replace("{{EventDate}}", Convert.ToDateTime(events.EventFrom).ToString("dd-MMM-yyyy"));
-            rawHTML = rawHTML.Replace("{{PhoneNo}}", invoices.BillingContactNo);
-            rawHTML = rawHTML.Replace("{{EventTitle}}", events.EventTitle);
-            rawHTML = rawHTML.Replace("{{EventPlace}}", events.EventVenue);
-            rawHTML = rawHTML.Replace("{{EventAddress}}", invoices.EventPlace);
-            rawHTML = rawHTML.Replace("{{EventDate}}", Convert.ToDateTime(events.EventFrom).ToString("dd-MMM-yyyy"));
-            rawHTML = rawHTML.Replace("{{TaxPer}}", Convert.ToDecimal(invoices.TaxPer).ToString("0.00"));
-            rawHTML = rawHTML.Replace("{{Total}}", Convert.ToDecimal(invoices.TotalDue).ToString("0.00"));
-            rawHTML = rawHTML.Replace("{{NetTotal}}", Convert.ToDecimal(invoices.NetDue).ToString("0.00"));
-
-
-            var lm = db.LocallizationMaster.Where(p => p.RegionCode == "UAE").ToList();
-            foreach (var l in lm)
-            {
-                rawHTML = rawHTML.Replace("{{" + l.LabelName + "}}", l.Translation);
-            }
-
-            StringBuilder sb = new StringBuilder();
-            foreach (var data in invoiceDetails)
-            {
-                var rl = rawLine;
-                rl = rl.Replace("{{Total}}", Convert.ToDecimal(data.Total).ToString("0.00"));
-                rl = rl.Replace("{{Rate}}", Convert.ToDecimal(data.Rate).ToString("0.00"));
-                rl = rl.Replace("{{NoG}}", data.NoFguest);
-                rl = rl.Replace("{{Particulars}}", data.Product);
-                sb.Append(rl);
-                sb.Append(Environment.NewLine);
-            }
-            rawHTML = rawHTML.Replace("{{RawData}}", sb.ToString());
-
-
-
-            System.IO.File.WriteAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + id + ".html", rawHTML);
-            StringReader sr = new StringReader(rawHTML);
-            Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
-            FileStream file = new FileStream(_configuration.GetSection("Uploads").GetSection("Invoice").Value + id + ".pdf", System.IO.FileMode.OpenOrCreate);
-            PdfWriter writer = PdfWriter.GetInstance(pdfDoc, file);
-            pdfDoc.Open();
-            XMLWorkerHelper.GetInstance().ParseXHtml(writer, pdfDoc, sr);
-            pdfDoc.Close();
-            return RedirectToAction("GenerateInvoice", AppController.Admin, new { id = id });
-        }
-
-
-        public IActionResult PreviewInvoice(int id)
-        {
-            if (AppSession.GetSession(this.HttpContext, SesionConstant.UserId) == "")
-                return RedirectToAction(AppAction.Index, AppController.Login);
-
-            if (AppSession.GetCurrentUserRole(this.HttpContext) != "Administrator")
-                return RedirectToAction(AppAction.Index, AppController.Login);
-            string rawLine = System.IO.File.ReadAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + id + ".html");
-
-            ViewBag.Invoice = rawLine;
-            return View();
-        }
-
+        /// <summary>
+        /// POST: Admin/AddItems
+        /// Adds a new item to the invoice or updates an existing item
+        /// Handles both adding new invoice details and editing existing ones
+        /// Calculates total amount based on rate and quantity
+        /// </summary>
+        /// <param name="form">Form collection containing item details (lineId, EventId, InvoiceId, Product, nog, rate)</param>
+        /// <returns>Redirects to the invoice generation page</returns>
+        [AuthorizeRoles("Administrator")]
         [HttpPost]
         public IActionResult AddItems(IFormCollection form)
         {
@@ -193,12 +148,19 @@ namespace EventPro.Web.Controllers
                 db.InvoiceDetails.Add(details);
             }
 
-
             db.SaveChanges();
 
             return RedirectToAction("GenerateInvoice", AppController.Admin, new { id = eventId });
         }
 
+        /// <summary>
+        /// GET: Admin/DeleteItem
+        /// Deletes a specific item from the invoice details
+        /// Removes the item and redirects back to the invoice page for the associated event
+        /// </summary>
+        /// <param name="id">ID of the invoice detail item to delete</param>
+        /// <returns>Redirects to the invoice generation page</returns>
+        [AuthorizeRoles("Administrator")]
         [HttpGet]
         public IActionResult DeleteItem(int id)
         {
@@ -214,5 +176,97 @@ namespace EventPro.Web.Controllers
             db.SaveChanges();
             return RedirectToAction("GenerateInvoice", AppController.Admin, new { id = inv.EventId });
         }
+
+        /// <summary>
+        /// GET: Admin/GeneratePDF
+        /// Generates a PDF invoice for the specified event
+        /// Reads HTML template, replaces placeholders with actual data, and converts to PDF
+        /// Handles localization for UAE region and includes invoice details
+        /// Saves both HTML and PDF files to the configured upload path
+        /// </summary>
+        /// <param name="id">Event ID for which to generate the PDF invoice</param>
+        /// <returns>Redirects to the invoice generation page</returns>
+        [AuthorizeRoles("Administrator")]
+        public IActionResult GeneratePDF(int id)
+        {
+            if (AppSession.GetSession(this.HttpContext, SesionConstant.UserId) == "")
+                return RedirectToAction(AppAction.Index, AppController.Login);
+
+            if (AppSession.GetCurrentUserRole(this.HttpContext) != "Administrator")
+                return RedirectToAction(AppAction.Index, AppController.Login);
+
+            var events = db.VwEvents.Where(p => p.Id == id).FirstOrDefault();
+            var client = db.VwUsers.Where(p => p.UserId == events.CreatedFor).FirstOrDefault();
+            var invoices = db.Invoices.Where(p => p.EventId == events.Id).FirstOrDefault();
+            var invoiceDetails = db.InvoiceDetails.Where(p => p.InvoiceId == invoices.Id).ToList();
+            string rawHTML = System.IO.File.ReadAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + "InvoiceTemplate.html");
+            string rawLine = System.IO.File.ReadAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + "RawLine.html");
+
+            rawHTML = rawHTML.Replace("{{InvoiceNo}}", events.GmapCode);
+            rawHTML = rawHTML.Replace("{{Location}}", events.EventVenue);
+            rawHTML = rawHTML.Replace("{{CommercialNo}}", invoices.EventName);
+            rawHTML = rawHTML.Replace("{{EventDate}}", Convert.ToDateTime(events.EventFrom).ToString("dd-MMM-yyyy"));
+            rawHTML = rawHTML.Replace("{{PhoneNo}}", invoices.BillingContactNo);
+            rawHTML = rawHTML.Replace("{{EventTitle}}", events.EventTitle);
+            rawHTML = rawHTML.Replace("{{EventPlace}}", events.EventVenue);
+            rawHTML = rawHTML.Replace("{{EventAddress}}", invoices.EventPlace);
+            rawHTML = rawHTML.Replace("{{EventDate}}", Convert.ToDateTime(events.EventFrom).ToString("dd-MMM-yyyy"));
+            rawHTML = rawHTML.Replace("{{TaxPer}}", Convert.ToDecimal(invoices.TaxPer).ToString("0.00"));
+            rawHTML = rawHTML.Replace("{{Total}}", Convert.ToDecimal(invoices.TotalDue).ToString("0.00"));
+            rawHTML = rawHTML.Replace("{{NetTotal}}", Convert.ToDecimal(invoices.NetDue).ToString("0.00"));
+
+            var lm = db.LocallizationMaster.Where(p => p.RegionCode == "UAE").ToList();
+            foreach (var l in lm)
+            {
+                rawHTML = rawHTML.Replace("{{" + l.LabelName + "}}", l.Translation);
+            }
+
+            StringBuilder sb = new StringBuilder();
+            foreach (var data in invoiceDetails)
+            {
+                var rl = rawLine;
+                rl = rl.Replace("{{Total}}", Convert.ToDecimal(data.Total).ToString("0.00"));
+                rl = rl.Replace("{{Rate}}", Convert.ToDecimal(data.Rate).ToString("0.00"));
+                rl = rl.Replace("{{NoG}}", data.NoFguest);
+                rl = rl.Replace("{{Particulars}}", data.Product);
+                sb.Append(rl);
+                sb.Append(Environment.NewLine);
+            }
+            rawHTML = rawHTML.Replace("{{RawData}}", sb.ToString());
+
+            System.IO.File.WriteAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + id + ".html", rawHTML);
+            StringReader sr = new StringReader(rawHTML);
+            Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
+            FileStream file = new FileStream(_configuration.GetSection("Uploads").GetSection("Invoice").Value + id + ".pdf", System.IO.FileMode.OpenOrCreate);
+            PdfWriter writer = PdfWriter.GetInstance(pdfDoc, file);
+            pdfDoc.Open();
+            XMLWorkerHelper.GetInstance().ParseXHtml(writer, pdfDoc, sr);
+            pdfDoc.Close();
+            return RedirectToAction("GenerateInvoice", AppController.Admin, new { id = id });
+        }
+
+        /// <summary>
+        /// GET: Admin/PreviewInvoice
+        /// Displays a preview of the generated HTML invoice
+        /// Reads the saved HTML file and displays it in the view
+        /// Allows administrators to review the invoice before finalizing
+        /// </summary>
+        /// <param name="id">Event ID for which to preview the invoice</param>
+        /// <returns>Invoice preview view with HTML content</returns>
+        [AuthorizeRoles("Administrator")]
+        public IActionResult PreviewInvoice(int id)
+        {
+            if (AppSession.GetSession(this.HttpContext, SesionConstant.UserId) == "")
+                return RedirectToAction(AppAction.Index, AppController.Login);
+
+            if (AppSession.GetCurrentUserRole(this.HttpContext) != "Administrator")
+                return RedirectToAction(AppAction.Index, AppController.Login);
+            string rawLine = System.IO.File.ReadAllText(_configuration.GetSection("Uploads").GetSection("Invoice").Value + id + ".html");
+
+            ViewBag.Invoice = rawLine;
+            return View();
+        }
+
+        #endregion
     }
 }

@@ -1,0 +1,48 @@
+@model List<EventPro.DAL.Models.Events>
+
+@if (Model != null && Model.Count > 0)
+{
+    <ul class="products-list product-list-in-card pl-2 pr-2">
+        @foreach (var evt in Model)
+        {
+            <li class="item">
+                <div class="product-img">
+                   @if (evt.CardInfo != null && evt.CardInfo.Count > 0 && !string.IsNullOrEmpty(evt.CardInfo.FirstOrDefault()?.BackgroundImage))
+                   {
+                         <img src="@evt.CardInfo.FirstOrDefault()?.BackgroundImage" class="grid-icon" alt="Event Backgroun Image" />
+                   }
+                   else if (evt.Icon != null)
+                    {
+                        <img src="~/upload/card/@evt.Icon" class="grid-icon" alt="Event Image" />
+                    }
+                    else
+                    {
+                        <img src="~/upload/card/default.png" class="grid-icon" alt="Default Image" />
+                    }
+                </div>
+                <div class="product-info">
+                    <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                        @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                        @if (evt.EventFrom != null)
+                        {
+                            <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
+                        }
+                    </a>
+                    @if (evt.EventVenue != null || (evt.CreatedByNavigation != null))
+                    {
+                        <span class="product-description">
+                            @(evt.EventVenue != null ? evt.EventVenue + ", " : "")
+                            @(evt.CreatedByNavigation != null ? evt.CreatedByNavigation.FirstName + " " + evt.CreatedByNavigation.LastName : "") 
+                        </span>
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="p-3 text-center">
+        <p class="text-muted">No events found in this category.</p>
+    </div>
+}
