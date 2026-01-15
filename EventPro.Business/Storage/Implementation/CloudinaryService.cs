@@ -1,10 +1,11 @@
+﻿using System.IO.Compression;
+
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+
 using EventPro.Business.Storage.Interface;
+
 using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace EventPro.Business.Storage.Implementation
 {
@@ -231,5 +232,70 @@ namespace EventPro.Business.Storage.Implementation
             var result = await _cloudinary.DestroyAsync(deleteParams);
             return result.Result == "ok";
         }
+
+        /// <summary>
+        /// Downloads all images from a specific Cloudinary folder and returns them as a ZIP stream.
+        /// Using cursor logic to handle if the results goes over 500
+        /// </summary>
+        /// <param name="folderName">Folder path, e.g., "cards/25/"</param>
+        /// <param name="maxResults">Default number of resources per request (default 500)</param>
+        /// <returns>MemoryStream containing the ZIP file</returns>
+        public async Task<MemoryStream> DownloadFilesAsZipStreamAsync(string folderName, int maxResults = 500)
+        {
+            if (!folderName.EndsWith("/"))
+                folderName += "/";
+            if (folderName.StartsWith("/"))
+                folderName = folderName.Substring(1);
+
+            var zipStream = new MemoryStream();
+
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+            {
+                string nextCursor = null;
+                bool hasMore = true;
+
+                while (hasMore)
+                {
+                    var searchResult = await _cloudinary.Search()
+                        .Expression($"folder:{folderName}*")   // أو prefix:cards/25/
+                        .MaxResults(maxResults)
+                        .NextCursor(nextCursor)
+                        .ExecuteAsync();
+
+                    if (searchResult?.Resources == null || !searchResult.Resources.Any())
+                    {
+                        hasMore = false;
+                        continue;
+                    }
+
+                    foreach (var resource in searchResult.Resources)
+                    {
+                        string fileName = Path.GetFileName(resource.PublicId) + ".jpg";
+
+                        try
+                        {
+                            using var client = new HttpClient();
+                            var imageBytes = await client.GetByteArrayAsync(resource.SecureUrl);
+
+                            var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+                            using var entryStream = entry.Open();
+                            await entryStream.WriteAsync(imageBytes);
+                        }
+                        catch (Exception ex)
+                        {
+                            // سجّل الخطأ بدون توقف العملية كلها
+                            Console.WriteLine($"Failed to download {fileName}: {ex.Message}");
+                        }
+                    }
+
+                    nextCursor = searchResult.NextCursor;
+                    hasMore = !string.IsNullOrEmpty(nextCursor);
+                }
+            }
+
+            zipStream.Position = 0;
+            return zipStream;
+        }
+
     }
 }
