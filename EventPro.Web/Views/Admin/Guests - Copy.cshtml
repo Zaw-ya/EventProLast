@@ -177,12 +177,13 @@
                                             <div class="dropdown-divider"></div>
                                             <a href="#" onclick="RefreshALl(@ViewBag.EventId,1);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh New</a>
 @*                                             <a href="#" onclick="RefreshALl(@ViewBag.EventId,0);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh All</a> *@
-
                                             <a href="~/admin/DownloadAll/@ViewBag.EventId" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download All</a>
+                                            
                                             @if (ViewBag.IsAdmin == 1)
                                             {
                                                 <a href="#" onclick="RefreshAllGuestsStatus(@ViewBag.EventId)" class="dropdown-item"><i class="fas fa-sync-alt" title="تحديث حالة الرسائل الأخيرة" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
                                                 @*                                             <a href="~/admin/ValidateAllGuestPhoneNumbers/@ViewBag.EventId" class="dropdown-item">
+                                                Gharabawy : This code when download the guest list it will validate all phone numbers (but it commented for now)
                                                 <i class="fas fa-check-circle" style="color:blue"></i>&nbsp;Validate All Numbers Format
                                             </a> *@
                                             }
@@ -629,9 +630,9 @@
                                                             <a onclick="SendFailedCongratularionMsg(${row.id})" class=" dropdown-item" style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Congratulation Msg</a>
                         </div>
                     </div>
-                                                                                                           <a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card</a>
+                                                                                                           <a href="https://res.cloudinary.com/dewicwvoe/image/upload/cards/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card</a>
                                                                                                                                            <a onclick="SetAccept(${row.id})" a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" style="cursor: pointer;"  class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept</a>
-                                                                                       <a href="/Upload/guestcode/${row.id}.png" target="_blank" download="barcode.png" class=" dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode</a>
+                                                                                       <a href="https://res.cloudinary.com/dewicwvoe/image/upload/QR/${@ViewBag.EventId}/${row.id}.png" target="_blank" download="barcode.png" class=" dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode</a>
 
                                                                                                                                                                                                         <a href="#" onclick="EditGuest('${row.id}','${row.name}','${row.noOfMembers}','${row.primaryContact}','${row.additionalText}','${row.secondaryContact}')" class="dropdown-item"><i class="nav-icon fas fa-pen-nib" style="color:cornflowerblue"></i>&nbsp; Edit</a>
                                                                                         <a href="#" onclick="SetGuestIdForDelete(${row.id})" class="dropdown-item" data-toggle="modal" data-target="#deleteConfirmation" ><i class="nav-icon fas fa-recycle" style="color:cornflowerblue"></i>&nbsp; Delete</a>
@@ -680,7 +681,7 @@
         }
 
         async function RefreshAllGuestsStatus(EventId) {
-            loaderText2.textContent = "... ???? ????? ????? ??????? ";
+            loaderText2.textContent = "جاري تحديث حالة كل الضيوف";
             darkoverlay2.hidden = false;
             loader2.hidden = false;
             var remainingStatus = 0;
@@ -691,15 +692,15 @@
                 var data = await fetch(`/admin/StatusRefreshForAllGuests/${EventId}`);
                 var result = await data.json();
                 if (!result.success) {
-                    Swal.fire("! ??? ??? ?? ");
+                    Swal.fire("! فشل في تحديث الحالة");
                 }
                 else {
-                    Swal.fire("?? ????? ????? ???????");
+                    Swal.fire("تم تحديث حالة كل الضيوف بنجاح");
                 }
             }
             catch
             {
-                Swal.fire("! ??? ??? ?? ");
+                Swal.fire("! فشل في تحديث الحالة");
             }
             loader2.hidden = true;
             darkoverlay2.hidden = true;
@@ -1502,7 +1503,7 @@
                 url: '/admin/refreshall?id=' + eventID + '&&type=' + type,
                 cache: false,
                 beforeSend: function (xhr) {
-                    loaderText.textContent = "... ???? ????? ??????? ";
+                     loaderText.textContent = "... جاري تحديث كل الحالات ";
                     loader.hidden = false;
                     startIntervel();
                     loader.hidden = false;
@@ -1514,7 +1515,7 @@
                         Swal.fire({
                             position: "center",
                             icon: "success",
-                            title: "?? ????? ???????"
+                             title: "تم تحديث كل الحالات بنجاح"
                         });
                         loader.hidden = true;
                         stopIntervel();
@@ -1526,7 +1527,7 @@
                         Swal.fire({
                             position: "center",
                             icon: "error",
-                            title: "?? ????? ??????? , ??? ??? ?? ",
+                             title: "فشل في تحديث كل الحالات، حاول مرة أخرى",
                             text: "Error:" + response.result,
                            
                         });
