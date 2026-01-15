@@ -1,14 +1,3 @@
-using DocumentFormat.OpenXml.EMMA;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using EventPro.DAL.Models;
-using EventPro.Web.Common;
-using EventPro.Web.Filters;
-using EventPro.Web.Models;
-using EventPro.Web.Services;
-using QRCoder;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -19,7 +8,19 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using EventPro.Business.Storage.Interface;
+
+using EventPro.DAL.Models;
+using EventPro.Web.Common;
+using EventPro.Web.Filters;
+using EventPro.Web.Models;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+
+using QRCoder;
+
+using Serilog;
 
 namespace EventPro.Web.Controllers
 {
@@ -214,7 +215,7 @@ namespace EventPro.Web.Controllers
             }
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, info.EventId,DAL.Enum.ActionEnum.UpdateQRCode);
+            await _auditLogService.AddAsync(userId, info.EventId, DAL.Enum.ActionEnum.UpdateQRCode);
             // redirect to the CardPreview view
             return RedirectToAction("CardPreview", "admin", new { id = info.EventId });
         }
@@ -298,7 +299,7 @@ namespace EventPro.Web.Controllers
             }
             else
             {
-              //Ali hani    // Construct Cloudinary URL for existing QR codes with folder structure: QR/{eventId}/{eventId}.png
+                //Ali hani    // Construct Cloudinary URL for existing QR codes with folder structure: QR/{eventId}/{eventId}.png
                 string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
                 ViewBag.Barcode = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{id}/{id}.png";
             }
@@ -310,6 +311,79 @@ namespace EventPro.Web.Controllers
         public IActionResult DownloadAsPDF(int id)
         {
             return View();
+        }
+
+        // When Refresh All is clicked
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> RefreshAll(int id, int type)
+        {
+            if (HasOperatorRole())
+            {
+                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var isOperatorHasAccess = db.EventOperator
+                     .Any(e => e.OperatorId == userId && e.EventId == id);
+
+                if (!isOperatorHasAccess)
+                    return new RedirectToActionResult(AppAction.AccessDenied, AppController.Login, new { });
+            }
+
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            try
+            {
+
+                string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+                List<string> files = null;
+
+                List<Guest> guests = await db.Guest.Where(p => p.EventId == id)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                //if (await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + id))
+                //{
+                //    files = await _blobStorage.GetFolderFilesAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
+                //    foreach (var file in files)
+                //    {
+                //        guests.RemoveAll(e => environment + cardPreview + "/" + id + "/" + "E00000" + id + "_" + e.GuestId + "_" + e.NoOfMembers + ".jpg" == file);
+                //    }
+                //}
+
+                // Get the invitation or the card info
+                // That has the design details such as positions ,font size, Qr position etc
+                var card = await db.CardInfo.Where(p => p.EventId == id)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+
+                string guestcode = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
+                string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
+
+                //if (!await _blobStorage.FolderExistsAsync(environment + guestcode) || !await _blobStorage.FolderExistsAsync(environment + path))
+                //    return Json(new Response { succeeded = false, result = "Directory not exist" });
+
+                //var parallelOptions = new ParallelOptions
+                //{
+                //    MaxDegreeOfParallelism = 1 // Use only one core
+                //};
+
+                //await Parallel.ForEachAsync(guests, async (guest, CancellationToken) =>
+                //{
+                //    await RefreshQRCode(guest, card);
+                //    await RefreshCard(guest, id, card, cardPreview, guestcode, path);
+                //});
+                foreach(var guest in guests)
+                {
+                    await RefreshQRCode(guest, card);
+                    await RefreshCard(guest, id, card, cardPreview, guestcode, path);
+                }
+
+                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.RefreshCards);
+                return Json(new Response() { succeeded = true });
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Something went wrong In RefreshAll ,Message:{ex.Message} InnerEx :{ex.InnerException}");
+                return Json(new Response { succeeded = false, result = ex.Message });
+            }
         }
 
         [HttpGet]
@@ -329,78 +403,15 @@ namespace EventPro.Web.Controllers
             }
             return Json(new { totalEventCards = eventCardsCount, totalCreatedCards = createdFiles });
         }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> RefreshAll(int id, int type)
-        {
-            if (HasOperatorRole())
-            {
-                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                var isOperatorHasAccess = db.EventOperator
-                     .Any(e => e.OperatorId == userId && e.EventId == id);
-
-                if (!isOperatorHasAccess)
-                    return new RedirectToActionResult(AppAction.AccessDenied, AppController.Login, new { });
-            }
-
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            try
-            {
-                string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-                List<string> files = null;
-
-                List<Guest> guests = await db.Guest.Where(p => p.EventId == id)
-                    .AsNoTracking()
-                    .ToListAsync();
-
-                if (await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + id))
-                {
-                    files = await _blobStorage.GetFolderFilesAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
-                    foreach (var file in files)
-                    {
-                        guests.RemoveAll(e => environment + cardPreview + "/" + id + "/" + "E00000" + id + "_" + e.GuestId + "_" + e.NoOfMembers + ".jpg" ==  file);
-                    }
-                }
-
-                var card = await db.CardInfo.Where(p => p.EventId == id)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync();
-
-                string guestcode = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
-                string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
-
-                if (!await _blobStorage.FolderExistsAsync(environment + guestcode) || !await _blobStorage.FolderExistsAsync(environment + path))
-                    return Json(new Response { succeeded = false, result = "Directory not exist" });
-
-                var parallelOptions = new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = 1 // Use only one core
-                };
-
-                await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
-                {
-                    await RefreshQRCode(guest, card);
-                    await RefreshCard(guest, id, card, cardPreview,guestcode, path);
-                });
-
-                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.RefreshCards);
-                return Json(new Response() { succeeded = true });
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Something went wrong In RefreshAll ,Message:{ex.Message} InnerEx :{ex.InnerException}");
-                return Json(new Response { succeeded = false, result = ex.Message });
-            }
-        }
-
+      
+        // This action get all guests final invitations and compress them 
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> DownloadAll(int id)
         {
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             if (HasOperatorRole())
             {
-               
+
                 var isOperatorHasAccess = db.EventOperator
                      .Any(e => e.OperatorId == userId && e.EventId == id);
 
@@ -409,15 +420,32 @@ namespace EventPro.Web.Controllers
             }
 
             var eventInfo = db.Events.Where(p => p.Id == id).FirstOrDefault();
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-            MemoryStream zipStream = new MemoryStream();
-            zipStream = await _blobStorage.DownloadFilesAsZipStreamAsync(environment + cardPreview + "/" + id);
+            // Gharabawy : We have commented this cause we will use the cloudinary
+            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-          
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
-            return File(zipStream, "application/zip", eventInfo.SystemEventTitle.Replace(" ", "_") + ".zip");
+            string folderName = $"cards/{id}/"; // It means the cards -> then go to the eventId(EventFolder) that has the guests folders
+
+            //MemoryStream zipStream = new MemoryStream();
+            //zipStream = await _blobStorage.DownloadFilesAsZipStreamAsync(environment + cardPreview + "/" + id);
+            //await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
+            //return File(zipStream, "application/zip", eventInfo.SystemEventTitle.Replace(" ", "_") + ".zip");
+
+            try
+            {
+                var zipStream = await _cloudinaryService.DownloadFilesAsZipStreamAsync(folderName);
+
+                await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
+
+                return File(zipStream, "application/zip", $"{eventInfo.SystemEventTitle.Replace(" ", "_")}_Cards.zip");
+            }
+            catch (Exception ex)
+            {
+                // يفضل تسجل الخطأ في log حقيقي
+                Log.Error($"Failed to download all cards for event {id}: {ex.Message}");
+                return StatusCode(500, "حدث خطأ أثناء إنشاء ملف الضغط");
+            }
         }
 
         [HttpPost]
