@@ -7,14 +7,76 @@ using System.Text.Json;
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
 {
+    #region Class Summary
+    /// <summary>
+    /// Producer service for publishing single webhook messages to RabbitMQ.
+    /// This service is responsible for sending individual Twilio webhook messages
+    /// to a message queue for asynchronous processing.
+    ///
+    /// Architecture Overview:
+    /// - Implements the Producer pattern in the Producer-Consumer messaging architecture
+    /// - Creates a persistent connection and channel to RabbitMQ on initialization
+    /// - Uses thread-safe publishing with lock mechanism for concurrent access
+    ///
+    /// Queue Configuration:
+    /// - Queue Name: TwilioSingleMessagingWebHookMessages (from appsettings)
+    /// - Durable: false (queue won't survive broker restart)
+    /// - Exclusive: false (queue can be accessed by multiple connections)
+    /// - AutoDelete: false (queue won't be deleted when consumers disconnect)
+    ///
+    /// Usage:
+    /// - Registered as Singleton in DI container
+    /// - Called by webhook controllers when receiving Twilio callbacks
+    /// - Messages are serialized to JSON before publishing
+    /// </summary>
+    #endregion
     public class WebHookSingleMessagingQueueProducerService : IWebHookSingleMessagingQueueProducerService
     {
+        #region Private Fields
+
+        /// <summary>
+        /// Factory for creating RabbitMQ connections. Injected via DI.
+        /// </summary>
         private readonly IConnectionFactory _connectionFactory;
+
+        /// <summary>
+        /// Persistent connection to RabbitMQ server.
+        /// Created once during initialization and reused for all publish operations.
+        /// </summary>
         private readonly IConnection connection;
+
+        /// <summary>
+        /// RabbitMQ channel (virtual connection) used for publishing messages.
+        /// Shared across all publish calls with thread-safe locking.
+        /// </summary>
         private readonly IModel channel;
+
+        /// <summary>
+        /// Application configuration for accessing RabbitMQ queue settings.
+        /// </summary>
         private readonly IConfiguration _Configuration;
+
+        /// <summary>
+        /// The name of the queue to publish messages to.
+        /// Retrieved from configuration: RabbitMqQueues:TwilioSingleMessagingWebHookMessages
+        /// </summary>
         private readonly String QueueName;
 
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        /// Initializes the producer service with RabbitMQ connection and queue declaration.
+        /// </summary>
+        /// <param name="connectionFactory">Factory for creating RabbitMQ connections</param>
+        /// <param name="configuration">Application configuration containing queue settings</param>
+        /// <remarks>
+        /// On initialization:
+        /// 1. Creates a new connection to RabbitMQ server
+        /// 2. Creates a channel for message operations
+        /// 3. Declares the queue (creates if not exists)
+        /// </remarks>
         public WebHookSingleMessagingQueueProducerService(IConnectionFactory connectionFactory,IConfiguration configuration)
         {
             _connectionFactory = connectionFactory;
@@ -23,21 +85,56 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             QueueName = _Configuration.GetSection("RabbitMqQueues")["TwilioSingleMessagingWebHookMessages"].ToLower();
             channel = connection.CreateModel();
 
+            // Declare the queue - creates it if it doesn't exist
+            // This ensures the queue is available before any publish attempts
             channel.QueueDeclare(queue: QueueName,
                                  durable: false,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
         }
+
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// Publishes a message asynchronously to the single messaging webhook queue.
+        /// </summary>
+        /// <param name="message">
+        /// The message object to publish. Will be serialized to JSON.
+        /// Expected types: MessageMetadataRequest or similar webhook payload objects
+        /// </param>
+        /// <returns>A completed Task when the message has been published</returns>
+        /// <remarks>
+        /// Thread Safety:
+        /// - Uses lock on channel to ensure thread-safe publishing
+        /// - Multiple concurrent calls will be serialized through the lock
+        ///
+        /// Message Flow:
+        /// 1. Serialize message object to JSON string
+        /// 2. Convert JSON to UTF-8 byte array
+        /// 3. Acquire lock on channel
+        /// 4. Publish to queue using BasicPublish
+        /// 5. Release lock
+        /// </remarks>
         public async Task SendingMessageAsync(object message)
         {
+            // Serialize the message object to JSON format
             var jsonString = JsonSerializer.Serialize(message);
+
+            // Convert the JSON string to a byte array for RabbitMQ
             var body = Encoding.UTF8.GetBytes(jsonString);
 
+            // Publish asynchronously with thread-safe channel access
             await Task.Run(() =>
             {
+                // Lock ensures only one thread publishes at a time
+                // This prevents channel corruption from concurrent access
                 lock (channel)
                 {
+                    // Publish to the default exchange (empty string)
+                    // Routing key matches queue name for direct delivery
                     channel.BasicPublish(exchange: string.Empty,
                             routingKey: QueueName,
                             body: body,
@@ -48,5 +145,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
 
             return;
         }
+
+        #endregion
     }
 }
