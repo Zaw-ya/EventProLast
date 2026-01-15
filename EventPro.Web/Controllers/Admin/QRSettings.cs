@@ -1,14 +1,3 @@
-using DocumentFormat.OpenXml.EMMA;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using EventPro.DAL.Models;
-using EventPro.Web.Common;
-using EventPro.Web.Filters;
-using EventPro.Web.Models;
-using EventPro.Web.Services;
-using QRCoder;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -19,7 +8,19 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using EventPro.Business.Storage.Interface;
+
+using EventPro.DAL.Models;
+using EventPro.Web.Common;
+using EventPro.Web.Filters;
+using EventPro.Web.Models;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+
+using QRCoder;
+
+using Serilog;
 
 namespace EventPro.Web.Controllers
 {
@@ -536,6 +537,7 @@ namespace EventPro.Web.Controllers
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             try
             {
+
                 string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
                 List<string> files = null;
 
@@ -544,18 +546,17 @@ namespace EventPro.Web.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                // Check existing files and exclude guests with current cards
-                if (await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + id))
-                {
-                    files = await _blobStorage.GetFolderFilesAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
-                    foreach (var file in files)
-                    {
-                        // Remove guests whose cards already exist
-                        guests.RemoveAll(e => environment + cardPreview + "/" + id + "/" + "E00000" + id + "_" + e.GuestId + "_" + e.NoOfMembers + ".jpg" == file);
-                    }
-                }
+                //if (await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + id))
+                //{
+                //    files = await _blobStorage.GetFolderFilesAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
+                //    foreach (var file in files)
+                //    {
+                //        guests.RemoveAll(e => environment + cardPreview + "/" + id + "/" + "E00000" + id + "_" + e.GuestId + "_" + e.NoOfMembers + ".jpg" == file);
+                //    }
+                //}
 
-                // Get card design settings
+                // Get the invitation or the card info
+                // That has the design details such as positions ,font size, Qr position etc
                 var card = await db.CardInfo.Where(p => p.EventId == id)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
@@ -563,21 +564,24 @@ namespace EventPro.Web.Controllers
                 string guestcode = _configuration.GetSection("Uploads").GetSection("Guestcode").Value;
                 string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
 
-                // Validate required folders exist
-                if (!await _blobStorage.FolderExistsAsync(environment + guestcode) || !await _blobStorage.FolderExistsAsync(environment + path))
-                    return Json(new Response { succeeded = false, result = "Directory not exist" });
+                //if (!await _blobStorage.FolderExistsAsync(environment + guestcode) || !await _blobStorage.FolderExistsAsync(environment + path))
+                //    return Json(new Response { succeeded = false, result = "Directory not exist" });
 
-                // Process guests in parallel (limited to 1 core to avoid overload)
-                var parallelOptions = new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = 1
-                };
+                //var parallelOptions = new ParallelOptions
+                //{
+                //    MaxDegreeOfParallelism = 1 // Use only one core
+                //};
 
-                await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+                //await Parallel.ForEachAsync(guests, async (guest, CancellationToken) =>
+                //{
+                //    await RefreshQRCode(guest, card);
+                //    await RefreshCard(guest, id, card, cardPreview, guestcode, path);
+                //});
+                foreach(var guest in guests)
                 {
                     await RefreshQRCode(guest, card);
                     await RefreshCard(guest, id, card, cardPreview, guestcode, path);
-                });
+                }
 
                 // Log audit trail
                 var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -617,18 +621,32 @@ namespace EventPro.Web.Controllers
 
             // Get event info for filename
             var eventInfo = db.Events.Where(p => p.Id == id).FirstOrDefault();
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-            // Download all cards as ZIP stream
-            MemoryStream zipStream = new MemoryStream();
-            zipStream = await _blobStorage.DownloadFilesAsZipStreamAsync(environment + cardPreview + "/" + id);
+            // Gharabawy : We have commented this cause we will use the cloudinary
+            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-            // Log audit trail
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
+            string folderName = $"cards/{id}/"; // It means the cards -> then go to the eventId(EventFolder) that has the guests folders
 
-            // Return ZIP file with event title as filename
-            return File(zipStream, "application/zip", eventInfo.SystemEventTitle.Replace(" ", "_") + ".zip");
+            //MemoryStream zipStream = new MemoryStream();
+            //zipStream = await _blobStorage.DownloadFilesAsZipStreamAsync(environment + cardPreview + "/" + id);
+            //await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
+            //return File(zipStream, "application/zip", eventInfo.SystemEventTitle.Replace(" ", "_") + ".zip");
+
+            try
+            {
+                var zipStream = await _cloudinaryService.DownloadFilesAsZipStreamAsync(folderName);
+
+                await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
+
+                return File(zipStream, "application/zip", $"{eventInfo.SystemEventTitle.Replace(" ", "_")}_Cards.zip");
+            }
+            catch (Exception ex)
+            {
+                // يفضل تسجل الخطأ في log حقيقي
+                Log.Error($"Failed to download all cards for event {id}: {ex.Message}");
+                return StatusCode(500, "حدث خطأ أثناء إنشاء ملف الضغط");
+            }
         }
 
         /// <summary>

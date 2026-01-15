@@ -522,11 +522,11 @@ namespace EventPro.Web.Controllers
             }
 
             Log.Information("Event {eId} guest {gId} added/modified by {uId}", eventId, guestId, userId);
-
-            // Refresh guest QR code and invitation card with new data
-            var card = await db.CardInfo.Where(p => p.EventId == eventId).FirstOrDefaultAsync();
-            await RefreshQRCode(guest, card);
-            await RefreshCard(guest, eventId, card, cardPreview, guestcode, path);
+            // Get the event card info 
+            var cardinfo = await db.CardInfo.Where(p => p.EventId == eventId).FirstOrDefaultAsync();
+            
+            await RefreshQRCode(guest, cardinfo);
+            await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
             await db.SaveChangesAsync();
 
             return addedOrModified;
@@ -539,6 +539,28 @@ namespace EventPro.Web.Controllers
         /// </summary>
         /// <param name="id">Guest ID to delete</param>
         /// <returns>Redirect to guests list with success message</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> DeleteGuest(int id)
+        {
+            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var guest = await db.Guest.Where(p => p.GuestId == id)
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync();
+            int eventId = Convert.ToInt32(guest.EventId);
+            db.Guest.Remove(guest);
+            await db.SaveChangesAsync();
+            await _auditLogService.AddAsync(userId, eventId, ActionEnum.DeleteGuest, id, guest.FirstName);
+            Log.Information("Event {eId} guest {gId} removed by {uId}", eventId, guest.GuestId, userId);
+            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            string environment = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            //await _cloudinaryService.DeleteAsync();
+
+            TempData["error"] = "Guest information deleted successfully!";
+
+            return RedirectToAction("Guests", "admin", new { id = eventId });
+        }
+
+
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> DeleteGuest(int id)
         {
@@ -2644,8 +2666,20 @@ namespace EventPro.Web.Controllers
             // Save generated card to Azure Blob Storage
             using (MemoryStream ms = new MemoryStream())
             {
+                // Save the final image to memory stream
                 myBitmap.Save(ms, ImageFormat.Jpeg);
-                await _blobStorage.UploadAsync(ms, "jpg", environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guestId + "_" + nos + ".jpg", cancellationToken: default);
+                // Here we will upload the image to cloudianry with a filename relate to the guest
+                // to make us able to retrieve it later when sending whatsapp message
+                var cloudinaryFileName = $"E00000{eventId}_{guestId}_{nos}.jpg";
+
+                var cloudinaryUrl = await _cloudinaryService.UploadImageAsync(
+                    ms,
+                    cloudinaryFileName,
+                    $"cards/{eventId}"
+                );
+
+
+                //await _blobStorage.UploadAsync(ms, "jpg", environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guestId + "_" + nos + ".jpg", cancellationToken: default);
             }
 
             // Dispose graphics objects
