@@ -630,10 +630,20 @@
                                                             <a onclick="SendFailedCongratularionMsg(${row.id})" class=" dropdown-item" style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Congratulation Msg</a>
                         </div>
                     </div>
-                                                                                                           <a href="https://res.cloudinary.com/dewicwvoe/image/upload/cards/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card</a>
-                                                                                                                                           <a onclick="SetAccept(${row.id})" a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" style="cursor: pointer;"  class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept</a>
-                                                                                       <a href="https://res.cloudinary.com/dewicwvoe/image/upload/QR/${@ViewBag.EventId}/${row.id}.png" target="_blank" download="barcode.png" class=" dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode</a>
-
+                    <!-- Download Card -->
+                    <a
+                       onclick="downloadLatestCard(${@ViewBag.EventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg')"
+                       class="dropdown-item latest-card-link"
+                       style="cursor: pointer;">
+                        <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card
+                    </a>      
+                    <a onclick="SetAccept(${row.id})" a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" style="cursor: pointer;"  class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept</a>
+                    <a
+                               onclick="downloadLatestQr(${@ViewBag.EventId}, ${row.id}, 'barcode_${row.id}.png')"
+                               class="dropdown-item latest-qr-link"
+                               style="cursor: pointer;">
+                                <i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode
+                    </a>
                                                                                                                                                                                                         <a href="#" onclick="EditGuest('${row.id}','${row.name}','${row.noOfMembers}','${row.primaryContact}','${row.additionalText}','${row.secondaryContact}')" class="dropdown-item"><i class="nav-icon fas fa-pen-nib" style="color:cornflowerblue"></i>&nbsp; Edit</a>
                                                                                         <a href="#" onclick="SetGuestIdForDelete(${row.id})" class="dropdown-item" data-toggle="modal" data-target="#deleteConfirmation" ><i class="nav-icon fas fa-recycle" style="color:cornflowerblue"></i>&nbsp; Delete</a>
                                                                                                               ${@ViewBag.IsAdmin == 1 ? `
@@ -1448,6 +1458,68 @@
             await fetch(`/admin/StatusRefreshIndividually/${guestId}?eventid=${@ViewBag.eventId}`);
             reloading();
         }
+
+        // Gharabawy added it :
+        // to get that latest url for the current guest while downloading the card or qr code
+        // cause we when refresh the cards we add a new file with the same name
+        // so cloundiary make a versinoing for that file, so we need to get the latest url from the server
+        async function downloadLatestCard(eventId, guestId, noOfMembers, defaultFileName) {
+            try {
+                const response = await fetch(`/admin/GetLatestCardUrl?eventId=${eventId}&guestId=${guestId}&noOfMembers=${noOfMembers}`);
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    // فتح في تبويب جديد أو داونلود مباشر
+                    const a = document.createElement('a');
+                    a.href = data.url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ',
+                        text: data.message || 'تعذر جلب رابط الدعوة'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في الاتصال',
+                    text: 'حدث خطأ أثناء جلب رابط الدعوة'
+                });
+            }
+        }
+
+        async function downloadLatestQr(eventId, guestId, defaultFileName) {
+            try {
+                const response = await fetch(`/admin/GetLatestQrUrl?eventId=${eventId}&guestId=${guestId}`);
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    const a = document.createElement('a');
+                    a.href = data.url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ',
+                        text: data.message || 'تعذر جلب رابط الـ QR'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في الاتصال',
+                    text: 'حدث خطأ أثناء جلب رابط الـ QR'
+                });
+            }
+        }
+        
     </script>
 
     <script>

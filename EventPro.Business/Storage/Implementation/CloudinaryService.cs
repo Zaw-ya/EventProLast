@@ -297,5 +297,40 @@ namespace EventPro.Business.Storage.Implementation
             return zipStream;
         }
 
+        // https://res.cloudinary.com/{cloud}/image/upload/v{version}/{publicId}.{format}
+        // In our case we has : 
+        // QR/{event_id}/{guestId}
+        // card/{event_id}/E00000_{guestId}_{noOfMembers}.jpg
+        public async Task<string> GetLatestVersionUrlAsync(
+            string publicId, // e.g., "QR/123/456"
+            string resourceType = "image")
+        {
+            if (string.IsNullOrWhiteSpace(publicId))
+                throw new ArgumentException("publicId is required");
+
+            var getParams = new GetResourceParams(publicId)
+            {
+                ResourceType = resourceType switch
+                {
+                    "video" => ResourceType.Video,
+                    "raw" => ResourceType.Raw,
+                    _ => ResourceType.Image
+                }
+            };
+
+            var resource = await _cloudinary.GetResourceAsync(getParams);
+
+            if (resource == null)
+                throw new Exception("Resource not found on Cloudinary");
+
+            // https://res.cloudinary.com/{cloud}/image/upload/v{version}/{publicId}.{format}
+            var url = _cloudinary.Api.UrlImgUp
+                .Version(resource.Version)
+                .BuildUrl($"{resource.PublicId}.{resource.Format}");
+
+            return url;
+        }
+
+
     }
 }
