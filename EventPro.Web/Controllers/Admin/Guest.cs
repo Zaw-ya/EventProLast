@@ -1943,11 +1943,16 @@ namespace EventPro.Web.Controllers
             // Load guest QR code from Cloudinary
             using HttpClient clientQR = new HttpClient();
             string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
-            var barcodeUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{eventId}/{guestId}.png";
+
+            // var barcodeUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{eventId}/{guestId}.png";
+            // We refresh qr code before we refresh the card so we have to get the latest version of qr code here
+            // We have to get the latest version of the qr code in case it was regenerated
+            var qrPublicId = $"QR/{eventId}/{guestId}";
+            var barcodeUrl = await _cloudinaryService.GetLatestVersionUrlAsync(qrPublicId);
             byte[] barcodeData = await clientQR.GetByteArrayAsync(barcodeUrl);
+            
             using MemoryStream fsBarcode = new MemoryStream(barcodeData);
             Image barcode = Image.FromStream(fsBarcode);
-
             Bitmap myBitmap = new Bitmap(img);
             Graphics grap = Graphics.FromImage(myBitmap);
 
@@ -1974,28 +1979,50 @@ namespace EventPro.Web.Controllers
             if (selectedValues.Contains("Guest Name"))
             {
 
+                // كود رسم اسم الضيف هنا
                 double nameXAxis = (cardInfo.FontAlignment == "right") ? Convert.ToDouble(cardInfo.NameRightAxis) : Convert.ToDouble(cardInfo.ContactNameXaxis);
+                double nameYAxis = (double)cardInfo.ContactNameYaxis;
 
+                string guestName = $"{guest.FirstName} {guest.LastName ?? ""}".Trim();
+
+                var font = new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
+                var textSize = grap.MeasureString(guestName, font);
+
+                // 1. مسح المنطقة بجزء من الخلفية الأصلية (الحل الأمثل)
+                grap.DrawImage(
+                    img,
+                    destRect: new Rectangle(
+                        (int)((nameXAxis - 10) * zoomRatio),
+                        (int)((nameYAxis - 10) * zoomRatio),
+                        (int)(textSize.Width + 20 * zoomRatio),
+                        (int)(textSize.Height + 20 * zoomRatio)
+                    ),
+                    srcRect: new Rectangle(
+                        (int)((nameXAxis - 10) * zoomRatio),
+                        (int)((nameYAxis - 10) * zoomRatio),
+                        (int)(textSize.Width + 20 * zoomRatio),
+                        (int)(textSize.Height + 20 * zoomRatio)
+                    ),
+                    srcUnit:GraphicsUnit.Pixel
+                );
+
+                // 2. رسم النص الجديد
+                StringFormat format = new StringFormat();
                 if (cardInfo.FontAlignment == "right")
-                    frmt.FormatFlags = StringFormatFlags.DirectionRightToLeft;
-                else
-                    frmt = new StringFormat();
-
-                var f = new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
-                var stringsize = grap.MeasureString(guest.FirstName, f);
-
-                if (cardInfo.FontAlignment == "center")
+                    format.FormatFlags = StringFormatFlags.DirectionRightToLeft;
+                else if (cardInfo.FontAlignment == "center")
                 {
                     nameXAxis = (Convert.ToDouble(cardInfo.NameRightAxis) + Convert.ToDouble(cardInfo.ContactNameXaxis)) / 2;
-                    frmt = new StringFormat();
-                    frmt.Alignment = StringAlignment.Center;
+                    format.Alignment = StringAlignment.Center;
                 }
 
-
-                grap.DrawString(guest.FirstName, new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio))
-                , new SolidBrush(ColorTranslator.FromHtml(cardInfo.FontColor))
-                , new Point((int)((nameXAxis) * zoomRatio)
-                , (int)(cardInfo.ContactNameYaxis * zoomRatio)), frmt);
+                grap.DrawString(
+                    guestName,
+                    font,
+                    new SolidBrush(ColorTranslator.FromHtml(cardInfo.FontColor)),
+                    new PointF((float)(nameXAxis * zoomRatio), (float)(nameYAxis * zoomRatio)),
+                    format
+                );
             }
             if (selectedValues.Contains("Mobile No"))
             {

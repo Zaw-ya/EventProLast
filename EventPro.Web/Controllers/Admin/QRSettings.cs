@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
@@ -434,7 +435,48 @@ namespace EventPro.Web.Controllers
 
             try
             {
-                var zipStream = await _cloudinaryService.DownloadFilesAsZipStreamAsync(folderName);
+                // Get active guests from the database
+                var guests = await db.Guest
+                    .Where(g => g.EventId == id && !g.GuestArchieved)
+                    .Select(g => new { g.GuestId, g.NoOfMembers })  // بس البيانات اللازمة عشان نوفر موارد
+                    .ToListAsync();
+
+                if (!guests.Any())
+                    return NotFound("لا يوجد ضيوف نشيطين في هذا الحدث");
+
+                // Create zip stream
+                var zipStream = new MemoryStream();
+                using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                {
+                    foreach (var guest in guests)
+                    {
+                        // build the fileId or publicId 
+                        string publicId = $"cards/{id}/E00000{id}_{guest.GuestId}_{guest.NoOfMembers}";
+
+                        try
+                        {
+                            // get the latest URL
+                            string latestUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId);
+
+                            // download image
+                            using var client = new HttpClient();
+                            var imageBytes = await client.GetByteArrayAsync(latestUrl);
+
+                            // fileName in zip folder
+                            string fileName = $"E00000{id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
+
+                            // add file to the zip file
+                            var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+                            using var entryStream = entry.Open();
+                            await entryStream.WriteAsync(imageBytes);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning($"Failed to download card for guest {guest.GuestId} in event {id}: {ex.Message}");
+                        }
+                    }
+                }
+                zipStream.Position = 0;
 
                 await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DownloadCards);
 
@@ -445,6 +487,49 @@ namespace EventPro.Web.Controllers
                 // يفضل تسجل الخطأ في log حقيقي
                 Log.Error($"Failed to download all cards for event {id}: {ex.Message}");
                 return StatusCode(500, "حدث خطأ أثناء إنشاء ملف الضغط");
+            }
+        }
+
+        /// <summary>
+        /// Returns the latest URL (with current version) for a guest's final card
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLatestCardUrl(int eventId, int guestId, int noOfMembers)
+        {
+            try
+            {
+                // بناء الـ publicId بنفس الطريقة اللي بتستخدمها في الرفع
+                string publicId = $"cards/{eventId}/E00000{eventId}_{guestId}_{noOfMembers}";
+
+                // استدعاء الدالة اللي عملناها
+                string latestUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId);
+
+                return Ok(new { success = true, url = latestUrl });
+            }
+            catch (Exception ex)
+            {
+                // يفضل تسجل الخطأ في log حقيقي
+                return StatusCode(500, new { success = false, message = "حدث خطأ أثناء جلب رابط الدعوة: " + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Returns the latest URL for a guest's QR code
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLatestQrUrl(int eventId, int guestId)
+        {
+            try
+            {
+                string publicId = $"QR/{eventId}/{guestId}";
+
+                string latestUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId);
+
+                return Ok(new { success = true, url = latestUrl });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "حدث خطأ أثناء جلب رابط الـ QR: " + ex.Message });
             }
         }
 

@@ -9,5 +9,8 @@ namespace EventPro.Business.Storage.Interface
         Task<string> UpdateFileAsync(string publicId, Stream stream, string fileName);
         Task<bool> DeleteAsync(string publicId);
         Task<MemoryStream> DownloadFilesAsZipStreamAsync(string folderName, int maxResults = 500);
+        Task<string> GetLatestVersionUrlAsync(
+            string publicId, // e.g., "QR/123/456"
+            string resourceType = "image");
     }
 }
