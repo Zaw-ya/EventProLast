@@ -304,7 +304,13 @@ namespace EventPro.Web
             IUnitOFWorkService _unitOfWorkService = unitOFWorkService;
             Seeding.SeedAll(Configuration);
             app.UseResponseCompression();
+
+            // Global exception handler - catches all unhandled exceptions
             app.UseExceptionHandler("/Home/Error");
+
+            // Status code pages - handles 404, 403, etc.
+            app.UseStatusCodePagesWithReExecute("/Home/StatusCode/{0}");
+
             app.UseMiddleware<StaticFileCacheMiddleware>();
             app.UseStaticFiles();
 

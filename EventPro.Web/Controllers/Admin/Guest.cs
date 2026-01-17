@@ -561,28 +561,28 @@ namespace EventPro.Web.Controllers
         }
 
 
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> DeleteGuest(int id)
-        {
-            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var guest = await db.Guest.Where(p => p.GuestId == id)
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync();
-            int eventId = Convert.ToInt32(guest.EventId);
-            db.Guest.Remove(guest);
-            await db.SaveChangesAsync();
-            await _auditLogService.AddAsync(userId, eventId, ActionEnum.DeleteGuest, id, guest.FirstName);
-            Log.Information("Event {eId} guest {gId} removed by {uId}", eventId, guest.GuestId, userId);
+        //[AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        //public async Task<IActionResult> DeleteGuest(int id)
+        //{
+        //    var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        //    var guest = await db.Guest.Where(p => p.GuestId == id)
+        //                .AsNoTracking()
+        //                .FirstOrDefaultAsync();
+        //    int eventId = Convert.ToInt32(guest.EventId);
+        //    db.Guest.Remove(guest);
+        //    await db.SaveChangesAsync();
+        //    await _auditLogService.AddAsync(userId, eventId, ActionEnum.DeleteGuest, id, guest.FirstName);
+        //    Log.Information("Event {eId} guest {gId} removed by {uId}", eventId, guest.GuestId, userId);
 
-            // Delete guest invitation card from blob storage
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            string environment = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            await _blobStorage.DeleteFileAsync(environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", cancellationToken: default);
+        //    // Delete guest invitation card from blob storage
+        //    string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+        //    string environment = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+        //    await _blobStorage.DeleteFileAsync(environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", cancellationToken: default);
 
-            TempData["error"] = "Guest information deleted successfully!";
+        //    TempData["error"] = "Guest information deleted successfully!";
 
-            return RedirectToAction("Guests", "admin", new { id = eventId });
-        }
+        //    return RedirectToAction("Guests", "admin", new { id = eventId });
+        //}
 
         #endregion
 

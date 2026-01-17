@@ -1,31 +1,874 @@
 @model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = Model?.Title ?? "Error";
+    Layout = null;
+
+    var statusCode = Model?.StatusCode ?? 500;
+    var colorTheme = Model?.GetColorTheme() ?? "danger";
+    var iconClass = Model?.GetIconClass() ?? "fa-exclamation-triangle";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request. PLease contact EventPro Admin.</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@(Model?.Title ?? "Error") - EventPro</title>
 
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <p>
-        <strong>Request ID:</strong> <code>@ViewBag.RequestId</code>
-    </p>
+    <style>
+        :root {
+            --space-blue: #0a1821;
+            --space-dark: #061016;
+            --space-light: #1a2d3a;
+            --star-yellow: #F6F5BC;
+            --moon-gray: #D1D5D6;
+            --text-white: #FFFFFF;
+            --accent-blue: #68A1D6;
+            --danger-red: #ff6b6b;
+            --warning-orange: #ffa94d;
+            --info-cyan: #4dc3ff;
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<h3>Exception Details:</h3>
-<div class="alert alert-danger">
-    <h5>Exception Path:</h5>
-    <hr />
-    <p>@ViewBag.ExceptionPath</p>
-</div>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--space-blue);
+            color: var(--text-white);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
 
-<div class="alert alert-danger">
-    <h5>Exception Message:</h5>
-    <hr />
-    <p>@ViewBag.ExceptionMessage</p>
-</div>
-<div class="alert alert-danger">
-    <h5>Inner Exception Message:</h5>
-    <hr />
-    <p>@ViewBag.InnerException</p>
-</div>
+        .starry-sky {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.8;
+        }
+
+        /* Star animation */
+        .all-stars {
+            animation: blinkblink 7s linear infinite;
+        }
+
+        @@keyframes blinkblink {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .error-container {
+            display: flex;
+            min-height: 100vh;
+            padding: 40px;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .error-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-right: 60px;
+            position: relative;
+        }
+
+        .not-found {
+            width: 100%;
+            max-width: 560px;
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.1));
+            transition: transform 0.3s ease;
+        }
+
+            .not-found:hover {
+                transform: scale(1.02);
+            }
+
+        .error-content {
+            flex: 1;
+            padding-left: 60px;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .error-header {
+            margin-bottom: 30px;
+        }
+
+        .error-code-display {
+            font-size: 120px;
+            font-weight: 700;
+            color: var(--text-white);
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            line-height: 1;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+
+            .error-code-display::after {
+                content: '';
+                position: absolute;
+                bottom: -5px;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+            }
+
+        .error-title {
+            font-size: 36px;
+            font-weight: 300;
+            color: var(--text-white);
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: rgba(26, 45, 58, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+            .error-message p {
+                font-size: 18px;
+                line-height: 1.6;
+                margin-bottom: 15px;
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+        .arabic-message {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            direction: rtl;
+            text-align: right;
+        }
+
+        .error-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--text-white);
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .technical-details {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px 0;
+            user-select: none;
+        }
+
+            .details-header h3 {
+                color: var(--accent-blue);
+                font-size: 16px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .details-header i {
+                transition: transform 0.3s ease;
+            }
+
+        .details-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+
+            .details-content.expanded {
+                max-height: 500px;
+            }
+
+        .technical-details.expanded .details-header i {
+            transform: rotate(180deg);
+        }
+
+        .detail-item {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+            .detail-item:last-child {
+                border-bottom: none;
+            }
+
+        .detail-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: rgba(104, 161, 214, 0.2);
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .copy-btn:hover {
+                background: var(--accent-blue);
+                color: white;
+            }
+
+            .copy-btn.copied {
+                background: #4CAF50;
+                border-color: #4CAF50;
+                color: white;
+            }
+
+        .detail-value {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .exception-message {
+            color: var(--danger-red);
+        }
+
+        .stack-trace {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: rgba(104, 161, 214, 0.1);
+            border: 2px solid var(--accent-blue);
+            color: var(--text-white);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .action-btn:hover {
+                background: var(--accent-blue);
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(104, 161, 214, 0.3);
+            }
+
+            .action-btn.secondary {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+                .action-btn.secondary:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 255, 255, 0.3);
+                }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+            max-width: 400px;
+        }
+
+        #input1 {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            color: var(--text-white);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+            #input1:focus {
+                outline: none;
+                border-color: var(--accent-blue);
+                box-shadow: 0 0 0 2px rgba(104, 161, 214, 0.2);
+            }
+
+            #input1::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+            .footer-links a {
+                color: rgba(255, 255, 255, 0.7);
+                text-decoration: none;
+                font-size: 14px;
+                transition: all 0.3s ease;
+                position: relative;
+                padding-bottom: 5px;
+            }
+
+                .footer-links a::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 0;
+                    height: 1.5px;
+                    background: var(--accent-blue);
+                    transition: width 0.3s ease;
+                }
+
+                .footer-links a:hover {
+                    color: var(--text-white);
+                }
+
+                    .footer-links a:hover::after {
+                        width: 100%;
+                    }
+
+        /* Status code specific styles */
+        .status-400 .error-code-display::after {
+            background: linear-gradient(90deg, transparent, var(--warning-orange), transparent);
+        }
+
+        .status-401 .error-code-display::after {
+            background: linear-gradient(90deg, transparent, #ffa94d, transparent);
+        }
+
+        .status-403 .error-code-display::after {
+            background: linear-gradient(90deg, transparent, #ff6b6b, transparent);
+        }
+
+        .status-404 .error-code-display::after {
+            background: linear-gradient(90deg, transparent, #68A1D6, transparent);
+        }
+
+        .status-500 .error-code-display::after {
+            background: linear-gradient(90deg, transparent, #ff6b6b, transparent);
+        }
+
+        .status-503 .error-code-display::after {
+            background: linear-gradient(90deg, transparent, #4dc3ff, transparent);
+        }
+
+        /* Floating animation for moon */
+        @@keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(2deg);
+            }
+        }
+
+        .moon {
+            animation: float 20s ease-in-out infinite;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 1024px) {
+            .error-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .error-visual {
+                padding-right: 0;
+                margin-bottom: 40px;
+            }
+
+            .error-content {
+                padding-left: 0;
+                border-left: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 40px;
+                width: 100%;
+            }
+
+            .not-found {
+                max-width: 400px;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .error-code-display {
+                font-size: 80px;
+            }
+
+            .error-title {
+                font-size: 28px;
+            }
+
+            .error-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .footer-links {
+                gap: 20px;
+                justify-content: center;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .error-info {
+                grid-template-columns: 1fr;
+            }
+
+            .not-found {
+                max-width: 280px;
+            }
+
+            .error-code-display {
+                font-size: 60px;
+            }
+
+            .error-title {
+                font-size: 24px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+            border-radius: 4px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #5a8bc5;
+            }
+    </style>
+</head>
+<body class="status-@statusCode">
+    <!-- Starry Sky Background -->
+    <svg aria-labelledby="Starry sky" alt="Starry sky" class="starry-sky">
+        <title id="svgtitle2">Starry sky</title>
+        <!-- STARS START -->
+        <g class="all-stars" fill="#F6F5BC">
+            <path class="stars-one" d="M148.9 151.5c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM93.6 " />
+            <path class="stars-two" d="M148.9 540.6c-4.9-1.6-6.2-6.2-6.2-6.2-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.8-.4-1zM526.3 551.7c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM617.4 291.9c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.6-6.2-6.2-6.2-6.2zM681.9 42.7c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM51.1 83.9c-.3-.3-.6-.4-1-.4s-.7.1-1 .4C47.5 88.8 43 90 43 90c-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5.1-1.6-6.3-6.1-6.3-6.1z" />
+            <path class="all-stars" d="M148.9 151.5c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM93.6 318.5c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM132.3 169c-.2-.2-.4-.3-.6-.3s-.4.1-.6.3c-1 3.1-3.8 3.8-3.8 3.8-.2.2-.3.4-.3.6 0 .2.1.4.3.6 3.1 1 3.8 3.8 3.8 3.8.2.2.4.3.6.3s.4-.1.6-.3c1-3.1 3.8-3.8 3.8-3.8.2-.2.3-.4.3-.6 0-.2-.1-.4-.3-.6-3-.9-3.8-3.8-3.8-3.8zM585.9 269.5c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM723.4 540.6c-4.9-1.6-6.2-6.2-6.2-6.2-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.8-.4-1zM526.3 551.7c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM617.4 291.9c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.6-6.2-6.2-6.2-6.2zM681.9 42.7c-.3-.3-.6-.4-1-.4s-.7.1-1 .4c-1.6 4.9-6.2 6.2-6.2 6.2-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5-1.7-6.2-6.2-6.2-6.2zM51.1 83.9c-.3-.3-.6-.4-1-.4s-.7.1-1 .4C47.5 88.8 43 90 43 90c-.3.3-.4.6-.4 1s.1.7.4 1c4.9 1.6 6.2 6.2 6.2 6.2.3.3.6.4 1 .4s.7-.1 1-.4c1.6-4.9 6.2-6.2 6.2-6.2.3-.3.4-.6.4-1s-.1-.7-.4-1c-5.1-1.6-6.3-6.1-6.3-6.1z" />
+        </g>
+        <!-- Moon shadow -->
+        <g class="moon">
+            <path opacity=".5" fill="#3B3D3D" d="M122.7 373.9L-237.1 744l283.8 269.4 279.9-492.8z" />
+            <!-- Moon color base -->
+            <g fill="#D1D5D6">
+                <path d="M209 340.6c-70.9 0-128.4 57.5-128.4 128.4S138.1 597.4 209 597.4 337.4 539.9 337.4 469 279.9 340.6 209 340.6zm-41.9 176.1c0 10.9-8.9 19.8-19.8 19.8s-19.8-8.9-19.8-19.8c0-1.4.1-2.7.4-4-18.3-1.7-32.6-17-32.6-35.7 0-19.8 16.1-35.9 35.9-35.9 19.8 0 35.9 16.1 35.9 35.9 0 8.9-3.3 17.1-8.6 23.3 5.1 3.7 8.6 9.7 8.6 16.4zm20.2 3.9c0-8.8 7.1-16 16-16 8.8 0 16 7.1 16 16 0 8.8-7.1 16-16 16-8.9-.1-16-7.2-16-16zm5.8-43.5c0-13.3 10.7-24 24-24s24 10.7 24 24-10.7 24-24 24-24-10.8-24-24zm72.7 86.4c-4.2 0-8.2-.7-11.9-2-.5 12.8-11 23.1-24 23.1-13.3 0-24-10.7-24-24s10.7-24 24-24h1.1c-.7-2.9-1.1-5.8-1.1-8.9 0-19.8 16.1-35.9 35.9-35.9 19.8 0 35.9 16.1 35.9 35.9s-16.1 35.8-35.9 35.8zm10.9-91.1c0 2.6-2.1 4.6-4.6 4.6-2.6 0-4.6-2.1-4.6-4.6 0-2.6 2.1-4.6 4.6-4.6 2.5 0 4.6 2.1 4.6 4.6zm27.7 13.1c-2.1 2-4.9 3.2-8.1 3.2-6.5 0-11.7-5.2-11.7-11.7 0-6.5 5.2-11.7 11.7-11.7.5 0 1.1 0 1.6.1-1.5-3.6-3.2-7.1-5.1-10.5 2.5-4 3.9-8.7 3.9-13.8 0-14.6-11.8-26.4-26.4-26.4-3.6 0-7 .7-10.2 2-4.9-3.8-10.2-7.2-15.7-10.2.1 1 .2 2 .2 3.1 0 17.4-14.1 31.5-31.5 31.5-16.7 0-30.4-13-31.4-29.5 0-.7-.1-1.3-.1-2 0-3.4.5-6.6 1.5-9.6.9-2.8 2.2-5.5 3.8-7.9-2.2 0-4.3.1-6.5.2-3.8-6.7-11-11.2-19.2-11.2-11.8 0-21.5 9.3-22.1 21-17.1 7.5-32.1 18.8-43.9 32.8 14.3-50.3 60.6-87.2 115.6-87.2 66.3 0 120.1 53.8 120.1 120.1 0 29.5-10.6 56.4-28.2 77.3 3-10.5 4.6-21.5 4.6-32.9.1-9.1-.9-18.1-2.9-26.7z" />
+                <circle cx="256.3" cy="384.3" r="14.1" />
+            </g>
+            <g fill="#FFF">
+                <circle cx="217.1" cy="477.1" r="24" />
+                <path d="M265.8 491.7c-19.8 0-35.9 16.1-35.9 35.9 0 3.1.4 6.1 1.1 8.9h-1.1c-13.3 0-24 10.7-24 24s10.7 24 24 24c12.9 0 23.5-10.2 24-23.1 3.7 1.3 7.7 2 11.9 2 19.8 0 35.9-16.1 35.9-35.9s-16.1-35.8-35.9-35.8zM131.2 441.2c-19.8 0-35.9 16.1-35.9 35.9 0 18.7 14.3 34.1 32.6 35.7-.3 1.3-.4 2.6-.4 4 0 10.9 8.9 19.8 19.8 19.8s19.8-8.9 19.8-19.8c0-6.8-3.4-12.8-8.6-16.3 5.4-6.3 8.6-14.4 8.6-23.3 0-20-16.1-36-35.9-36z" />
+                <path d="M331 467.9c0-66.3-53.8-120.1-120.1-120.1-54.9 0-101.3 36.9-115.6 87.2 11.8-14.1 26.9-25.4 43.9-32.8.6-11.7 10.2-21 22.1-21 8.2 0 15.4 4.5 19.2 11.2 2.2-.1 4.3-.2 6.5-.2-1.6 2.4-2.9 5.1-3.8 7.9-1 3-1.5 6.3-1.5 9.6 0 .7 0 1.3.1 2 1 16.5 14.7 29.5 31.4 29.5 17.4 0 31.5-14.1 31.5-31.5 0-1-.1-2.1-.2-3.1 5.5 3 10.7 6.4 15.7 10.2 3.1-1.3 6.6-2 10.2-2 14.6 0 26.4 11.8 26.4 26.4 0 5-1.4 9.8-3.9 13.8 1.9 3.4 3.6 6.9 5.1 10.5-.5-.1-1.1-.1-1.6-.1-6.5 0-11.7 5.2-11.7 11.7 0 6.5 5.2 11.7 11.7 11.7 3.1 0 6-1.2 8.1-3.2 2 8.6 3 17.6 3 26.8 0 11.4-1.6 22.5-4.6 32.9 17.5-21 28.1-48 28.1-77.4z" />
+                <circle cx="203.2" cy="520.6" r="16" />
+                <circle cx="272.1" cy="472.4" r="4.6" />
+            </g>
+            <path opacity=".1" fill-rule="evenodd" clip-rule="evenodd" fill="#3B3D3D" d="M201.2 368.2l-.4-.8c-.4-.7-1.4-1-2.1-.6l-80.5 46.8c-.7.4-1 1.4-.6 2.1l.4.8c.3.5.8.8 1.4.8.3 0 .5-.1.8-.2l1-.6c0 .1.1.3.2.4l24.2 41.7c.2.4.7.7 1.2.7.2 0 .5-.1.7-.2l34.1-19.8c.3-.2.5-.5.6-.8.1-.4 0-.7-.1-1l-24.2-41.7-.3-.3 43.2-25.1c.4-.2.6-.5.7-1-.1-.4-.1-.8-.3-1.2z" />
+            <!-- Flag stick -->
+            <g>
+                <path fill="#acacac" stroke="#B5B5B6" stroke-miterlimit="10" d="M200.8 369.5c-.2.6-.8 1-1.4.8l-.9-.2c-.6-.2-1-.8-.8-1.4l25.5-89.5c.2-.6.8-1 1.4-.8l.9.2c.6.2 1 .8.8 1.4l-25.5 89.5z" />
+                <path fill-rule="evenodd" clip-rule="evenodd" fill="#263563" stroke="#B5B5B6" stroke-miterlimit="10" d="M262.9 334c-.1.5-.7.8-1.2.7l-46.4-13.2c-.5-.1-.8-.7-.7-1.2l10.8-38c.1-.5.7-.8 1.2-.7l46.4 13.2c.5.1.8.7.7 1.2l-10.8 38z" />
+                <g fill-rule="evenodd" clip-rule="evenodd" fill="#263563">
+                    <path d="M249 311.1c.4.6.8 1.1 1.2 1.6.4.5.9.9.3 1.6.8.2 1.6.3 2.3.5-.1.4-.2.6-.2.9 0 .1.1.2.1.3.1-.1.2-.1.2-.2l.3-.9c.7.3 1.4.5 2.1.7.1-.8.1-.8 1-1.2.7-.3 1.3-.5 2-.8-.5-.7-.5-.7 0-1.3.1-.2.2-.4.4-.5-.5-.5-1.6.1-1.6-1.1-.4.3-.7.5-1 .7-.2.1-.4.1-.6.2 0-.2 0-.4.1-.6l.9-1.8c-.3.1-.6.1-.8.2-.2-.7-.3-1.3-.5-2-.5.5-1 .9-1.5 1.4l-.6-.6c-.1.8-.1 1.5-.2 2.3 0 .1-.1.3-.2.4-.1-.1-.3-.2-.3-.3-.2-.4-.3-.8-.5-1.2-.6.5-.6.5-1.3.2-.2-.1-.4-.1-.6-.2-.4.5.4 1.5-1 1.7z" />
+                    <path d="M260.2 298.6c-.6 1.1-1.2 2.2-1.8 3.4-.6 1.3-1.3 2.5-1.9 3.8-.4.8-.5.9-1.4.4.2-.8.4-1.6.5-2.4.1-.5.1-1 .2-1.5.1-1.8-1.4-3.7-3.2-3.9-.1 0-.4.2-.5.3-.9 1.6-1.7 3.3-2.5 5 0 .1-.1.2-.1.2-.2.2-.1.6-.6.4-.4-.2-.1-.4-.1-.7.2-.9.4-1.8.5-2.8 0-.7-.1-1.4-.3-2.1-.1-.4-.3-.5-.8-.4-1.8.7-3.3 1.7-4.5 3.1-2.5 2.6-4.3 5.6-5.2 9.1-.5 1.9-.5 3.8.3 5.6.8 1.7 1.2 1.8 2.8.8.7-.4 1.3-.9 2-1.4.3-.2.6-.3 1 0-1.2 1-2.4 2-3.7 2.9.7.6 1.6.8 2.6 1 2.5.4 4.6-.7 6.4-2.3.7-.6 1.2-.5 1.9-.2v.1c-2 2.2-4.2 4.1-7.3 4.3-2.3.2-4.4-.4-6.4-1.8-.2-.2-.5-.3-.8-.3-5.5.1-9.3-3.9-9-9.4 0-.7.1-1.4.2-2 .2-.6.4-1.3.5-1.9.1-.2.2-.3.3-.5.6-1.2 1.1-2.5 1.9-3.6 2.5-3.8 5.9-6.4 10.5-7.2 1.9-.3 3.9-.3 5.6.6 1.1.6 2.1.7 3.3.7.6 0 1.2.1 1.8.1.5.1.9.3 1.4.4.2.1.5.3.7.4.8.6 1.6 1.1 2.4 1.7.4.3.8.4 1.2.1.4-.2.7-.5 1.1-.7.3.5.7.6 1 .7zm-13.4-2c-.7-.5-2.1-.7-3.4-.6-2.1.2-3.8 1.2-5.3 2.4-2.4 2-4.2 4.6-5.5 7.5-.8 1.7-1.3 3.5-1.3 5.4 0 2.5.8 4.6 3.1 5.9.6.3 1.2.5 1.9.8 0-.1.1-.1.1-.2s-.1-.2-.1-.2c-1-1.5-1.4-3.1-1.4-4.9-.1-2.3.5-4.5 1.5-6.6 1.6-3.3 3.9-6.1 7.1-8 .9-.5 2.1-.9 3.3-1.5z" />
+                    <path d="M249 311.1c1.4-.1.5-1.1.8-1.8.2.1.4.1.6.2.7.3.7.3 1.3-.2.2.4.3.8.5 1.2l.3.3c.1-.1.2-.3.2-.4.1-.7.1-1.5.2-2.3l.6.6c.5-.4 1-.9 1.5-1.4.2.7.4 1.3.5 2 .3-.1.5-.1.8-.2-.3.7-.6 1.2-.9 1.8-.1.2-.1.4-.1.6.2-.1.4-.1.6-.2.3-.2.6-.4 1-.7 0 1.2 1.1.7 1.6 1.1-.1.2-.2.3-.4.5-.5.7-.5.7 0 1.3-.7.3-1.3.5-2 .8-.8.3-.8.3-1 1.2-.7-.2-1.3-.5-2.1-.7l-.3.9c0 .1-.2.2-.2.2 0-.1-.1-.2-.1-.3 0-.3.1-.5.2-.9-.7-.2-1.5-.3-2.3-.5.6-.7.1-1.2-.3-1.6-.1-.5-.5-1-1-1.5z" />
+                </g>
+            </g>
+        </g>
+    </svg>
+
+    <div class="error-container">
+        <!-- Left side: Error visual -->
+        <div class="error-visual">
+            <svg aria-labelledby="404" alt="404 Page not found" class="not-found">
+                <title id="svgtitle1">Error - @statusCode</title>
+                <g class="404-text">
+                    <g opacity=".5" fill="#3B3D3D">
+                        <path d="M320.1 209.5c0 7.2-6 12.5-13.7 12.5s-13.7-5.4-13.7-12.5v-16.3h-43.8c-8.4 0-14.1-6.4-14.1-13.5 0-.8.8-4.4 2-7L275 84.5c2-4.8 7.2-7.8 12.3-7.8 6.8 0 13.7 6 13.7 12.9 0 1.2 0 2.6-.8 4.4-11.5 26.7-20.9 47.6-32.4 74.2h24.9v-30.4c0-7.2 6-12.5 13.7-12.5 7.4 0 13.7 5.4 13.7 12.5v30.4h2.6c7.6 0 13.3 5.8 13.3 12.3 0 7-5.8 12.5-13.3 12.5h-2.6v16.5zM436.9 123.9v54.7c0 24.3-16.3 43.6-46 43.6s-46-19.3-46-43.6v-54.7c0-26.3 13.9-47.4 46-47.4 32.1.1 46 21.2 46 47.4zm-64.3-1.4v56.1c0 11.3 6.4 19.1 18.3 19.1s18.3-7.8 18.3-19.1v-56.1c0-12.7-5.2-21.7-18.3-21.7s-18.3 9-18.3 21.7zM535 209.5c0 7.2-6 12.5-13.7 12.5s-13.7-5.4-13.7-12.5v-16.3h-43.8c-8.4 0-14.1-6.4-14.1-13.5 0-.8.8-4.4 2-7l38.2-88.2c2-4.8 7.2-7.8 12.3-7.8 6.8 0 13.7 6 13.7 12.9 0 1.2 0 2.6-.8 4.4-11.5 26.7-20.9 47.6-32.4 74.2h24.9v-30.4c0-7.2 6-12.5 13.7-12.5 7.4 0 13.7 5.4 13.7 12.5v30.4h2.6c7.6 0 13.3 5.8 13.3 12.3 0 7-5.8 12.5-13.3 12.5H535v16.5z" />
+                    </g>
+                    <g fill="#FFF">
+                        <path d="M326.4 197.5c0 7.2-6 12.5-13.7 12.5s-13.7-5.4-13.7-12.5v-16.3h-43.8c-8.4 0-14.1-6.4-14.1-13.5 0-.8.8-4.4 2-7l38.2-88.2c2-4.8 7.2-7.8 12.3-7.8 6.8 0 13.7 6 13.7 12.9 0 1.2 0 2.6-.8 4.4-11.5 26.7-20.9 47.6-32.4 74.2H299v-30.4c0-7.2 6-12.5 13.7-12.5 7.4 0 13.7 5.4 13.7 12.5v30.4h2.6c7.6 0 13.3 5.8 13.3 12.3 0 7-5.8 12.5-13.3 12.5h-2.6v16.5zM443.2 111.9v54.7c0 24.3-16.3 43.6-46 43.6s-46-19.3-46-43.6v-54.7c0-26.3 13.9-47.4 46-47.4 32.1.1 46 21.2 46 47.4zm-64.2-1.4v56.1c0 11.3 6.4 19.1 18.3 19.1s18.3-7.8 18.3-19.1v-56.1c0-12.7-5.2-21.7-18.3-21.7s-18.3 9-18.3 21.7zM541.4 197.5c0 7.2-6 12.5-13.7 12.5-7.8 0-13.7-5.4-13.7-12.5v-16.3h-43.8c-8.4 0-14.1-6.4-14.1-13.5 0-.8.8-4.4 2-7l38.2-88.2c2-4.8 7.2-7.8 12.3-7.8 6.8 0 13.7 6 13.7 12.9 0 1.2 0 2.6-.8 4.4-11.5 26.7-20.9 47.6-32.4 74.2H514v-30.4c0-7.2 6-12.5 13.7-12.5 7.4 0 13.7 5.4 13.7 12.5v30.4h2.6c7.6 0 13.3 5.8 13.3 12.3 0 7-5.8 12.5-13.3 12.5h-2.6v16.5z" />
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Right side: Error content -->
+        <div class="error-content">
+            <div class="error-header">
+                <div class="error-code-display">@statusCode</div>
+                <h1 class="error-title">@(Model?.Title?.ToLower() ?? "error")</h1>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message">
+                <p>@(Model?.Message ?? "An unexpected error has occurred. We're working to fix the issue.")</p>
+                @if (!string.IsNullOrEmpty(Model?.GetStatusMessageArabic()))
+                {
+                    <p class="arabic-message">@Model.GetStatusMessageArabic()</p>
+                }
+            </div>
+
+            <!-- Search Box -->
+            <div class="search-container">
+                <input id="input1" type="text" placeholder="Search for help...">
+                <svg class="search-icon" width="26" height="25.8">
+                    <path opacity=".4" fill="#68A1D6" d="M22.3 3.7C20.5 2 18.1 1 15.6 1S10.8 2 9 3.7c-1.8 1.8-2.7 4.1-2.7 6.6 0 1.7.5 3.4 1.4 4.9l-6 6-.1.1c-.8.9-.8 2.2.1 3.1.8.8 2.2.9 3.1.1l6-6c1.5.9 3.1 1.4 4.9 1.4 2.5 0 4.9-1 6.6-2.7 3.6-3.8 3.6-9.8 0-13.5zm-2.9 10.5c-1 1-2.4 1.6-3.8 1.6s-2.8-.6-3.8-1.6-1.6-2.4-1.6-3.8.6-2.8 1.6-3.8S14.2 5 15.6 5s2.8.6 3.8 1.6c2.1 2.1 2.1 5.5 0 7.6z" />
+                </svg>
+            </div>
+
+            <!-- Request Information -->
+            <div class="error-info">
+                <div class="info-item">
+                    <span class="info-label">Reference ID</span>
+                    <span class="info-value">@(Model?.RequestId ?? "N/A")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Timestamp</span>
+                    <span class="info-value">@(Model?.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status Code</span>
+                    <span class="info-value">@statusCode</span>
+                </div>
+            </div>
+
+            @if (Model?.ShowDetails == true)
+            {
+                <!-- Technical Details -->
+                <div class="technical-details" id="techDetails">
+                    <div class="details-header" onclick="toggleDetails()">
+                        <h3><i class="fas fa-code"></i> Technical Details (Development Mode)</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="details-content" id="detailsContent">
+                        @if (!string.IsNullOrEmpty(Model?.Path))
+                        {
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    Request Path
+                                    <button class="copy-btn" onclick="copyToClipboard('@Model.Path', this)">
+                                        <i class="far fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <div class="detail-value">@Model.Path</div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model?.ExceptionType))
+                        {
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    Exception Type
+                                    <button class="copy-btn" onclick="copyToClipboard('@Model.ExceptionType', this)">
+                                        <i class="far fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <div class="detail-value exception-message">@Model.ExceptionType</div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model?.ExceptionMessage))
+                        {
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    Exception Message
+                                    <button class="copy-btn" onclick="copyToClipboard('@Html.Raw(Model.ExceptionMessage.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", ""))', this)">
+                                        <i class="far fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <div class="detail-value exception-message">@Model.ExceptionMessage</div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model?.InnerExceptionMessage))
+                        {
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    Inner Exception
+                                    <button class="copy-btn" onclick="copyToClipboard('@Model.InnerExceptionMessage', this)">
+                                        <i class="far fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <div class="detail-value exception-message">@Model.InnerExceptionMessage</div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model?.StackTrace))
+                        {
+                            <div class="detail-item">
+                                <div class="detail-label">
+                                    Stack Trace
+                                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('stackTrace').innerText, this)">
+                                        <i class="far fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <div class="detail-value stack-trace" id="stackTrace">@Model.StackTrace</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Action Buttons -->
+            <div class="error-actions">
+                <a href="/" class="action-btn">
+                    <i class="fas fa-home"></i> Homepage
+                </a>
+                <button onclick="history.back()" class="action-btn secondary">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </button>
+                <button onclick="location.reload()" class="action-btn secondary">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+                <a href="mailto:support@eventpro.com" class="action-btn">
+                    <i class="fas fa-envelope"></i> Contact Support
+                </a>
+            </div>
+
+            <!-- Footer Links -->
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="#">Locations</a>
+                <a href="#">Weekly Specials</a>
+                <a href="#">Corporate</a>
+                <a href="/docs">Documentation</a>
+                <a href="/privacy">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-expand details in development
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (Model?.ShowDetails == true)
+            {
+                    <text>
+                    const detailsContent = document.getElementById('detailsContent');
+                    const techDetails = document.getElementById('techDetails');
+                    if (detailsContent && techDetails) {
+                        detailsContent.classList.add('expanded');
+                        techDetails.classList.add('expanded');
+                    }
+                    </text>
+            }
+
+            // Search functionality
+            const searchInput = document.getElementById('input1');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const query = this.value.trim();
+                        if (query) {
+                            // Redirect to help page with search query
+                            window.location.href = `/help?q=${encodeURIComponent(query)}`;
+                        }
+                    }
+                });
+            }
+
+            // Add typing effect to error message
+            const errorMessage = document.querySelector('.error-message p');
+            if (errorMessage) {
+                const text = errorMessage.textContent;
+                errorMessage.textContent = '';
+                let i = 0;
+                const typeWriter = () => {
+                    if (i < text.length) {
+                        errorMessage.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(typeWriter, 30);
+                    }
+                };
+                setTimeout(typeWriter, 1000);
+            }
+        });
+
+        function toggleDetails() {
+            const detailsContent = document.getElementById('detailsContent');
+            const techDetails = document.getElementById('techDetails');
+            if (detailsContent && techDetails) {
+                detailsContent.classList.toggle('expanded');
+                techDetails.classList.toggle('expanded');
+            }
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHtml = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.innerHTML = originalHtml;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                button.innerHTML = '<i class="fas fa-times"></i> Failed';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="far fa-copy"></i> Copy';
+                }, 2000);
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + / to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                const searchInput = document.getElementById('input1');
+                if (searchInput) searchInput.focus();
+            }
+            // Escape to close details
+            if (e.key === 'Escape') {
+                const detailsContent = document.getElementById('detailsContent');
+                const techDetails = document.getElementById('techDetails');
+                if (detailsContent && detailsContent.classList.contains('expanded')) {
+                    detailsContent.classList.remove('expanded');
+                    techDetails.classList.remove('expanded');
+                }
+            }
+            // F5 to reload
+            if (e.key === 'F5') {
+                e.preventDefault();
+                location.reload();
+            }
+        });
+
+        // Add star twinkling effect
+        function twinkleStars() {
+            const stars = document.querySelectorAll('.all-stars path');
+            stars.forEach(star => {
+                const delay = Math.random() * 5000;
+                const duration = 1000 + Math.random() * 2000;
+
+                star.style.animation = `none`;
+
+                setTimeout(() => {
+                    star.style.animation = `blinkblink ${duration}ms linear infinite`;
+                }, delay);
+            });
+        }
+
+        twinkleStars();
+        setInterval(twinkleStars, 15000);
+    </script>
+</body>
+</html>
