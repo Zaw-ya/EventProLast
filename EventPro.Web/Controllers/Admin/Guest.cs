@@ -1,3 +1,15 @@
+using EventPro.DAL;
+using EventPro.DAL.Enum;
+using EventPro.DAL.Models;
+using EventPro.DAL.ViewModels;
+using EventPro.Web.Common;
+using EventPro.Web.Filters;
+using ExcelDataReader;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QRCoder;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,24 +23,6 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-
-using EventPro.DAL;
-using EventPro.DAL.Enum;
-using EventPro.DAL.Models;
-using EventPro.DAL.ViewModels;
-using EventPro.Web.Common;
-using EventPro.Web.Filters;
-
-using ExcelDataReader;
-
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-using QRCoder;
-
-using Serilog;
-
 namespace EventPro.Web.Controllers
 {
     public partial class AdminController : Controller
@@ -2493,24 +2487,33 @@ namespace EventPro.Web.Controllers
             int guestId = guest.GuestId;
             int nos = Convert.ToInt32(guest.NoOfMembers);
 
+            //Ali hani we depand on cloudinary service to get the latest version of qr code image becasue it clean to add all placeholder on it
+            // Always load the original background image (without placeholders)
+            // This ensures guest data replaces placeholders cleanly
+            //Image img;
             // Load template image from local storage (generated in CardPreview)
-            string templatePath = Path.Combine(webHostEnvironment.WebRootPath, "upload", "cardpreview", $"{eventId}.png");
+            //string templatePath = Path.Combine(webHostEnvironment.WebRootPath, "upload", "cardpreview", $"{eventId}.png");
 
-            Image img;
-            if (System.IO.File.Exists(templatePath))
-            {
-                // Use local template
-                img = Image.FromFile(templatePath);
-            }
-            else
-            {
-                // Fallback: Load background from Cloudinary if template doesn't exist
-                using HttpClient client = new HttpClient();
-                var imageUrl = cardInfo.BackgroundImage;
-                byte[] imageData = await client.GetByteArrayAsync(imageUrl);
-                using MemoryStream fs = new MemoryStream(imageData);
-                img = Image.FromStream(fs);
-            }
+            //Image img;
+            //if (System.IO.File.Exists(templatePath))
+            //{
+            //    // Use local template
+            //    img = Image.FromFile(templatePath);
+            //}
+            //else
+            //{
+            //    // Fallback: Load background from Cloudinary if template doesn't exist
+            //    using HttpClient client = new HttpClient();
+            //    var imageUrl = cardInfo.BackgroundImage;
+            //    byte[] imageData = await client.GetByteArrayAsync(imageUrl);
+            //    using MemoryStream fs = new MemoryStream(imageData);
+            //    img = Image.FromStream(fs);
+            //}
+            using HttpClient client = new HttpClient();
+            var imageUrl = cardInfo.BackgroundImage;
+            byte[] imageData = await client.GetByteArrayAsync(imageUrl);
+            using MemoryStream fs = new MemoryStream(imageData);
+            Image img = Image.FromStream(fs);
 
             // Calculate zoom ratio for high-resolution images (max width 900px)
             double zoomRatio = 1;
@@ -2566,27 +2569,31 @@ namespace EventPro.Web.Controllers
                 string guestName = $"{guest.FirstName} {guest.LastName ?? ""}".Trim();
 
                 var font = new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
-                var textSize = grap.MeasureString(guestName, font);
 
-                grap.DrawImage(
-                    img,
-                    destRect: new Rectangle(
-                        (int)((nameXAxis - 10) * zoomRatio),
-                        (int)((nameYAxis - 10) * zoomRatio),
-                        (int)(textSize.Width + 20 * zoomRatio),
-                        (int)(textSize.Height + 20 * zoomRatio)
-                    ),
-                    srcRect: new Rectangle(
-                        (int)((nameXAxis - 10) * zoomRatio),
-                        (int)((nameYAxis - 10) * zoomRatio),
-                        (int)(textSize.Width + 20 * zoomRatio),
-                        (int)(textSize.Height + 20 * zoomRatio)
-                    ),
-                    srcUnit:GraphicsUnit.Pixel
-                );
+       
 
+       //AliHani         //grap.DrawImage(
+                //    img,
+                //    destRect: new Rectangle(
+                //        (int)((nameXAxis - 10) * zoomRatio),
+                //        (int)((nameYAxis - 10) * zoomRatio),
+                //        (int)(textSize.Width + 20 * zoomRatio),
+                //        (int)(textSize.Height + 20 * zoomRatio)
+                //    ),
+                //    srcRect: new Rectangle(
+                //        (int)((nameXAxis - 10) * zoomRatio),
+                //        (int)((nameYAxis - 10) * zoomRatio),
+                //        (int)(textSize.Width + 20 * zoomRatio),
+                //        (int)(textSize.Height + 20 * zoomRatio)
+                //    ),
+                //    srcUnit: GraphicsUnit.Pixel
+                //);
                 StringFormat format = new StringFormat();
                 if (cardInfo.FontAlignment == "right")
+                {
+                    format.FormatFlags = StringFormatFlags.DirectionRightToLeft;
+                }
+                else if (cardInfo.FontAlignment == "center")
                 {
                     nameXAxis = (Convert.ToDouble(cardInfo.NameRightAxis) + Convert.ToDouble(cardInfo.ContactNameXaxis)) / 2;
                     format.Alignment = StringAlignment.Center;
