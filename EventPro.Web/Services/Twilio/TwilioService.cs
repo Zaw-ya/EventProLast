@@ -24,7 +24,7 @@ namespace EventPro.Services.TwilioService
 {
     public class TwilioService : ITwilioService
     {
-        #region .............
+        #region Dependencies and Constructor
         private readonly IConfiguration _configuration;
         private IConfiguration CountrySendingProfileConfig;
         private IConfiguration choosenSendingWhatsappProfileSettingsConfig;
@@ -71,9 +71,12 @@ namespace EventPro.Services.TwilioService
         }
 
 
-        #region   ????? ???? ???????  
+        #region Standard Invitations  
 
         // Female and Male + Basic => Arabic
+        /// <summary>
+        /// Sends a basic Arabic invitation message.
+        /// </summary>
         public async Task<Guest> SendArabicbasic(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -120,6 +123,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a basic Arabic invitation message with header text.
+        /// </summary>
         public async Task<Guest> SendArabicbasicHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -167,6 +173,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a basic Arabic invitation message with header image.
+        /// </summary>
         public async Task<Guest> SendArabicbasicHeaderImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -214,6 +223,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a basic Arabic invitation message with header text and image.
+        /// </summary>
         public async Task<Guest> SendArabicbasicHeaderTextImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -264,6 +276,10 @@ namespace EventPro.Services.TwilioService
         }
 
         // Female and Male + Basic => English
+        // Female and Male + Basic => English
+        /// <summary>
+        /// Sends a basic English invitation message.
+        /// </summary>
         public async Task<Guest> SendEnglishbasic(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -301,6 +317,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a basic English invitation message with header text.
+        /// </summary>
         public async Task<Guest> SendbasicHeaderTextEnglish(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -335,6 +354,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a basic English invitation message with header image.
+        /// </summary>
         public async Task<Guest> SendbasicHeaderImageEnglish(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -371,6 +393,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a basic English invitation message with header text and image.
+        /// </summary>
         public async Task<Guest> SendbasicHeaderTextImageEnglish(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -408,6 +433,10 @@ namespace EventPro.Services.TwilioService
         }
 
         // Female + Guest Name => Arabic
+        // Female + Guest Name => Arabic
+        /// <summary>
+        /// Sends a default Arabic invitation for a female guest.
+        /// </summary>
         public async Task<Guest> SendArabicFemaleDefault(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -448,6 +477,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic invitation with header image for a female guest.
+        /// </summary>
         public async Task<Guest> SendArabicFemaleWithHeaderImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -488,6 +520,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic invitation with header text for a female guest.
+        /// </summary>
         public async Task<Guest> SendArabicFemaleWithHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -528,6 +563,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic invitation with header text and image for a female guest.
+        /// </summary>
         public async Task<Guest> SendArabicFemaleWithHeaderImageAndHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -572,6 +610,10 @@ namespace EventPro.Services.TwilioService
         }
 
         // Male + Guest Name => Arabic
+        // Male + Guest Name => Arabic
+        /// <summary>
+        /// Sends a default Arabic invitation for a male guest.
+        /// </summary>
         public async Task<Guest> SendArabicMaleDefault(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -611,6 +653,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic invitation with header image for a male guest.
+        /// </summary>
         public async Task<Guest> SendArabicMaleWithHeaderImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -650,6 +695,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic invitation with header text for a male guest.
+        /// </summary>
         public async Task<Guest> SendArabicMaleWithHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -691,6 +739,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic invitation with header text and image for a male guest.
+        /// </summary>
         public async Task<Guest> SendArabicMaleWithHeaderImageAndHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -734,6 +785,10 @@ namespace EventPro.Services.TwilioService
         }
 
         // Female and Male + Guest Name => English
+        // Female and Male + Guest Name => English
+        /// <summary>
+        /// Sends a default English invitation.
+        /// </summary>
         public async Task<Guest> SendEnglishDefault(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -773,6 +828,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an English invitation with header image.
+        /// </summary>
         public async Task<Guest> SendEnglishWithHeaderImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -813,6 +871,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an English invitation with header text.
+        /// </summary>
         public async Task<Guest> SendEnglishWithHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -853,6 +914,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an English invitation with header text and image.
+        /// </summary>
         public async Task<Guest> SendEnglishWithHeaderImageAndHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -899,9 +963,13 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region ????? ?? ????????????
+        #region Custom Invitations
 
         //Female Or Male + English Or Arabic => Guest name
+        //Female Or Male + English Or Arabic => Guest name
+        /// <summary>
+        /// Sends a custom invitation with guest name.
+        /// </summary>
         public async Task<Guest> SendCustomWithName(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -938,6 +1006,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends a custom invitation with guest name and header text.
+        /// </summary>
         public async Task<Guest> SendCustomWithNameHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -970,6 +1041,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends a custom invitation with guest name and header image.
+        /// </summary>
         public async Task<Guest> SendCustomWithNameHeaderImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1007,6 +1081,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends a custom invitation with guest name, header text, and header image.
+        /// </summary>
         public async Task<Guest> SendCustomWithNameHeaderTextImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1042,6 +1119,10 @@ namespace EventPro.Services.TwilioService
         }
 
         //Female Or Male + English Or Arabic => Basic
+        //Female Or Male + English Or Arabic => Basic
+        /// <summary>
+        /// Sends a basic custom invitation.
+        /// </summary>
         public async Task<Guest> SendCustomBasic(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1077,6 +1158,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends a basic custom invitation with header text.
+        /// </summary>
         public async Task<Guest> SendCustomBasicHeaderText(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1108,6 +1192,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends a basic custom invitation with header image.
+        /// </summary>
         public async Task<Guest> SendCustomBasicHeaderImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1143,6 +1230,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends a basic custom invitation with header text and header image.
+        /// </summary>
         public async Task<Guest> SendCustomBasicHeaderTextImage(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1177,8 +1267,11 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region  ????? ??????
+        #region Card Invitations
 
+        /// <summary>
+        /// Sends an Arabic card invitation.
+        /// </summary>
         public async Task<Guest> SendArabicCard(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1203,6 +1296,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an Arabic card invitation with guest name.
+        /// </summary>
         public async Task<Guest> SendArabicCardwithname(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1230,6 +1326,9 @@ namespace EventPro.Services.TwilioService
             return guest;
         }
 
+        /// <summary>
+        /// Sends an English card invitation.
+        /// </summary>
         public async Task<Guest> SendEnglishCard(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1254,6 +1353,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends an English card invitation with guest name.
+        /// </summary>
         public async Task<Guest> SendEnglishCardwithname(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1282,6 +1384,9 @@ namespace EventPro.Services.TwilioService
         }
 
 
+        /// <summary>
+        /// Sends a card invitation by ID (Basic).
+        /// </summary>
         public async Task<Guest> SendCardByIDBasic(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1306,6 +1411,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a card invitation by ID with guest name.
+        /// </summary>
         public async Task<Guest> SendCardByIDWithGusetName(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1334,8 +1442,11 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region  ??? ?????   
+        #region Thank You and Generic Messages   
 
+        /// <summary>
+        /// Sends a 'Thank You' message by ID.
+        /// </summary>
         public async Task<Guest> SendThanksById(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1369,6 +1480,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends a custom 'Thank You' message.
+        /// </summary>
         public async Task<Guest> SendThanksCustom(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1404,6 +1518,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 1.
+        /// </summary>
         public async Task<Guest> SendTemp1(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1436,6 +1553,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 2.
+        /// </summary>
         public async Task<Guest> SendTemp2(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1468,6 +1588,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 3.
+        /// </summary>
         public async Task<Guest> SendTemp3(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1501,6 +1624,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 4.
+        /// </summary>
         public async Task<Guest> SendTemp4(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1535,6 +1661,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 5.
+        /// </summary>
         public async Task<Guest> SendTemp5(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1569,6 +1698,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 6.
+        /// </summary>
         public async Task<Guest> SendTemp6(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1600,6 +1732,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 7.
+        /// </summary>
         public async Task<Guest> SendTemp7(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1632,6 +1767,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 8.
+        /// </summary>
         public async Task<Guest> SendTemp8(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1664,6 +1802,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 9.
+        /// </summary>
         public async Task<Guest> SendTemp9(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1697,6 +1838,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends generic template message 10.
+        /// </summary>
         public async Task<Guest> SendTemp10(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1732,7 +1876,10 @@ namespace EventPro.Services.TwilioService
         }
         #endregion
 
-        #region ????? ????? ????? ?????? 
+        #region Owner Notifications 
+        /// <summary>
+        /// Sends a congratulation message to the event owner (Arabic).
+        /// </summary>
         public async Task<Guest> SendCongratulationMessageToOwner(Guest guest, string message)
         {
             CountrySendingProfileConfig = _configuration.GetSection("EventProBackup");
@@ -1757,6 +1904,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a congratulation message to the event owner (English).
+        /// </summary>
         public async Task<Guest> SendCongratulationMessageToOwnerEnglish(Guest guest, string message)
         {
             var templateId = CountrySendingProfileConfig["Templates:SendCongratulationMessageToOwnerEnglish"];
@@ -1785,7 +1935,10 @@ namespace EventPro.Services.TwilioService
         }
         #endregion
 
-        #region ??????? ????????? 
+        #region Legacy Reminders 
+        /// <summary>
+        /// Sends a reminder using a template ID.
+        /// </summary>
         public async Task<Guest> SendReminderWithTempIdold(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1817,6 +1970,9 @@ namespace EventPro.Services.TwilioService
 
             return guest;
         }
+        /// <summary>
+        /// Sends a custom reminder (Legacy).
+        /// </summary>
         public async Task<Guest> SendReminderCustomold(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1854,6 +2010,9 @@ namespace EventPro.Services.TwilioService
 
         }
 
+        /// <summary>
+        /// Sends legacy reminder template 1.
+        /// </summary>
         public async Task<Guest> SendRTemp1old(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1886,6 +2045,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends legacy reminder template 2 or 3.
+        /// </summary>
         public async Task<Guest> SendRTemp2or3old(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1928,7 +2090,191 @@ namespace EventPro.Services.TwilioService
         }
         #endregion
 
-        #region ????? ??????? ??? ???????
+        #region Active Reminders
+        /// <summary>
+        /// Sends an active reminder using a template ID.
+        /// </summary>
+        public async Task<Guest> SendReminderWithTempId(Guest guest, Events events)
+        {
+            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
+
+            var templateId = events.ReminderTempId;
+            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+
+            // Generate ICS file and save it
+            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
+
+            var icsFileName = $"event_{events.Id}.ics";
+            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
+
+            string[] parameters;
+            if (events.SendingType == "Basic")
+            {
+                parameters = new string[] { icsFileUrl };
+            }
+            else
+            {
+                parameters = new string[] { icsFileUrl, guest.FirstName.Trim() };
+            }
+
+            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
+
+            if (messageSid != null)
+            {
+                guest.ReminderMessageId = messageSid;
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            return guest;
+        }
+
+        /// <summary>
+        /// Sends a custom active reminder.
+        /// </summary>
+        public async Task<Guest> SendReminderCustom(Guest guest, Events events)
+        {
+            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
+
+            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+            string templateId = "";
+
+            // Generate ICS file and save it
+            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
+
+            var icsFileName = $"event_{events.Id}.ics";
+            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
+
+            string[] parameters;
+            if (events.SendingType == "Basic")
+            {
+                //======================================================TEMP NAME || copy_copy_copy_remember_temp_custombasic_calender_www
+                //templateId = "HXf977018a7cb7d2119cc392287981aa9e";
+                templateId = CountrySendingProfileConfig["Templates:SendReminderCustomBasic"];
+                parameters = new string[] { events.ReminderMessage, icsFileUrl };
+            }
+            else
+            {
+                //======================================================TEMP NAME | copy_copy_remember_temp_custombasic_calender_www
+                //templateId = "HX469c107376c77b299601663a186ead02";
+                templateId = CountrySendingProfileConfig["Templates:SendReminderCustom"];
+                parameters = new string[] { guest.FirstName.Trim(), events.ReminderMessage, icsFileUrl };
+            }
+
+            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
+
+
+            if (messageSid != null)
+            {
+                guest.ReminderMessageId = messageSid;
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            return guest;
+        }
+
+        /// <summary>
+        /// Sends active reminder template 1.
+        /// </summary>
+        public async Task<Guest> SendRTemp1(Guest guest, Events events)
+        {
+            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
+
+            //======================================================TEMP NAME || copy_remember_temp_1_calender_www
+            //var templateId = "HXa179f751b01f9cd6c2dea1d950f0cc8b";
+            var templateId = CountrySendingProfileConfig["Templates:SendRTemp1"];
+
+            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+            var evntDate = Convert.ToDateTime(events.EventFrom);
+
+            // Generate ICS file and save it
+            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
+            var icsFileName = $"event_{events.Id}.ics";
+            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
+
+            var parameters = new string[]
+            {
+                        guest.FirstName.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        icsFileUrl
+            };
+
+            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
+            if (messageSid != null)
+            {
+                guest.ReminderMessageId = messageSid;
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            return guest;
+
+        }
+
+        /// <summary>
+        /// Sends active reminder template 2 or 3.
+        /// </summary>
+        public async Task<Guest> SendRTemp2or3(Guest guest, Events events)
+        {
+            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
+
+            //==============TEMP NAME : remember_temp_2_calender_www11 
+            //string templateId = "HXf8208000e4b8b7f93e124d9a2a834672";
+            string templateId = CountrySendingProfileConfig["Templates:SendRTemp2or3female"];
+
+            if (events.ParentTitleGender != "Female")
+            {
+                // remember_temp_3_calender_www22
+                //templateId = "HX04fb9063090b1d16d17062b39b09438c";
+                templateId = CountrySendingProfileConfig["Templates:SendRTemp2or3male"];
+            }
+            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+            var evntDate = Convert.ToDateTime(events.EventFrom);
+
+            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
+            var icsFileName = $"event_{events.Id}.ics";
+            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
+
+            var parameters = new string[]
+            {
+                        guest.FirstName.Trim(),
+                        events.EventTitle.Trim(),
+                        events.EventFrom.Value.ToString("dddd", new CultureInfo("ar-SA")),
+                        events.EventFrom.Value.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        events.ParentTitle.Trim(),
+                        icsFileUrl
+            };
+
+            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
+            if (messageSid != null)
+            {
+                guest.ReminderMessageId = messageSid;
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            return guest;
+        }
+
+        #endregion
+
+        #region Duplicate Answer Messages
+        /// <summary>
+        /// Sends an Arabic duplicate answer message.
+        /// </summary>
         public async Task<string> SendArabicDuplicateAnswer(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1943,6 +2289,9 @@ namespace EventPro.Services.TwilioService
             await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
             return "sent"; ;
         }
+        /// <summary>
+        /// Sends an English duplicate answer message.
+        /// </summary>
         public async Task<string> SendEnglishDuplicateAnswer(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1960,7 +2309,10 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region  ???? ???????? 
+        #region Event Location Messages 
+        /// <summary>
+        /// Sends the event location (Arabic).
+        /// </summary>
         public async Task<Guest> SendArabicEventLocation(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -1985,6 +2337,9 @@ namespace EventPro.Services.TwilioService
             }
             return guest;
         }
+        /// <summary>
+        /// Sends the event location (English).
+        /// </summary>
         public async Task<Guest> SendEnglishEventLocation(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -2011,8 +2366,11 @@ namespace EventPro.Services.TwilioService
         }
         #endregion
 
-        #region  ???? ????????
+        #region Service Messages
         //KSA
+        /// <summary>
+        /// Sends EventPro service message (Arabic - KSA).
+        /// </summary>
         public async Task<string> SendEventProArabicService(string phoneNumber)
         {
             var templateId = CountrySendingProfileConfig["Templates:SendEventProArabicService"];
@@ -2028,6 +2386,9 @@ namespace EventPro.Services.TwilioService
             return messageSid;
         }
         //Kuwait
+        /// <summary>
+        /// Sends EventPro service message (Arabic - Kuwait).
+        /// </summary>
         public async Task<string> SendEventProArabicServiceKuwait(string phoneNumber)
         {
             var templateId = CountrySendingProfileConfig["Templates:SendEventProArabicServiceKuwait"];
@@ -2044,6 +2405,9 @@ namespace EventPro.Services.TwilioService
             return messageSid;
         }
         //Bahrain 
+        /// <summary>
+        /// Sends EventPro service message (Arabic - Bahrain).
+        /// </summary>
         public async Task<string> SendEventProArabicServiceBahrain(string phoneNumber)
         {
             var templateId = CountrySendingProfileConfig["Templates:SendEventProArabicServiceBahrain"];
@@ -2059,6 +2423,9 @@ namespace EventPro.Services.TwilioService
             return messageSid;
         }
         //English Not Used 
+        /// <summary>
+        /// Sends EventPro service message (English).
+        /// </summary>
         public async Task<string> SendEventProEnglishService(string phoneNumber)
         {
 
@@ -2077,9 +2444,12 @@ namespace EventPro.Services.TwilioService
         }
         #endregion
 
-        #region ???? ??? ?????? ?????
+        #region Decline Messages
 
 
+        /// <summary>
+        /// Sends a decline template message.
+        /// </summary>
         public async Task<Guest> SendDeclineTemp(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -2099,6 +2469,9 @@ namespace EventPro.Services.TwilioService
             return guest;
 
         }
+        /// <summary>
+        /// Sends a fixed decline template message.
+        /// </summary>
         public async Task<Guest> SendDeclineTempFixedTemp(Guest guest, Events events)
         {
             setCountrySendingProfile(events.choosenSendingWhatsappProfile);
@@ -2115,7 +2488,11 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region ???? ?????????????????????
+        #region Core Sending Logic
+        /// <summary>
+        /// The core method for sending WhatsApp template messages via Twilio API.
+        /// Handles configuration loading and sender number selection.
+        /// </summary>
         private async Task<string> SendWhatsAppTemplateMessageAsync(string toPhoneNumber, string contentSid, object[] parameters, int? cityId, int ChoosenNumberWithinCountry, string choosenSendingWhatsappProfile, string choosenCountryNumber)
         {
 
@@ -2232,7 +2609,10 @@ namespace EventPro.Services.TwilioService
         }
         #endregion
 
-        #region ?????? ?? ???? ???????? 
+        #region Country Helpers 
+        /// <summary>
+        /// Retrieves the country name based on the city ID.
+        /// </summary>
         private async Task<string> WhichCountry(int cityId)
         {
             //Samples: Kuwait City ID = 6 ,
@@ -2247,9 +2627,11 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region ????? ????????????
+        #region Status Updates
 
-        // Get the status of various messages for a guest from Twilio and update the guest's record in the database.
+        /// <summary>
+        /// Gets the status of various messages for a guest from Twilio and updates the guest's record in the database.
+        /// </summary>
         public async Task<string> GetMessageStatusAndUpdateGuestAsync(Guest guest)
         {
             var choosenSendingWhatsappProfile = await _db.Events.Where(e => e.Id == guest.EventId)
@@ -2327,7 +2709,9 @@ namespace EventPro.Services.TwilioService
             return "Guest status updated successfully";
         }
 
-        // Get the status of all messages related to a specific event's guests and update their records in the database.
+        /// <summary>
+        /// Gets the status of all messages related to a specific event's guests and updates their records in the database.
+        /// </summary>
         public async Task<string> GetMessagesAndUpdateEventGuestsAsync(Events events)
         {
             var choosenSendingWhatsappProfile = events.choosenSendingWhatsappProfile;
@@ -2399,7 +2783,9 @@ namespace EventPro.Services.TwilioService
             return "Event guests' statuses updated successfully";
         }
 
-        // Fetch the status of a specific message from Twilio and update the guest's record based on the type of message.
+        /// <summary>
+        /// Fetches the status of a specific message from Twilio and updates the guest's record based on the type of message.
+        /// </summary>
         private async Task FetchAndProcessMessage(string messageId, Guest guest, string messageType)
         {
             try
@@ -2429,7 +2815,9 @@ namespace EventPro.Services.TwilioService
             catch { }
         }
 
-        // Update the guest's record based on the message type and status received from Twilio.
+        /// <summary>
+        /// Updates the guest's record based on the message type and status received from Twilio.
+        /// </summary>
         private void UpdateMessageStatus(Guest guest, string status, string messageType)
         {
             switch (status)
@@ -2452,7 +2840,9 @@ namespace EventPro.Services.TwilioService
             }
         }
 
-        // Set specific status fields in the guest's record (e.g., Read, Delivered) based on the message type.
+        /// <summary>
+        /// Sets specific status fields in the guest's record (e.g., Read, Delivered) based on the message type.
+        /// </summary>
         private void SetMessageStatus(Guest guest, string messageType, string statusType, bool status)
         {
             switch (messageType)
@@ -2492,9 +2882,12 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        #region ??????? ?????? ???????? ??????????
+        #region Calendar and Validation
 
-        #region ????? ??? ??????? ?????
+        #region ICS Generation
+        /// <summary>
+        /// Generates an ICS calendar event string.
+        /// </summary>
         public string GenerateCalendarEventICS(string eventName, DateTime eventDate, string eventLocation)
         {
 
@@ -2546,6 +2939,9 @@ namespace EventPro.Services.TwilioService
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Saves the ICS content to a file.
+        /// </summary>
         public async Task<string> SaveCalendarEventToFileAsync(string icsContent, string fileName)
         {
             //var directoryPath = Path.Combine(@"H:\Upload\Prod\Calendar");
@@ -2581,177 +2977,16 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
-        public async Task<Guest> SendReminderWithTempId(Guest guest, Events events)
-        {
-            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
 
-            var templateId = events.ReminderTempId;
-            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-
-            // Generate ICS file and save it
-            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
-
-            var icsFileName = $"event_{events.Id}.ics";
-            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
-
-            string[] parameters;
-            if (events.SendingType == "Basic")
-            {
-                parameters = new string[] { icsFileUrl };
-            }
-            else
-            {
-                parameters = new string[] { icsFileUrl, guest.FirstName.Trim() };
-            }
-
-            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
-
-            if (messageSid != null)
-            {
-                guest.ReminderMessageId = messageSid;
-            }
-            else
-            {
-                throw new Exception();
-            }
-
-            return guest;
-        }
-
-        public async Task<Guest> SendReminderCustom(Guest guest, Events events)
-        {
-            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
-
-            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-            string templateId = "";
-
-            // Generate ICS file and save it
-            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
-
-            var icsFileName = $"event_{events.Id}.ics";
-            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
-
-            string[] parameters;
-            if (events.SendingType == "Basic")
-            {
-                //======================================================TEMP NAME || copy_copy_copy_remember_temp_custombasic_calender_www
-                //templateId = "HXf977018a7cb7d2119cc392287981aa9e";
-                templateId = CountrySendingProfileConfig["Templates:SendReminderCustomBasic"];
-                parameters = new string[] { events.ReminderMessage, icsFileUrl };
-            }
-            else
-            {
-                //======================================================TEMP NAME | copy_copy_remember_temp_custombasic_calender_www
-                //templateId = "HX469c107376c77b299601663a186ead02";
-                templateId = CountrySendingProfileConfig["Templates:SendReminderCustom"];
-                parameters = new string[] { guest.FirstName.Trim(), events.ReminderMessage, icsFileUrl };
-            }
-
-            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
-
-
-            if (messageSid != null)
-            {
-                guest.ReminderMessageId = messageSid;
-            }
-            else
-            {
-                throw new Exception();
-            }
-
-            return guest;
-        }
-
-        public async Task<Guest> SendRTemp1(Guest guest, Events events)
-        {
-            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
-
-            //======================================================TEMP NAME || copy_remember_temp_1_calender_www
-            //var templateId = "HXa179f751b01f9cd6c2dea1d950f0cc8b";
-            var templateId = CountrySendingProfileConfig["Templates:SendRTemp1"];
-
-            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-            var evntDate = Convert.ToDateTime(events.EventFrom);
-
-            // Generate ICS file and save it
-            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
-            var icsFileName = $"event_{events.Id}.ics";
-            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
-
-            var parameters = new string[]
-            {
-                        guest.FirstName.Trim(),
-                        events.EventTitle.Trim(),
-                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                        evntDate.ToString("dd/MM/yyyy"),
-                        events.EventVenue.ToString().Trim(),
-                        icsFileUrl
-            };
-
-            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
-            if (messageSid != null)
-            {
-                guest.ReminderMessageId = messageSid;
-            }
-            else
-            {
-                throw new Exception();
-            }
-
-            return guest;
-
-        }
-
-        public async Task<Guest> SendRTemp2or3(Guest guest, Events events)
-        {
-            setCountrySendingProfile(events.choosenSendingWhatsappProfile);
-
-            //==============TEMP NAME : remember_temp_2_calender_www11 
-            //string templateId = "HXf8208000e4b8b7f93e124d9a2a834672";
-            string templateId = CountrySendingProfileConfig["Templates:SendRTemp2or3female"];
-
-            if (events.ParentTitleGender != "Female")
-            {
-                // remember_temp_3_calender_www22
-                //templateId = "HX04fb9063090b1d16d17062b39b09438c";
-                templateId = CountrySendingProfileConfig["Templates:SendRTemp2or3male"];
-            }
-            string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-            var evntDate = Convert.ToDateTime(events.EventFrom);
-
-            var icsContent = GenerateCalendarEventICS(events.EventTitle, events.EventFrom.Value, events.EventVenue);
-            var icsFileName = $"event_{events.Id}.ics";
-            var icsFileUrl = await SaveCalendarEventToFileAsync(icsContent, icsFileName);
-
-            var parameters = new string[]
-            {
-                        guest.FirstName.Trim(),
-                        events.EventTitle.Trim(),
-                        events.EventFrom.Value.ToString("dddd", new CultureInfo("ar-SA")),
-                        events.EventFrom.Value.ToString("dd/MM/yyyy"),
-                        events.EventVenue.ToString().Trim(),
-                        events.ParentTitle.Trim(),
-                        icsFileUrl
-            };
-
-            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, events.choosenSendingWhatsappProfile, events.choosenSendingCountryNumber);
-            if (messageSid != null)
-            {
-                guest.ReminderMessageId = messageSid;
-            }
-            else
-            {
-                throw new Exception();
-            }
-
-            return guest;
-        }
 
 
         #endregion
 
-        #region ?????? ?? ????? ??? ???????
+        #region Validation
 
+        /// <summary>
+        /// Validates a phone number using Twilio Lookup.
+        /// </summary>
         public async Task<bool> ValidatePhoneNumberAsync(Guest guest)
         {
 
@@ -2777,6 +3012,9 @@ namespace EventPro.Services.TwilioService
 
         #endregion
 
+        /// <summary>
+        /// Checks the balance of a single Twilio account and sends an email if it is low.
+        /// </summary>
         public async Task CheckSingleAccountAsync(TwilioProfileSettings acc)
         {
             try
@@ -2825,6 +3063,9 @@ namespace EventPro.Services.TwilioService
             }
         }
 
+        /// <summary>
+        /// Retrieves the balance of a Twilio account via API.
+        /// </summary>
         public async Task<BalanceResponse?> GetBalanceAsync(string accountSid, string authToken)
         {
             try
