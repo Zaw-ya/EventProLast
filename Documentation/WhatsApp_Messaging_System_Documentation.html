@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventPro WhatsApp Messaging System - Complete Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .slide {
+            background: white;
+            min-height: 100vh;
+            padding: 60px;
+            page-break-after: always;
+            position: relative;
+        }
+        .slide-number {
+            position: absolute;
+            bottom: 20px;
+            right: 40px;
+            font-size: 14px;
+            color: #666;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 42px;
+            margin-bottom: 30px;
+            border-bottom: 4px solid #3498db;
+            padding-bottom: 20px;
+        }
+        h2 {
+            color: #2980b9;
+            font-size: 32px;
+            margin: 30px 0 20px 0;
+        }
+        h3 {
+            color: #27ae60;
+            font-size: 24px;
+            margin: 25px 0 15px 0;
+        }
+        h4 {
+            color: #8e44ad;
+            font-size: 20px;
+            margin: 20px 0 10px 0;
+        }
+        p {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        ul, ol {
+            margin-left: 40px;
+            margin-bottom: 20px;
+        }
+        li {
+            font-size: 18px;
+            line-height: 2;
+            color: #34495e;
+        }
+        .highlight {
+            background: #f39c12;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+        .file-path {
+            background: #e8f6f3;
+            color: #1abc9c;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .danger {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .flow-diagram {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .title-slide h1 {
+            color: white;
+            font-size: 56px;
+            border: none;
+            margin-bottom: 20px;
+        }
+        .title-slide p {
+            color: rgba(255,255,255,0.9);
+            font-size: 24px;
+        }
+        .toc {
+            column-count: 2;
+            column-gap: 40px;
+        }
+        .toc li {
+            break-inside: avoid;
+        }
+        @media print {
+            .slide {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide title-slide">
+    <h1>EventPro WhatsApp Messaging System</h1>
+    <p>Complete Technical Documentation</p>
+    <p style="margin-top: 40px; font-size: 18px;">For Developers and System Administrators</p>
+    <p style="margin-top: 20px; font-size: 16px; opacity: 0.8;">Version 1.0 | January 2026</p>
+    <div class="slide-number">1</div>
+</div>
+
+<!-- SLIDE 2: Table of Contents -->
+<div class="slide">
+    <h1>Table of Contents</h1>
+    <div class="toc">
+        <ol>
+            <li><strong>System Overview</strong> - What is this system?</li>
+            <li><strong>Architecture Diagram</strong> - How components connect</li>
+            <li><strong>Twilio Configuration</strong> - Where and how to configure</li>
+            <li><strong>Project File Structure</strong> - Important files map</li>
+            <li><strong>WhatsApp Entry Points</strong> - Where sending starts</li>
+            <li><strong>Message Flow Process</strong> - Step-by-step flow</li>
+            <li><strong>Template Selection Logic</strong> - How templates are chosen</li>
+            <li><strong>Database Models</strong> - Data structure</li>
+            <li><strong>Phone Number Handling</strong> - Country codes explained</li>
+            <li><strong>WATI Integration</strong> - Legacy system explanation</li>
+            <li><strong>How to Remove WATI</strong> - Cleanup guide</li>
+            <li><strong>Adding New Configuration</strong> - Setup guide</li>
+            <li><strong>Troubleshooting</strong> - Common issues</li>
+            <li><strong>Security Considerations</strong> - Best practices</li>
+        </ol>
+    </div>
+    <div class="slide-number">2</div>
+</div>
+
+<!-- SLIDE 3: System Overview -->
+<div class="slide">
+    <h1>1. System Overview</h1>
+
+    <h2>What is EventPro?</h2>
+    <p>EventPro is an event management system that sends WhatsApp invitations to guests. It handles:</p>
+    <ul>
+        <li><strong>Confirmation Messages</strong> - Initial invitation with Yes/No buttons</li>
+        <li><strong>Card/QR Messages</strong> - Invitation card with QR code for entry</li>
+        <li><strong>Event Location</strong> - Google Maps link to venue</li>
+        <li><strong>Reminder Messages</strong> - Before event reminders</li>
+        <li><strong>Congratulation Messages</strong> - Thank you after event</li>
+    </ul>
+
+    <h2>Two WhatsApp Providers</h2>
+    <table>
+        <tr>
+            <th>Provider</th>
+            <th>Status</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><strong>Twilio</strong></td>
+            <td style="color: green;">ACTIVE - Primary</td>
+            <td>Main WhatsApp Business API provider</td>
+        </tr>
+        <tr>
+            <td><strong>WATI</strong></td>
+            <td style="color: red;">DISABLED - Legacy</td>
+            <td>Old provider, code exists but returns null</td>
+        </tr>
+    </table>
+
+    <div class="info">
+        <strong>Important:</strong> You should only use Twilio. WATI code is legacy and should be removed.
+    </div>
+    <div class="slide-number">3</div>
+</div>
+
+<!-- SLIDE 4: Architecture Diagram -->
+<div class="slide">
+    <h1>2. Architecture Diagram</h1>
+
+    <div class="flow-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              EventPro WhatsApp Architecture                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐     ┌──────────────────┐     ┌─────────────────────────────────┐
+│   Admin UI   │────▶│  Guest.cs        │────▶│  WhatsappSendingProvidersService │
+│  (Browser)   │     │  Controller      │     │  (Provider Selector)             │
+└──────────────┘     └──────────────────┘     └─────────────────────────────────┘
+                                                            │
+                                                            ▼
+                     ┌──────────────────────────────────────────────────────────┐
+                     │                TwilioMessagesSendingFactory              │
+                     │  - SendConfirmationMessagesAsync()                       │
+                     │  - SendCardMessagesAsync()                               │
+                     │  - SendEventLocationAsync()                              │
+                     │  - SendReminderMessageAsync()                            │
+                     │  - SendCongratulationMessageAsync()                      │
+                     └──────────────────────────────────────────────────────────┘
+                                                            │
+                     ┌──────────────────────────────────────┼──────────────────┐
+                     │                                      │                  │
+                     ▼                                      ▼                  ▼
+          ┌─────────────────────┐           ┌─────────────────────┐  ┌─────────────────┐
+          │TwilioConfirmation   │           │TwilioCardTemplates  │  │TwilioReminder   │
+          │Templates            │           │                     │  │MessageTemplates │
+          └─────────────────────┘           └─────────────────────┘  └─────────────────┘
+                     │                                      │                  │
+                     └──────────────────────────────────────┼──────────────────┘
+                                                            │
+                                                            ▼
+                     ┌──────────────────────────────────────────────────────────┐
+                     │           TwilioMessagingConfiguration                   │
+                     │  SendWhatsAppTemplateMessageAsync()                      │
+                     │  - Load credentials from TwilioProfileSettings           │
+                     │  - Select WhatsApp number by country                     │
+                     │  - Make REST API call to Twilio                          │
+                     └──────────────────────────────────────────────────────────┘
+                                                            │
+                                                            ▼
+                     ┌──────────────────────────────────────────────────────────┐
+                     │                    Twilio REST API                        │
+                     │  POST https://api.twilio.com/2010-04-01/Accounts/        │
+                     │       {AccountSid}/Messages.json                         │
+                     └──────────────────────────────────────────────────────────┘
+                                                            │
+                                                            ▼
+                     ┌──────────────────────────────────────────────────────────┐
+                     │                      WhatsApp                             │
+                     │                   (Guest receives message)                │
+                     └──────────────────────────────────────────────────────────┘
+                                                            │
+                                                            ▼
+                     ┌──────────────────────────────────────────────────────────┐
+                     │               TwillioCallbackController                   │
+                     │  - Receives webhook from Twilio                          │
+                     │  - Updates Guest message status in database              │
+                     │  - Processes button clicks (Yes/No/Location)             │
+                     └──────────────────────────────────────────────────────────┘
+    </div>
+    <div class="slide-number">4</div>
+</div>
+
+<!-- SLIDE 5: Twilio Configuration - Where -->
+<div class="slide">
+    <h1>3. Twilio Configuration</h1>
+
+    <h2>Where is Twilio Configured?</h2>
+
+    <div class="warning">
+        <strong>Important:</strong> Twilio credentials are NOT in appsettings.json!<br>
+        They are stored in the <strong>database</strong> in the <code>TwilioProfileSettings</code> table.
+    </div>
+
+    <h3>Configuration Locations:</h3>
+
+    <table>
+        <tr>
+            <th>What</th>
+            <th>Where</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>Twilio Credentials</td>
+            <td>Database: <code>TwilioProfileSettings</code> table</td>
+            <td>AccountSid, AuthToken, MessagingServiceSid</td>
+        </tr>
+        <tr>
+            <td>WhatsApp Numbers</td>
+            <td>Database: <code>TwilioProfileSettings</code> table</td>
+            <td>WhatsAppNumberSaudi1, WhatsAppNumberKuwait1, etc.</td>
+        </tr>
+        <tr>
+            <td>Template IDs</td>
+            <td>Database: <code>TwilioProfileSettings</code> table</td>
+            <td>100+ template ID fields</td>
+        </tr>
+        <tr>
+            <td>Default Provider</td>
+            <td>Database: <code>AppSettings</code> table</td>
+            <td>WhatsappServiceProvider = "Twilio"</td>
+        </tr>
+        <tr>
+            <td>RabbitMQ Queues</td>
+            <td><span class="file-path">appsettings.json</span></td>
+            <td>Webhook queue names only</td>
+        </tr>
+    </table>
+
+    <h3>Admin Interface to Manage Twilio:</h3>
+    <p><span class="file-path">URL: /AppSettings/DefaultTemplates</span></p>
+    <p><span class="file-path">Controller: EventPro.Web\Controllers\Admin\AppSettingsController.cs</span></p>
+
+    <div class="slide-number">5</div>
+</div>
+
+<!-- SLIDE 6: Twilio Configuration - Database Model -->
+<div class="slide">
+    <h1>3. Twilio Configuration (continued)</h1>
+
+    <h2>TwilioProfileSettings Database Table</h2>
+
+    <p><span class="file-path">EventPro.DAL\Models\TwilioProfileSettings.cs</span></p>
+
+    <div class="code-block">
+public class TwilioProfileSettings
+{
+    [Key]
+    public int Id { get; set; }
+
+    // ========== REQUIRED CREDENTIALS ==========
+    [Required]
+    public string Name { get; set; }           // Profile name (e.g., "Da3wty")
+    [Required]
+    public string AccountSid { get; set; }     // Twilio Account SID (AC...)
+    [Required]
+    public string AuthToken { get; set; }      // Twilio Auth Token
+    [Required]
+    public string MessagingServiceSid { get; set; }  // Messaging Service (MG...)
+
+    // ========== WHATSAPP NUMBERS BY COUNTRY ==========
+    public string? WhatsAppNumberSaudi1 { get; set; }    // +966...
+    public string? WhatsAppNumberSaudi2 { get; set; }    // Backup number
+    public string? WhatsAppNumberKuwait1 { get; set; }   // +965...
+    public string? WhatsAppNumberKuwait2 { get; set; }
+    public string? WhatsAppNumberBahrain1 { get; set; }  // +973...
+    public string? WhatsAppNumberBahrain2 { get; set; }
+
+    // ========== TEMPLATE IDs (100+ fields) ==========
+    // Confirmation Templates
+    public string? ConfirmArabicFemaleWithoutGuestName { get; set; }
+    public string? ConfirmArabicMaleWithoutGuestName { get; set; }
+    public string? ConfirmEnglishWithoutGuestName { get; set; }
+    // ... many more template ID fields
+}
+    </div>
+
+    <div class="info">
+        <strong>Note:</strong> Each template ID (like "ConfirmArabicFemaleWithoutGuestName") stores a Twilio Content SID
+        (e.g., "HX1234567890abcdef") that references a pre-approved WhatsApp template in Twilio.
+    </div>
+    <div class="slide-number">6</div>
+</div>
+
+<!-- SLIDE 7: Project File Structure -->
+<div class="slide">
+    <h1>4. Project File Structure</h1>
+
+    <h2>WhatsApp-Related Files Map</h2>
+
+    <div class="code-block" style="font-size: 13px;">
+EventPro/
+├── EventPro.Web/
+│   ├── Controllers/
+│   │   ├── Admin/
+│   │   │   ├── Guest.cs                    ★ Main controller - triggers WhatsApp sending
+│   │   │   ├── AppSettingsController.cs    ★ Manage Twilio profiles
+│   │   │   └── Events.cs                   - Event management
+│   │   └── Api/
+│   │       ├── TwillioCallbackController.cs ★ Webhook receiver from Twilio
+│   │       ├── WatiCallbackController.cs    ✗ LEGACY - Remove
+│   │       └── HangfireController.cs        - Background jobs
+│   │
+│   └── Services/
+│       ├── Twilio/
+│       │   ├── ITwilioService.cs           ★ Interface definition
+│       │   └── TwilioService.cs            ★ Main Twilio service (3000+ lines)
+│       └── WatiService/                     ✗ LEGACY - Remove entire folder
+│
+├── EventPro.Business/
+│   └── WhatsAppMessagesProviders/
+│       ├── Interface/
+│       │   ├── IWhatsappSendingProviderService.cs
+│       │   ├── IMessagesSendingFactory.cs   ★ Main factory interface
+│       │   ├── IConfirmationMessageTemplates.cs
+│       │   ├── ICardMessageTemplates.cs
+│       │   └── ... (other interfaces)
+│       │
+│       └── Implementation/
+│           ├── WhatsappSendingProvidersService.cs  ★ Provider selector
+│           └── Twilio/
+│               ├── TwilioMessagesSendingFactory.cs  ★ Main routing logic
+│               ├── TwilioMessagingConfiguration.cs  ★ API call to Twilio
+│               ├── TwilioConfirmationTemplates.cs   ★ Confirmation messages
+│               ├── TwilioCardTemplates.cs           ★ Card/QR messages
+│               ├── TwilioReminderMessageTemplates.cs
+│               ├── TwilioCongratulationTemplates.cs
+│               ├── TwilioEventLocatioinTemplates.cs
+│               ├── TwilioDeclineMessageTemplates.cs
+│               └── TwilioMessagesSync.cs            ★ Status polling
+│
+└── EventPro.DAL/
+    └── Models/
+        ├── TwilioProfileSettings.cs        ★ Twilio config model
+        ├── Guest.cs                        ★ Guest with message tracking
+        ├── Events.cs                       ★ Event with template config
+        ├── AppSettings.cs                  - App configuration
+        └── BalanceResponse.cs              - Balance check model
+
+★ = Important file    ✗ = Should be removed (WATI legacy)
+    </div>
+    <div class="slide-number">7</div>
+</div>
+
+<!-- SLIDE 8: WhatsApp Entry Points -->
+<div class="slide">
+    <h1>5. WhatsApp Entry Points</h1>
+
+    <h2>Where Does Sending Start?</h2>
+
+    <p>All WhatsApp sending is triggered from <span class="file-path">Guest.cs</span> controller.</p>
+
+    <h3>Bulk Sending Methods (Send to All Guests)</h3>
+    <table>
+        <tr>
+            <th>Method</th>
+            <th>URL</th>
+            <th>What it Sends</th>
+        </tr>
+        <tr>
+            <td>SendToAll()</td>
+            <td>/admin/SendToAll/{eventId}</td>
+            <td>Confirmation message with Yes/No buttons</td>
+        </tr>
+        <tr>
+            <td>SendCardToAll()</td>
+            <td>/admin/SendCardToAll/{eventId}</td>
+            <td>Invitation card with QR code</td>
+        </tr>
+        <tr>
+            <td>SendEventLocationToAll()</td>
+            <td>/admin/SendEventLocationToAll/{eventId}</td>
+            <td>Google Maps link</td>
+        </tr>
+        <tr>
+            <td>SendReminderMessageToAll()</td>
+            <td>/admin/SendReminderMessageToAll/{eventId}</td>
+            <td>Reminder before event</td>
+        </tr>
+        <tr>
+            <td>SendCongratulationMessageToAll()</td>
+            <td>/admin/SendCongratulationMessageToAll/{eventId}</td>
+            <td>Thank you message</td>
+        </tr>
+    </table>
+
+    <h3>Single Guest Sending Methods</h3>
+    <table>
+        <tr>
+            <th>Method</th>
+            <th>URL</th>
+        </tr>
+        <tr>
+            <td>InviteOnWhatsapp()</td>
+            <td>/admin/InviteOnWhatsapp/{guestId}</td>
+        </tr>
+        <tr>
+            <td>SendQRCode()</td>
+            <td>/admin/SendQRCode/{guestId}</td>
+        </tr>
+        <tr>
+            <td>SendEventLocation()</td>
+            <td>/admin/SendEventLocation/{guestId}</td>
+        </tr>
+        <tr>
+            <td>SendReminderMessage()</td>
+            <td>/admin/SendReminderMessage/{guestId}</td>
+        </tr>
+    </table>
+    <div class="slide-number">8</div>
+</div>
+
+<!-- SLIDE 9: Message Flow Process -->
+<div class="slide">
+    <h1>6. Message Flow Process</h1>
+
+    <h2>Step-by-Step: What Happens When Admin Clicks "Send"</h2>
+
+    <div class="flow-diagram" style="font-size: 12px;">
+STEP 1: Admin clicks "Send confirmation Whatsapp" button in UI
+         │
+         ▼
+STEP 2: Guest.cs → SendToAll(eventId) method is called
+         │
+         ▼
+STEP 3: Load event configuration:
+         - Event.MessageLanguage (Arabic/English/Custom)
+         - Event.ParentTitleGender (Male/Female)
+         - Event.choosenSendingWhatsappProfile (which Twilio profile)
+         │
+         ▼
+STEP 4: Get WhatsApp provider:
+         WhatsappSendingProvidersService.SelectConfiguredSendingProviderAsync()
+         └─▶ Returns TwilioMessagesSendingFactory
+         │
+         ▼
+STEP 5: Call factory method:
+         TwilioMessagesSendingFactory.SendConfirmationMessagesAsync(guests, event)
+         │
+         ▼
+STEP 6: Route to correct template based on language/gender:
+         - Arabic + Female → SendArabicFemaleDefault()
+         - Arabic + Male → SendArabicMaleDefault()
+         - English → SendEnglishDefault()
+         - Custom → SendCustomTemplate()
+         │
+         ▼
+STEP 7: Load TwilioProfileSettings from database:
+         - AccountSid, AuthToken
+         - MessagingServiceSid
+         - Template ID (ContentSid)
+         - WhatsApp sender number
+         │
+         ▼
+STEP 8: For each guest (parallel, max 4 threads):
+         │
+         ├─▶ Format phone number: +966501234567
+         │
+         ├─▶ Generate encrypted button IDs (for Yes/No tracking)
+         │
+         ├─▶ Build template variables:
+         │   {"1": "Guest Name", "2": "Event Title", "3": "Friday", ...}
+         │
+         └─▶ Call Twilio API:
+             POST https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json
+             │
+             ▼
+STEP 9: Twilio returns Message SID (e.g., "SM123abc...")
+         │
+         ▼
+STEP 10: Update Guest record in database:
+          - guest.MessageId = "SM123abc..."
+          - guest.Response = "Message Processed Successfully"
+          - guest.WasentOn = DateTime.Now
+          - guest.YesButtonId = encrypted ID
+          - guest.NoButtonId = encrypted ID
+         │
+         ▼
+STEP 11: Guest receives WhatsApp message with buttons
+    </div>
+    <div class="slide-number">9</div>
+</div>
+
+<!-- SLIDE 10: Template Selection Logic -->
+<div class="slide">
+    <h1>7. Template Selection Logic</h1>
+
+    <h2>How the System Chooses Which Template to Send</h2>
+
+    <p><span class="file-path">TwilioMessagesSendingFactory.cs</span></p>
+
+    <div class="flow-diagram">
+SendConfirmationMessagesAsync(guests, event)
+│
+├─▶ Check: event.MessageLanguage
+│   │
+│   ├─▶ "Twilio | TemplateWithVariables"
+│   │   └─▶ SendCustomTemplateWithVariables()
+│   │       Uses: event.CustomConfirmationTemplateWithVariables
+│   │
+│   ├─▶ "Twilio | Arabic"
+│   │   └─▶ Check: event.ParentTitleGender
+│   │       │
+│   │       ├─▶ "Female"
+│   │       │   └─▶ Check: event.SendingType
+│   │       │       ├─▶ "Basic" → SendFemaleBasicTemplates()
+│   │       │       └─▶ Default → SendFemaleDefaultTemplates()
+│   │       │
+│   │       └─▶ "Male"
+│   │           └─▶ Check: event.SendingType
+│   │               ├─▶ "Basic" → SendMaleBasicTemplates()
+│   │               └─▶ Default → SendMaleDefaultTemplates()
+│   │
+│   ├─▶ "Twilio | English"
+│   │   └─▶ SendEnglishTemplates()
+│   │
+│   └─▶ "Twilio | Custom"
+│       └─▶ SendCustomTemplates()
+
+INSIDE SendFemaleBasicTemplates():
+│
+└─▶ Check Header Configuration:
+    │
+    ├─▶ No Header Text, No Header Image
+    │   └─▶ Template: ConfirmArabicFemaleWithoutGuestName
+    │
+    ├─▶ Has Header Text, No Header Image
+    │   └─▶ Template: ConfirmArabicFemaleWithHeaderTextAndWithoutGuestName
+    │
+    ├─▶ No Header Text, Has Header Image
+    │   └─▶ Template: ConfirmArabicFemaleWithHeaderImageAndWithoutGuestName
+    │
+    └─▶ Has Header Text AND Header Image
+        └─▶ Template: ConfirmArabicFemaleWithHeaderImageAndHeaderTextAndWithoutGuestName
+    </div>
+    <div class="slide-number">10</div>
+</div>
+
+<!-- SLIDE 11: Database Models -->
+<div class="slide">
+    <h1>8. Database Models</h1>
+
+    <h2>Guest Table - Message Tracking Fields</h2>
+
+    <p><span class="file-path">EventPro.DAL\Models\Guest.cs</span></p>
+
+    <table>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td colspan="3" style="background: #3498db; color: white;"><strong>Confirmation Message</strong></td>
+        </tr>
+        <tr>
+            <td>MessageId</td>
+            <td>string</td>
+            <td>Twilio Message SID</td>
+        </tr>
+        <tr>
+            <td>TextSent / TextDelivered / TextRead / TextFailed</td>
+            <td>bool?</td>
+            <td>Status flags</td>
+        </tr>
+        <tr>
+            <td>YesButtonId / NoButtonId</td>
+            <td>string</td>
+            <td>Encrypted button IDs for tracking clicks</td>
+        </tr>
+        <tr>
+            <td>Response</td>
+            <td>string</td>
+            <td>"Confirm", "Decline", "Message Processed Successfully"</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="background: #3498db; color: white;"><strong>Card/QR Message</strong></td>
+        </tr>
+        <tr>
+            <td>ImgSentMsgId</td>
+            <td>string</td>
+            <td>Twilio Message SID for card</td>
+        </tr>
+        <tr>
+            <td>ImgSent / ImgDelivered / ImgRead / ImgFailed</td>
+            <td>bool?</td>
+            <td>Status flags</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="background: #3498db; color: white;"><strong>Event Location Message</strong></td>
+        </tr>
+        <tr>
+            <td>waMessageEventLocationForSendingToAll</td>
+            <td>string</td>
+            <td>Twilio Message SID</td>
+        </tr>
+        <tr>
+            <td>EventLocationSent / Delivered / Read / Failed</td>
+            <td>bool?</td>
+            <td>Status flags</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="background: #3498db; color: white;"><strong>Reminder & Congratulation</strong></td>
+        </tr>
+        <tr>
+            <td>ReminderMessageId / ConguratulationMsgId</td>
+            <td>string</td>
+            <td>Message SIDs</td>
+        </tr>
+    </table>
+    <div class="slide-number">11</div>
+</div>
+
+<!-- SLIDE 12: Phone Number Handling -->
+<div class="slide">
+    <h1>9. Phone Number Handling</h1>
+
+    <h2>How Country Codes Work</h2>
+
+    <h3>Currently Supported Countries:</h3>
+    <table>
+        <tr>
+            <th>Country</th>
+            <th>Code</th>
+            <th>Database Fields</th>
+            <th>Selection Key</th>
+        </tr>
+        <tr>
+            <td>Saudi Arabia</td>
+            <td>+966</td>
+            <td>WhatsAppNumberSaudi1, WhatsAppNumberSaudi2</td>
+            <td>"SAUDI" (default)</td>
+        </tr>
+        <tr>
+            <td>Kuwait</td>
+            <td>+965</td>
+            <td>WhatsAppNumberKuwait1, WhatsAppNumberKuwait2</td>
+            <td>"KUWAIT"</td>
+        </tr>
+        <tr>
+            <td>Bahrain</td>
+            <td>+973</td>
+            <td>WhatsAppNumberBahrain1, WhatsAppNumberBahrain2</td>
+            <td>"BAHRAIN"</td>
+        </tr>
+        <tr style="background: #fff3cd;">
+            <td><strong>Egypt</strong></td>
+            <td>+20</td>
+            <td><strong>NOT CONFIGURED</strong></td>
+            <td>Need to add!</td>
+        </tr>
+    </table>
+
+    <h3>Number Selection Logic:</h3>
+    <p><span class="file-path">TwilioMessagingConfiguration.cs lines 60-80</span></p>
+
+    <div class="code-block">
+// Event stores which country to use
+string choosenCountryNumber = events.choosenSendingCountryNumber;  // "SAUDI", "KUWAIT", "BAHRAIN"
+int ChoosenNumberWithinCountry = events.ChoosenNumberWithinCountry; // 1 or 2
+
+// Select the correct sender number
+if (choosenCountryNumber == "BAHRAIN")
+    ChoosenSendingNumber = (ChoosenNumberWithinCountry == 2)
+        ? FromWhatsAppNumberBahrain2
+        : FromWhatsAppNumberBahrain1;
+else if (choosenCountryNumber == "KUWAIT")
+    ChoosenSendingNumber = fromWhatsAppNumberKuwait2 or fromWhatsAppNumberKuwait1;
+else  // Default: SAUDI
+    ChoosenSendingNumber = fromWhatsAppNumberSaudi2 or fromWhatsAppNumberSaudi1;
+
+// Send message from selected number
+request.AddParameter("From", $"whatsapp:{ChoosenSendingNumber}");
+    </div>
+    <div class="slide-number">12</div>
+</div>
+
+<!-- SLIDE 13: Adding Egypt Support -->
+<div class="slide">
+    <h1>9. Phone Number Handling (continued)</h1>
+
+    <h2>How to Add Egypt (+20) Support</h2>
+
+    <div class="warning">
+        <strong>Note:</strong> Egypt is NOT currently supported. You need to add it.
+    </div>
+
+    <h3>Step 1: Update TwilioProfileSettings Model</h3>
+    <p><span class="file-path">EventPro.DAL\Models\TwilioProfileSettings.cs</span></p>
+
+    <div class="code-block">
+// Add these new fields after Bahrain:
+public string? WhatsAppNumberEgypt1 { get; set; }   // +20...
+public string? WhatsAppNumberEgypt2 { get; set; }   // Backup number
+    </div>
+
+    <h3>Step 2: Create Database Migration</h3>
+    <div class="code-block">
+dotnet ef migrations add AddEgyptWhatsAppNumbers
+dotnet ef database update
+    </div>
+
+    <h3>Step 3: Update TwilioMessagingConfiguration.cs</h3>
+    <div class="code-block">
+// Add Egypt number loading (around line 45):
+var fromWhatsAppNumberEgypt1 = profileSettings?.WhatsAppNumberEgypt1;
+var fromWhatsAppNumberEgypt2 = profileSettings?.WhatsAppNumberEgypt2;
+
+// Add Egypt selection (around line 70):
+else if (choosenCountryNumber == "EGYPT")
+{
+    ChoosenSendingNumber = (ChoosenNumberWithinCountry == 2)
+        ? fromWhatsAppNumberEgypt2
+        : fromWhatsAppNumberEgypt1;
+}
+    </div>
+
+    <h3>Step 4: Update Admin UI</h3>
+    <p>Add input fields for Egypt numbers in <span class="file-path">Views/AppSettings/DefaultTemplates.cshtml</span></p>
+    <div class="slide-number">13</div>
+</div>
+
+<!-- SLIDE 14: WATI Integration -->
+<div class="slide">
+    <h1>10. WATI Integration (Legacy)</h1>
+
+    <h2>What is WATI?</h2>
+    <p>WATI (WhatsApp Team Inbox) is another WhatsApp Business API provider, similar to Twilio.</p>
+
+    <div class="danger">
+        <strong>Status: DISABLED</strong><br>
+        WATI code exists in the project but is NOT functional. The provider selector returns <code>null</code> for WATI,
+        which means Twilio is always used as fallback.
+    </div>
+
+    <h2>Why WATI Was Used</h2>
+    <ul>
+        <li>Previous developer may have started with WATI</li>
+        <li>WATI has simpler setup for small projects</li>
+        <li>Project migrated to Twilio but WATI code was never removed</li>
+    </ul>
+
+    <h2>WATI Files in Project:</h2>
+    <table>
+        <tr>
+            <th>File</th>
+            <th>Purpose</th>
+            <th>Status</th>
+        </tr>
+        <tr>
+            <td>EventPro.Web\Services\WatiService\</td>
+            <td>WATI service implementation</td>
+            <td style="color: red;">Remove</td>
+        </tr>
+        <tr>
+            <td>EventPro.API\Services\WatiService\</td>
+            <td>API WATI service</td>
+            <td style="color: red;">Remove</td>
+        </tr>
+        <tr>
+            <td>Controllers\Api\WatiCallbackController.cs</td>
+            <td>WATI webhook handler</td>
+            <td style="color: red;">Remove</td>
+        </tr>
+    </table>
+
+    <h2>Security Issue Found:</h2>
+    <div class="danger">
+        <strong>Hardcoded JWT Token!</strong><br>
+        WATI authentication token is hardcoded in 40+ places in WatiService.cs.
+        This is a security risk even if the code is not used.
+    </div>
+    <div class="slide-number">14</div>
+</div>
+
+<!-- SLIDE 15: How to Remove WATI -->
+<div class="slide">
+    <h1>11. How to Remove WATI</h1>
+
+    <h2>Step-by-Step Cleanup Guide</h2>
+
+    <h3>Step 1: Delete WATI Service Folders</h3>
+    <div class="code-block">
+Delete these folders:
+- EventPro.Web\Services\WatiService\          (entire folder)
+- EventPro.API\Services\WatiService\          (entire folder)
+    </div>
+
+    <h3>Step 2: Delete WATI Callback Controller</h3>
+    <div class="code-block">
+Delete:
+- EventPro.Web\Controllers\Api\WatiCallbackController.cs
+    </div>
+
+    <h3>Step 3: Remove DI Registration in Startup.cs</h3>
+    <p><span class="file-path">EventPro.Web\Startup.cs</span></p>
+    <div class="code-block">
+// Remove this line (around line 229):
+services.AddScoped&lt;IWatiService, WatiService&gt;();
+    </div>
+
+    <p><span class="file-path">EventPro.API\Startup.cs</span></p>
+    <div class="code-block">
+// Remove this line (around line 99):
+services.AddScoped&lt;IWatiService, WatiService&gt;();
+    </div>
+
+    <h3>Step 4: Simplify WhatsappSendingProvidersService.cs</h3>
+    <div class="code-block">
+// Remove all WATI checks that return null
+// Change this:
+if (DefaultSendingProvider == "Wati")
+    return null;
+
+// To just use Twilio:
+return new TwilioMessagesSendingFactory(...);
+    </div>
+
+    <h3>Step 5: Remove IWatiService Injections</h3>
+    <p>Search for <code>IWatiService</code> and remove from constructors in:</p>
+    <ul>
+        <li>AdminController.cs</li>
+        <li>HangfireController.cs</li>
+        <li>FeedbackController.cs</li>
+    </ul>
+    <div class="slide-number">15</div>
+</div>
+
+<!-- SLIDE 16: Adding New Twilio Configuration -->
+<div class="slide">
+    <h1>12. Adding New Twilio Configuration</h1>
+
+    <h2>How to Set Up Your New Twilio Account</h2>
+
+    <h3>Step 1: Get Twilio Credentials</h3>
+    <p>From your Twilio Console (console.twilio.com):</p>
+    <ul>
+        <li><strong>Account SID</strong> - Starts with "AC..."</li>
+        <li><strong>Auth Token</strong> - Secret key</li>
+        <li><strong>Messaging Service SID</strong> - Starts with "MG..."</li>
+        <li><strong>WhatsApp Sender Number</strong> - Your approved WhatsApp number (+20...)</li>
+    </ul>
+
+    <h3>Step 2: Create Template Content in Twilio</h3>
+    <p>In Twilio Console → Messaging → Content Templates:</p>
+    <ul>
+        <li>Create templates for each message type (Confirmation, Card, Reminder, etc.)</li>
+        <li>Get the Content SID (starts with "HX...")</li>
+        <li>Templates must be approved by WhatsApp (takes 24-48 hours)</li>
+    </ul>
+
+    <h3>Step 3: Add Profile in EventPro</h3>
+    <ol>
+        <li>Go to: <code>/AppSettings/DefaultTemplates?id=-1</code> (Create new)</li>
+        <li>Fill in:
+            <ul>
+                <li>Name: "MyNewProfile"</li>
+                <li>Account SID: AC...</li>
+                <li>Auth Token: ...</li>
+                <li>Messaging Service SID: MG...</li>
+                <li>WhatsApp Numbers for each country</li>
+                <li>All template Content SIDs</li>
+            </ul>
+        </li>
+        <li>Click Save</li>
+    </ol>
+
+    <h3>Step 4: Set as Default Profile</h3>
+    <p>In database <code>AppSettings</code> table:</p>
+    <div class="code-block">
+UPDATE AppSettings SET
+    WhatsappServiceProvider = 'Twilio',
+    WhatsappDefaultTwilioProfile = 'MyNewProfile'
+    </div>
+    <div class="slide-number">16</div>
+</div>
+
+<!-- SLIDE 17: Webhook Configuration -->
+<div class="slide">
+    <h1>12. Adding New Configuration (continued)</h1>
+
+    <h2>Step 5: Configure Twilio Webhooks</h2>
+
+    <p>In Twilio Console, set the webhook URL for message status updates:</p>
+
+    <div class="code-block">
+Webhook URL: https://your-domain.com/api/TwillioCallbackController/Post
+Method: POST
+    </div>
+
+    <h3>What the Webhook Receives:</h3>
+    <ul>
+        <li><strong>MessageSid</strong> - Which message this status is for</li>
+        <li><strong>MessageStatus</strong> - "sent", "delivered", "read", "failed"</li>
+        <li><strong>ButtonPayload</strong> - If guest clicked a button (Yes/No)</li>
+        <li><strong>To/From</strong> - Phone numbers</li>
+    </ul>
+
+    <h3>Webhook Handler Location:</h3>
+    <p><span class="file-path">EventPro.Web\Controllers\Api\TwillioCallbackController.cs</span></p>
+
+    <div class="success">
+        <strong>Tip:</strong> Use ngrok for testing webhooks locally:<br>
+        <code>ngrok http 5000</code><br>
+        Then use the ngrok URL in Twilio webhook settings.
+    </div>
+
+    <h2>Step 6: Test Your Configuration</h2>
+    <ol>
+        <li>Create a test event with your new profile</li>
+        <li>Add one guest (your phone number)</li>
+        <li>Send a confirmation message</li>
+        <li>Check if message arrives on WhatsApp</li>
+        <li>Click Yes/No button</li>
+        <li>Verify status updates in Guest table</li>
+    </ol>
+    <div class="slide-number">17</div>
+</div>
+
+<!-- SLIDE 18: Troubleshooting -->
+<div class="slide">
+    <h1>13. Troubleshooting</h1>
+
+    <h2>Common Issues and Solutions</h2>
+
+    <h3>Issue 1: Message Not Sending</h3>
+    <table>
+        <tr>
+            <th>Check</th>
+            <th>Solution</th>
+        </tr>
+        <tr>
+            <td>Guest.Response = "WA Error"</td>
+            <td>Check Twilio credentials, check phone number format</td>
+        </tr>
+        <tr>
+            <td>No MessageId stored</td>
+            <td>API call failed - check logs, verify template ID exists</td>
+        </tr>
+        <tr>
+            <td>TextFailed = true</td>
+            <td>Twilio rejected message - check template approval status</td>
+        </tr>
+    </table>
+
+    <h3>Issue 2: Buttons Not Working</h3>
+    <ul>
+        <li>Check YesButtonId/NoButtonId are stored in Guest</li>
+        <li>Verify webhook URL is configured in Twilio</li>
+        <li>Check TwillioCallbackController is receiving requests</li>
+    </ul>
+
+    <h3>Issue 3: Wrong Template Sent</h3>
+    <ul>
+        <li>Check Event.MessageLanguage value</li>
+        <li>Check Event.ParentTitleGender value</li>
+        <li>Verify TwilioProfileSettings has correct template IDs</li>
+    </ul>
+
+    <h3>Issue 4: Balance Check Failing</h3>
+    <div class="code-block">
+// Check balance manually:
+GET https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Balance.json
+Authorization: Basic {base64(AccountSid:AuthToken)}
+    </div>
+
+    <h3>Useful Debugging:</h3>
+    <div class="code-block">
+// In TwilioMessagingConfiguration.cs, add logging:
+Console.WriteLine($"Sending to: {toPhoneNumber}");
+Console.WriteLine($"Using template: {contentSid}");
+Console.WriteLine($"From number: {ChoosenSendingNumber}");
+Console.WriteLine($"Response: {response.Content}");
+    </div>
+    <div class="slide-number">18</div>
+</div>
+
+<!-- SLIDE 19: Security Considerations -->
+<div class="slide">
+    <h1>14. Security Considerations</h1>
+
+    <h2>Best Practices</h2>
+
+    <h3>1. Protect Twilio Credentials</h3>
+    <div class="success">
+        <strong>Good:</strong> Credentials stored in database (encrypted if possible)
+    </div>
+    <div class="danger">
+        <strong>Bad:</strong> WATI has hardcoded JWT tokens - REMOVE THIS CODE
+    </div>
+
+    <h3>2. Validate Webhook Signatures</h3>
+    <p>Twilio sends a signature header. Verify it to prevent fake webhooks:</p>
+    <div class="code-block">
+// In TwillioCallbackController, add:
+var validator = new RequestValidator(authToken);
+var isValid = validator.Validate(requestUrl, requestParams, twilioSignature);
+    </div>
+
+    <h3>3. Rate Limiting</h3>
+    <ul>
+        <li>AppSettings.BulkSendingLimit controls max messages per batch</li>
+        <li>Parallel processing limited to 4 threads</li>
+        <li>Consider adding delays between batches</li>
+    </ul>
+
+    <h3>4. Encrypt Button IDs</h3>
+    <div class="success">
+        <strong>Already Implemented:</strong> Button IDs are encrypted using UrlEncryptionHelper<br>
+        This prevents guests from guessing other guests' button IDs.
+    </div>
+
+    <h3>5. Admin Access Control</h3>
+    <ul>
+        <li>AppSettingsController requires Administrator role</li>
+        <li>Guest.cs controller requires operator access to event</li>
+    </ul>
+
+    <h3>6. Database Security</h3>
+    <ul>
+        <li>Use parameterized queries (Entity Framework does this)</li>
+        <li>Limit database user permissions</li>
+        <li>Regular backups of TwilioProfileSettings</li>
+    </ul>
+    <div class="slide-number">19</div>
+</div>
+
+<!-- SLIDE 20: Quick Reference -->
+<div class="slide">
+    <h1>Quick Reference Card</h1>
+
+    <h2>Important Files</h2>
+    <table style="font-size: 14px;">
+        <tr>
+            <th>Purpose</th>
+            <th>File Path</th>
+        </tr>
+        <tr>
+            <td>Send messages</td>
+            <td>EventPro.Web\Controllers\Admin\Guest.cs</td>
+        </tr>
+        <tr>
+            <td>Twilio config model</td>
+            <td>EventPro.DAL\Models\TwilioProfileSettings.cs</td>
+        </tr>
+        <tr>
+            <td>Provider selector</td>
+            <td>EventPro.Business\WhatsAppMessagesProviders\Implementation\WhatsappSendingProvidersService.cs</td>
+        </tr>
+        <tr>
+            <td>Message routing</td>
+            <td>EventPro.Business\...\Twilio\TwilioMessagesSendingFactory.cs</td>
+        </tr>
+        <tr>
+            <td>API call to Twilio</td>
+            <td>EventPro.Business\...\Twilio\TwilioMessagingConfiguration.cs</td>
+        </tr>
+        <tr>
+            <td>Webhook handler</td>
+            <td>EventPro.Web\Controllers\Api\TwillioCallbackController.cs</td>
+        </tr>
+        <tr>
+            <td>Admin UI for config</td>
+            <td>EventPro.Web\Controllers\Admin\AppSettingsController.cs</td>
+        </tr>
+    </table>
+
+    <h2>Key Database Tables</h2>
+    <table style="font-size: 14px;">
+        <tr>
+            <th>Table</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td>TwilioProfileSettings</td>
+            <td>Twilio credentials, numbers, template IDs</td>
+        </tr>
+        <tr>
+            <td>Guest</td>
+            <td>Message IDs, status flags, button IDs</td>
+        </tr>
+        <tr>
+            <td>Events</td>
+            <td>Which profile/language/template to use</td>
+        </tr>
+        <tr>
+            <td>AppSettings</td>
+            <td>Default provider, bulk limits</td>
+        </tr>
+    </table>
+
+    <h2>Message Status Flow</h2>
+    <div class="code-block" style="font-size: 12px;">
+Sent → Delivered → Read
+  ↓
+Failed (if error)
+    </div>
+    <div class="slide-number">20</div>
+</div>
+
+<!-- SLIDE 21: Summary -->
+<div class="slide title-slide">
+    <h1>Summary</h1>
+    <div style="text-align: left; max-width: 800px; margin: 0 auto;">
+        <p style="color: white; font-size: 20px; margin-bottom: 30px;">Key Takeaways:</p>
+        <ul style="color: white; font-size: 18px; line-height: 2.5;">
+            <li>Twilio is the PRIMARY WhatsApp provider - use it</li>
+            <li>WATI is LEGACY code - should be removed</li>
+            <li>Configuration is in DATABASE, not appsettings.json</li>
+            <li>Egypt support needs to be ADDED manually</li>
+            <li>Admin panel at /AppSettings/DefaultTemplates</li>
+            <li>All sending starts from Guest.cs controller</li>
+            <li>Templates are selected based on language + gender</li>
+            <li>Webhooks update message status automatically</li>
+        </ul>
+    </div>
+    <p style="margin-top: 50px; font-size: 16px; opacity: 0.8;">
+        For questions: Review the code or contact the development team
+    </p>
+    <div class="slide-number">21</div>
+</div>
+
+</body>
+</html>
