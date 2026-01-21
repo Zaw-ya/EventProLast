@@ -10,6 +10,11 @@ using Twilio;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
+    /// <summary>
+    /// Abstract base class that provides core Twilio WhatsApp messaging configuration and functionality.
+    /// This class serves as the foundation for all Twilio-based WhatsApp messaging implementations,
+    /// handling authentication, phone number selection based on country, and message sending via Twilio's API.
+    /// </summary>
     public abstract class TwilioMessagingConfiguration : IProviderMessagingConfiguration
     {
 
@@ -19,6 +24,13 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         protected IMemoryCacheStoreService _memoryCacheStoreService;
         protected ParallelOptions parallelOptions;
         private readonly EventProContext db;
+
+        /// <summary>
+        /// Constructor that initializes the Twilio messaging configuration.
+        /// Sets up the database context, memory cache service, and parallel processing options.
+        /// </summary>
+        /// <param name="configuration">Application configuration for accessing settings</param>
+        /// <param name="memoryCacheStoreService">Cache service for storing sending progress counters</param>
         public TwilioMessagingConfiguration(IConfiguration configuration ,
             IMemoryCacheStoreService memoryCacheStoreService)
         {
@@ -31,6 +43,27 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             };
         }
 
+        /// <summary>
+        /// Sends a WhatsApp template message via Twilio's REST API.
+        ///
+        /// This method performs the following steps:
+        /// 1. Extracts Twilio credentials (AccountSid, AuthToken) from the profile settings
+        /// 2. Selects the appropriate sender phone number based on:
+        ///    - ChoosenNumberWithinCountry: Chooses between number 1 or 2 for each country
+        ///    - choosenCountryNumber: Determines which country's number to use (BAHRAIN, KUWAIT, or Saudi as default)
+        /// 3. Converts the parameters array into a JSON dictionary format required by Twilio
+        ///    Example: ["Ahmed", "Event123"] becomes {"1": "Ahmed", "2": "Event123"}
+        /// 4. Makes a POST request to Twilio's Messages API with the template content
+        /// 5. Returns the message SID (unique identifier) if successful, or null if failed
+        /// </summary>
+        /// <param name="toPhoneNumber">Recipient's phone number (will be prefixed with 'whatsapp:')</param>
+        /// <param name="contentSid">Twilio Content Template SID - identifies which pre-approved template to use</param>
+        /// <param name="parameters">Dynamic values to substitute into the template placeholders</param>
+        /// <param name="cityId">Optional city identifier (currently unused in this method)</param>
+        /// <param name="ChoosenNumberWithinCountry">1 or 2 - selects between the two available numbers per country</param>
+        /// <param name="profileSettings">Twilio profile containing all credentials and phone numbers</param>
+        /// <param name="choosenCountryNumber">Country code string: "BAHRAIN", "KUWAIT", or defaults to Saudi</param>
+        /// <returns>Message SID string if successful, null if an exception occurs</returns>
         protected async Task<string> SendWhatsAppTemplateMessageAsync(string toPhoneNumber, string contentSid, object[] parameters, int? cityId, int ChoosenNumberWithinCountry, TwilioProfileSettings profileSettings , string choosenCountryNumber)
         {
             var sendingProfile = profileSettings;
@@ -117,6 +150,18 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         }
 
 
+        /// <summary>
+        /// Initializes the Twilio client with credentials from a named profile stored in the database.
+        ///
+        /// This method:
+        /// 1. Queries the TwilioProfileSettings table to find a profile matching the given name
+        /// 2. Extracts the AccountSid and AuthToken from that profile
+        /// 3. Initializes the global TwilioClient with these credentials
+        ///
+        /// Use this when you need to switch between different Twilio accounts/profiles
+        /// (e.g., different accounts for different clients or events).
+        /// </summary>
+        /// <param name="choosenSendingWhatsappProfile">The name of the Twilio profile to load from database</param>
         protected async Task SetTwilioAccountConfigurationAsync(string choosenSendingWhatsappProfile)
         {
             var twilioProfile = await db.TwilioProfileSettings.Where(e => e.Name == choosenSendingWhatsappProfile)
@@ -128,6 +173,20 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             TwilioClient.Init(accountSid, authToken);
         }
 
+        /// <summary>
+        /// Increments and persists the message sending counter for bulk operations.
+        ///
+        /// This method is used during batch WhatsApp message sending to track progress.
+        /// The counter is stored in memory cache using the event ID as the key,
+        /// allowing the UI to display real-time progress (e.g., "Sending 5 of 100 messages").
+        ///
+        /// Only increments when there are multiple guests (bulk send scenario).
+        /// For single guest sends, the counter remains unchanged.
+        /// </summary>
+        /// <param name="guests">List of guests being messaged - counter only updates if count > 1</param>
+        /// <param name="events">The event associated with this sending operation (used as cache key)</param>
+        /// <param name="counter">Current counter value to increment</param>
+        /// <returns>The incremented counter value (or unchanged if single guest)</returns>
         protected int UpdateCounter(List<Guest> guests, Events events, int counter)
         {
             if (guests.Count > 1)
@@ -139,6 +198,19 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return counter;
         }
 
+        /// <summary>
+        /// Initializes the message sending counter to zero at the start of a bulk send operation.
+        ///
+        /// Call this method before starting to send messages to multiple guests.
+        /// It resets the progress counter in memory cache to 0, preparing for
+        /// the UpdateCounter method to track progress as each message is sent.
+        ///
+        /// The counter is stored with the event ID as key, so each event's
+        /// sending progress is tracked independently.
+        /// </summary>
+        /// <param name="guests">List of guests to be messaged - counter only initializes if count > 1</param>
+        /// <param name="events">The event associated with this sending operation (used as cache key)</param>
+        /// <returns>Initial counter value (always 0)</returns>
         protected int SetSendingCounter(List<Guest> guests, Events events)
         {
             int counter = 0;
