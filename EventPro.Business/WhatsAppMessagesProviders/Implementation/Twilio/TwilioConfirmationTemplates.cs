@@ -31,7 +31,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                              .AsNoTracking()
                              .FirstOrDefaultAsync();
 
-            if (events.ConfirmationButtonsType == "QuickReplies")
+            if (events.ConfirmationButtonsType == "QuickReplies")  //Ali Hani// There are two option "QuickReplies" or "Links" 
             {
 
                 if (events.ParentTitleGender == "Female")
@@ -43,7 +43,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     templateId = profileSettings?.ConfirmArabicMaleWithoutGuestName;
                 }
             }
-            else
+            else // Ali Hani //In Else ConfirmationButtonsType = "Links" 
             {
                 if (events.ParentTitleGender == "Female")
                 {
@@ -54,8 +54,19 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     templateId = profileSettings?.ConfirmArabicMaleWithoutGuestNameWithLink;
                 }
             }
-            int counter = SetSendingCounter(guests, events);
 
+            //Ali Hani // Set the initial counter for sending messages in TwilioMessagingConfiguration file
+            int counter = SetSendingCounter(guests, events);
+            //Ali Hani //if guest.counter > 1 reset counter make it zero like in second parameter here _memoryCacheStoreService.save(events.Id.ToString(), 0);
+
+
+            //Ali Hani//note that max degree of parallelism is set in TwilioMessagingConfiguration file is 4
+            /* Ali Hani // in TwilioMessagingConfiguration file
+             parallelOptions = new ParallelOptions
+             {
+                 MaxDegreeOfParallelism = 4 // number of cpu used
+             };
+             */
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
@@ -80,8 +91,6 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await updateDataBaseAndDisposeCache(guests, events);
             return;
         }
-
-
 
         public async Task SendArabicbasicHeaderImage(List<Guest> guests, Events events)
         {
@@ -1282,9 +1291,13 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                 string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                 string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                var matches = Regex.Matches(events.CustomConfirmationTemplateWithVariables, @"\{\{(.*?)\}\}");
-                List<string> templateParameters = matches
-                    .Cast<Match>()
+
+
+                var matches = Regex.Matches(events.CustomConfirmationTemplateWithVariables, @"\{\{(.*?)\}\}"); //Ali Hani Extract template parameters enclosed in {{ }}
+
+                //Ali Hani // get the list of template parameters values
+                List<string> templateParameters =
+                     matches.Cast<Match>() // AliHani //Turn MatchCollection into IEnumerable<Match> to use LINQ methods
                     .Select(m =>
                     {
                         string propName = m.Groups[1].Value;
@@ -1298,16 +1311,17 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                             return (guest.NoOfMembers - 1)?.ToString() ?? "0";
                         }
                         var value = guest.GetType().GetProperty(propName)?
-                                          .GetValue(guest, null)?.ToString();
+                                          .GetValue(guest, null)?.ToString(); //Ali Hani //Using reflection to get property value dynamically , From Guest class first
                         if (value == null)
                         {
                             value = events.GetType().GetProperty(propName)?
-                                          .GetValue(events, null)?.ToString();
+                                          .GetValue(events, null)?.ToString(); //Ali Hani //Using reflection if value = null check it in event , From Events class second
                         }
-                        return value ?? propName;
+                        return value ?? propName; //Ali Hani //If still null return the property name itself to avoid breaking the template
                     })
                     .ToList();
 
+                // Append button IDs at the end of the parameters list
                 templateParameters.Add(yesButtonId);
                 templateParameters.Add(noButtonId);
                 templateParameters.Add(eventLocationButtonId);
@@ -1316,6 +1330,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
                 counter = UpdateCounter(guests, events, counter);
             });
+            //update database and clear cache
             await updateDataBaseAndDisposeCache(guests, events);
             return;
         }
@@ -1340,6 +1355,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         private async Task SendMessageAndUpdateStatus(Events events, string templateId, Guest guest, string fullPhoneNumber, string yesButtonId, string noButtonId, string eventLocationButtonId, string[] parameters, List<Guest> guests, TwilioProfileSettings profileSettings)
         {
+            // Ali hani // Send the WhatsApp template message and get the message SID for tracking status , 
             string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
             if (messageSid != null)
             {
