@@ -301,24 +301,27 @@ namespace EventPro.Web
             {
                 using var connection = rabbitFactory.CreateConnection();
                 using var channel = connection.CreateModel();
-                string queueName = "test_queue";
-                string message = "Hello RabbitMQ!";
 
-                // اتأكد ان الـ queue موجودة
-                channel.QueueDeclare(queue: queueName,
-                                     durable: false,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
+                #region Testing for succsess connection
+                //string queueName = "test_queue";
+                //string message = "Hello RabbitMQ!";
 
-                // حوّل الرسالة لـ byte array
-                var body = System.Text.Encoding.UTF8.GetBytes(message);
+                //// اتأكد ان الـ queue موجودة
+                //channel.QueueDeclare(queue: queueName,
+                //                     durable: false,
+                //                     exclusive: false,
+                //                     autoDelete: false,
+                //                     arguments: null);
 
-                // ابعت الرسالة
-                channel.BasicPublish(exchange: "",
-                                     routingKey: queueName,
-                                     basicProperties: null,
-                                     body: body);
+                //// حوّل الرسالة لـ byte array
+                //var body = System.Text.Encoding.UTF8.GetBytes(message);
+
+                //// ابعت الرسالة
+                //channel.BasicPublish(exchange: "",
+                //                     routingKey: queueName,
+                //                     basicProperties: null,
+                //                     body: body); 
+                #endregion
 
                 Log.Information("RabbitMQ connection successful! Host: {Host}", rabbitFactory.VirtualHost);
             }
