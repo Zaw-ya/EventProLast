@@ -896,8 +896,8 @@ namespace EventPro.Web.Controllers
 
             // Validate guest phone numbers exist
             if (!CheckGuestsNumbersExist(guests))
-                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
-
+                return Json(new { success = false, message = "يجب وجود رقم احتياطي واساسي لكل ضيف من الضيوف" });
+            
             // Validate invitation cards exist in blob storage
             if (!await CheckGuestsCardsExistAsync(guests, _event))
                 return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
@@ -955,8 +955,7 @@ namespace EventPro.Web.Controllers
 
             try
             {
-                var sendingProvider = await _WhatsappSendingProvider
-                    .SelectConfiguredSendingProviderAsync(_event);
+                var sendingProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await sendingProvider.SendCardMessagesAsync(guests, _event);
             }
             catch
@@ -2409,26 +2408,29 @@ namespace EventPro.Web.Controllers
         /// <returns>True if all cards exist, false otherwise</returns>
         private async Task<bool> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
         {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            #region Old checking code with blob storage
+            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-            // Check if event card folder exists
-            if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
-            {
-                return false;
-            }
+            //// Check if event card folder exists
+            //if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
+            //{
+            //    return false;
+            //}
 
-            // Validate each guest has a card file
-            foreach (var guest in guests)
-            {
-                string imagePath = cardPreview + "/" + guest.EventId + "/" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
-                if (!await _blobStorage.FileExistsAsync(environment + imagePath))
-                {
-                    return false;
-                }
-            }
+            //// Validate each guest has a card file
+            //foreach (var guest in guests)
+            //{
+            //    string imagePath = cardPreview + "/" + guest.EventId + "/" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+            //    if (!await _blobStorage.FileExistsAsync(environment + imagePath))
+            //    {
+            //        return false;
+            //    }
+            //}
 
             return true;
+            #endregion
+
         }
 
         /// <summary>
@@ -2436,7 +2438,7 @@ namespace EventPro.Web.Controllers
         /// Checks both PrimaryContactNo and SecondaryContactNo are not empty
         /// </summary>
         /// <param name="guests">List of guests to validate</param>
-        /// <returns>True if all guests have valid phone numbers, false otherwise</returns>
+        /// <returns>True if all guests have valid phone numbers(primary,secondary), false otherwise</returns>
         private bool CheckGuestsNumbersExist(List<Guest> guests)
         {
             if (guests.Any(e => string.IsNullOrEmpty(e.PrimaryContactNo) ||
