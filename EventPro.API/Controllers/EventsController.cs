@@ -22,11 +22,17 @@ using System.Threading.Tasks;
 
 namespace EventPro.API.Controllers
 {
+    /// <summary>
+    /// Controller responsible for managing events, gatekeeper operations, and location data.
+    /// Handles event retrieval, calendar display, reservations, check-in/out, and geographic lookups.
+    /// </summary>
     [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class EventsController : ControllerBase
     {
+        #region Private Fields
+
         private readonly IConfiguration _configuration;
         private readonly EventProContext db;
         private readonly ILogger<EventsController> _logger;
@@ -34,7 +40,18 @@ namespace EventPro.API.Controllers
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
         private readonly IBlobStorage _blobStorage;
 
+        #endregion
 
+        #region Constructor
+
+        /// <summary>
+        /// Initializes a new instance of the EventsController.
+        /// </summary>
+        /// <param name="configuration">Application configuration settings</param>
+        /// <param name="logger">Logger for recording controller activities</param>
+        /// <param name="watiService">WATI WhatsApp service integration</param>
+        /// <param name="whatsappSendingProvider">WhatsApp messaging provider service</param>
+        /// <param name="blobStorage">Azure Blob storage service for file uploads</param>
         public EventsController(IConfiguration configuration, ILogger<EventsController> logger, IWatiService watiService,
             IWhatsappSendingProviderService whatsappSendingProvider,
             IBlobStorage blobStorage)
@@ -47,6 +64,15 @@ namespace EventPro.API.Controllers
             _blobStorage = blobStorage;
         }
 
+        #endregion
+
+        #region Event Retrieval Endpoints
+
+        /// <summary>
+        /// Gets paginated list of events with statistics for the authenticated gatekeeper.
+        /// Uses stored procedure Proc_GetEventsStatsByGK for optimized data retrieval.
+        /// </summary>
+        /// <returns>Paginated list of events with statistics</returns>
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -90,6 +116,12 @@ namespace EventPro.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets available events for the calendar view.
+        /// Returns events that are not assigned to any gatekeeper, are in the user's city,
+        /// are marked to show on calendar, and are upcoming (within the last day).
+        /// </summary>
+        /// <returns>List of free events available for reservation</returns>
         [HttpGet("Calender")]
         public async Task<IActionResult> Calender()
         {
@@ -126,6 +158,17 @@ namespace EventPro.API.Controllers
             return Ok(freeEvents);
         }
 
+        #endregion
+
+        #region Event Reservation Endpoints
+
+        /// <summary>
+        /// Reserves an event for the authenticated gatekeeper.
+        /// Validates that the event is not already assigned and the gatekeeper
+        /// is not already assigned to another event on the same date.
+        /// </summary>
+        /// <param name="eventId">The ID of the event to reserve</param>
+        /// <returns>The created EventGatekeeperMapping record</returns>
         [HttpGet("ReserveEvent")]
         public async Task<IActionResult> ReserveEvent(int eventId)
         {
@@ -167,22 +210,100 @@ namespace EventPro.API.Controllers
             return Ok(egm);
         }
 
-        //[AllowAnonymous]
-        [HttpGet("TestTable")]
-        public async Task<IActionResult> TestNewTable()
+        /// <summary>
+        /// Unassigns the authenticated gatekeeper from an event.
+        /// Records the unassignment in the report table and sends WhatsApp notification.
+        /// Only gatekeepers can unassign themselves from events.
+        /// </summary>
+        /// <param name="eventId">The ID of the event to unassign from</param>
+        /// <returns>Success status</returns>
+        [HttpGet("UnassignFromEvent")]
+        public async Task<IActionResult> UnassignFromEvent(int eventId)
         {
-            await db.GKEventHistory.AddAsync(new GKEventHistory
+            UserToken userToken = new UserToken();
+            var headers = Request.Headers;
+            var evntId = eventId;
+
+            try
             {
-                CheckType = "In",
-                Event_Id = 2,
-                GK_Id = 3,
-                ImagePath = "",
-                LogDT = DateTime.Now,
-            });
-            await db.SaveChangesAsync();
-            return Ok();
+                var check = UserFromHeaders.BadToken(Request.Headers, userToken, _configuration);
+                if (check != null)
+                {
+                    return check;
+                }
+                if (userToken.Role != "Gatekeeper")
+                {
+                    return BadRequest("Only Gatekeeper is allowed");
+                }
+
+                var userId = userToken.UserId;
+
+                EventGatekeeperMapping egm = await db.EventGatekeeperMapping
+                    .Where(p => p.GatekeeperId == userId && p.EventId == evntId)
+                    .FirstOrDefaultAsync();
+
+                if (egm == null) return BadRequest(new { success = false });
+
+                db.EventGatekeeperMapping.Remove(egm);
+                await db.SaveChangesAsync();
+
+
+                var deletedRecord = new ReportDeletedEventsByGk
+                {
+                    EventId = eventId,
+                    GatekeeperId = userId,
+                    UnassignedOn = DateTime.UtcNow,
+                    UnassignedById = userId,
+                    UnassignedByName = userToken.UserName
+                };
+
+                await db.ReportDeletedEventsByGk.AddAsync(deletedRecord);
+                await db.SaveChangesAsync();
+
+                try
+                {
+                    var history = new GKEventHistory
+                    {
+                        CheckType = string.Empty,
+                        Event_Id = eventId,
+                        GK_Id = userToken.UserId,
+                        LogDT = DateTime.Now,
+                        longitude = string.Empty,
+                        latitude = string.Empty
+                    };
+
+                    await _whatsappSendingProvider.SelectTwilioSendingProvider()
+                             .GetGateKeeperMessageTemplates()
+                             .SendGateKeeperUnassignEventMessage(history);
+                }
+                catch (Exception ex)
+                {
+
+                }
+
+                return Ok();
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest();
+            }
+
         }
 
+        #endregion
+
+        #region Gatekeeper Check-In/Check-Out Endpoints
+
+        /// <summary>
+        /// Records a gatekeeper check-in for an event.
+        /// Requires an image upload for verification. Captures GPS coordinates from headers.
+        /// Sends WhatsApp notification upon successful check-in.
+        /// Only gatekeepers can perform check-in operations.
+        /// </summary>
+        /// <param name="file">Image file for check-in verification</param>
+        /// <param name="eventId">The ID of the event to check into</param>
+        /// <returns>The created GKEventHistory record</returns>
         [HttpPost("CheckIn")]
         public async Task<IActionResult> CheckIn(IFormFile? file, int eventId)
         {
@@ -249,6 +370,14 @@ namespace EventPro.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Records a gatekeeper check-out from an event.
+        /// Validates that the gatekeeper has previously checked in.
+        /// Captures GPS coordinates from headers and sends WhatsApp notification.
+        /// Only gatekeepers can perform check-out operations.
+        /// </summary>
+        /// <param name="eventId">The ID of the event to check out from</param>
+        /// <returns>The created GKEventHistory record</returns>
         [HttpGet("CheckOut")]
         public async Task<IActionResult> CheckOut(int eventId)
         {
@@ -311,6 +440,64 @@ namespace EventPro.API.Controllers
             }
         }
 
+        #endregion
+
+        #region Location & Geographic Endpoints
+
+        /// <summary>
+        /// Gets all available event locations.
+        /// Returns formatted location data excluding 'other' locations.
+        /// This endpoint is publicly accessible without authentication.
+        /// </summary>
+        /// <returns>List of formatted event locations</returns>
+        [AllowAnonymous]
+        [HttpGet("Locations")]
+        public async Task<IActionResult> Locations()
+        {
+            return Ok(await db.EventLocations.Where(l => l.City.ToLower() != "other").Select(l => l.GetLocationFormatted()).ToListAsync());
+        }
+
+        /// <summary>
+        /// Gets all available countries.
+        /// This endpoint is publicly accessible without authentication.
+        /// </summary>
+        /// <returns>List of countries with ID and name</returns>
+        [AllowAnonymous]
+        [HttpGet("GetCountries")]
+        public async Task<IActionResult> GetCountries()
+        {
+            var countries = await db.Country
+                        .Select(c => new CountryDto { id = c.Id, CountryName = c.CountryName })
+                        .ToListAsync();
+            return Ok(countries);
+        }
+
+        /// <summary>
+        /// Gets all cities for a specific country.
+        /// This endpoint is publicly accessible without authentication.
+        /// </summary>
+        /// <param name="countryId">The ID of the country to get cities for</param>
+        /// <returns>List of cities with ID and name</returns>
+        [AllowAnonymous]
+        [HttpGet("GetCities/{countryId:int}")]
+        public async Task<IActionResult> GetCities(int countryId)
+        {
+            var cities = await db.City.Where(c => c.CountryId == countryId)
+                  .Select(c => new CityDto() { id = c.Id, CityName = c.CityName }).ToListAsync();
+            return Ok(cities);
+        }
+
+        #endregion
+
+        #region Private Helper Methods
+
+        /// <summary>
+        /// Builds WhatsApp message body for check-in/check-out notifications.
+        /// Creates a PinacleBody object with gatekeeper and event details.
+        /// </summary>
+        /// <param name="history">The GKEventHistory record containing check details</param>
+        /// <param name="template">The WhatsApp template ID to use</param>
+        /// <returns>Configured PinacleBody for WhatsApp API</returns>
         private async Task<PinacleBody> SendCheck(GKEventHistory history, string template)
         {
             var gkUser = await db.Users.Where(gk => gk.UserId == history.GK_Id).FirstOrDefaultAsync();
@@ -342,32 +529,12 @@ namespace EventPro.API.Controllers
             return ikart;
         }
 
-        [AllowAnonymous]
-        [HttpGet("Locations")]
-        public async Task<IActionResult> Locations()
-        {
-            return Ok(await db.EventLocations.Where(l => l.City.ToLower() != "other").Select(l => l.GetLocationFormatted()).ToListAsync());
-        }
-
-        [AllowAnonymous]
-        [HttpGet("GetCountries")]
-        public async Task<IActionResult> GetCountries()
-        {
-            var countries = await db.Country
-                        .Select(c => new CountryDto { id = c.Id, CountryName = c.CountryName })
-                        .ToListAsync();
-            return Ok(countries);
-        }
-
-        [AllowAnonymous]
-        [HttpGet("GetCities/{countryId:int}")]
-        public async Task<IActionResult> GetCities(int countryId)
-        {
-            var cities = await db.City.Where(c => c.CountryId == countryId)
-                  .Select(c => new CityDto() { id = c.Id, CityName = c.CityName }).ToListAsync();
-            return Ok(cities);
-        }
-
+        /// <summary>
+        /// Builds WhatsApp media message body for sending images.
+        /// Creates a PinacleMediaBody object for image attachments.
+        /// </summary>
+        /// <param name="imgUrl">The URL of the image to send</param>
+        /// <returns>Configured PinacleMediaBody for WhatsApp API</returns>
         private async Task<PinacleMediaBody> SendImage(string imgUrl)
         {
             string _fromNo = "966582991745";
@@ -388,78 +555,31 @@ namespace EventPro.API.Controllers
             return ikart;
         }
 
-        [HttpGet("UnassignFromEvent")]
-        public async Task<IActionResult> UnassignFromEvent(int eventId)
+        #endregion
+
+        #region Test/Debug Endpoints
+
+        /// <summary>
+        /// Test endpoint for verifying GKEventHistory table operations.
+        /// Adds a sample record to the database for testing purposes.
+        /// </summary>
+        /// <returns>Success status</returns>
+        //[AllowAnonymous]
+        [HttpGet("TestTable")]
+        public async Task<IActionResult> TestNewTable()
         {
-            UserToken userToken = new UserToken();
-            var headers = Request.Headers;
-            var evntId = eventId;
-
-            try
+            await db.GKEventHistory.AddAsync(new GKEventHistory
             {
-                var check = UserFromHeaders.BadToken(Request.Headers, userToken, _configuration);
-                if (check != null)
-                {
-                    return check;
-                }
-                if (userToken.Role != "Gatekeeper")
-                {
-                    return BadRequest("Only Gatekeeper is allowed");
-                }
-
-                var userId = userToken.UserId;
-
-                EventGatekeeperMapping egm = await db.EventGatekeeperMapping
-                    .Where(p => p.GatekeeperId == userId && p.EventId == evntId)
-                    .FirstOrDefaultAsync();
-
-                if (egm == null) return BadRequest(new { success = false });
-
-                db.EventGatekeeperMapping.Remove(egm);
-                await db.SaveChangesAsync();
-
-
-                var deletedRecord = new ReportDeletedEventsByGk
-                {
-                    EventId = eventId,
-                    GatekeeperId = userId,
-                    UnassignedOn = DateTime.UtcNow,  
-                    UnassignedById = userId,       
-                    UnassignedByName = userToken.UserName 
-                };
-
-                await db.ReportDeletedEventsByGk.AddAsync(deletedRecord);
-                await db.SaveChangesAsync();
-
-                try
-                {
-                    var history = new GKEventHistory
-                    {
-                        CheckType = string.Empty,
-                        Event_Id = eventId,
-                        GK_Id = userToken.UserId,
-                        LogDT = DateTime.Now,
-                        longitude = string.Empty,
-                        latitude = string.Empty
-                    };
-
-                    await _whatsappSendingProvider.SelectTwilioSendingProvider()
-                             .GetGateKeeperMessageTemplates()
-                             .SendGateKeeperUnassignEventMessage(history);
-                }
-                catch (Exception ex)
-                {
-
-                }
-
-                return Ok();
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest();
-            }
-
+                CheckType = "In",
+                Event_Id = 2,
+                GK_Id = 3,
+                ImagePath = "",
+                LogDT = DateTime.Now,
+            });
+            await db.SaveChangesAsync();
+            return Ok();
         }
+
+        #endregion
     }
 }

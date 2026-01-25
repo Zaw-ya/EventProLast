@@ -443,7 +443,7 @@
                         }
 
                     } else {
-                        Swal.fire(` !??? ??? ?? `);
+                        Swal.fire(`حدث خطأ ما!`);
                     }
 
                 });
@@ -495,7 +495,7 @@
                     if (data.success) {
                         Swal.fire(`تم تحميل الضيوف بنجاح`);
                     } else {
-                        Swal.fire(` !??? ??? ?? `);
+                        Swal.fire(`حدث خطأ ما!`);
                     }
                     $('#GuestsTable').DataTable().ajax.reload();
                 }              
@@ -685,6 +685,8 @@
         const loaderText2 = document.getElementById('loaderText');
         const darkoverlay2 = document.getElementById('dark-overlay');
 
+
+
         function reloading() {
             console.log("working");
             $('#GuestsTable').DataTable().ajax.reload(null, false);
@@ -727,19 +729,20 @@
             return data.allStatus;
         }
 
+
         async function SendFailedMsgsToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
+                title: "هل تريد إرسال الرسائل الفاشلة لجميع الضيوف؟",
                 text: "",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ????? ?????? ";
+                    loaderText2.textContent = "جاري إرسال الرسائل الفاشلة...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -750,15 +753,15 @@
                         var data = await fetch(`/DefaultWhatsapp/sendMessagesToAll/${eventId}`);
                         var result = await data.json();
                         if (!result.success) {
-                            Swal.fire("! ??? ??? ?? ");
+                            Swal.fire("حدث خطأ ما!");
                         }
                         else {
-                            Swal.fire("??? ????? ???????");
+                            Swal.fire("تم الإرسال بنجاح");
                         }
                     }
                     catch
                     {
-                        Swal.fire("! ??? ??? ?? ");
+                        Swal.fire("حدث خطأ ما!");
                     }
                     loader2.hidden = true;
                     darkoverlay2.hidden = true;
@@ -771,17 +774,17 @@
 
         async function SendConfirmationToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ?????? ? ???????? ?",
-                text: "??? ??? ????? ??????? ?????? ????? ?? ???? ??? ????? ????? ?????? ? ???????? ?? ??? ",
+                title: "هل تريد إرسال رسائل التأكيد والدعوات؟",
+                text: "سيتم إرسال رسائل التأكيد لجميع الضيوف الذين لم يتم إرسال رسالة تأكيد لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ????? ?????? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التأكيد...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -791,7 +794,7 @@
                     var data = await fetch(`/admin/SendToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -816,7 +819,7 @@
         }
 
         async function SendFailedImgsToAll(eventId) {
-            loaderText2.textContent = "... ???? ????? ???????  ";
+            loaderText2.textContent = "جاري إرسال البطاقات...";
             darkoverlay2.hidden = false;
             loader2.hidden = false;
             var remainingMessages = 0;
@@ -830,16 +833,16 @@
                 var data = await fetch(`/DefaultWhatsapp/sendImagesToAll/${eventId}`);
                 var result = await data.json();
                 if (!result.success) {
-                    Swal.fire("! ??? ??? ?? ");
+                    Swal.fire("حدث خطأ ما!");
                 }
                 else {
-                    Swal.fire("??? ????? ???????");
+                    Swal.fire("تم الإرسال بنجاح");
                 }
                 console.log(data);
             }
             catch
             {
-                Swal.fire("! ??? ??? ?? ");
+                Swal.fire("حدث خطأ ما!");
             }
             loader2.hidden = true;
             darkoverlay2.hidden = true;
@@ -849,17 +852,17 @@
 
         async function SendPushToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ?????? ?",
-                text: "??? ??? ????? ??????? ?????? ????? ?? ????? ????? ?????? ?? ???",
+                title: "هل تريد إرسال البطاقات؟",
+                text: "سيتم إرسال البطاقات لجميع الضيوف الذين لم يتم إرسال بطاقة لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ???????  ";
+                    loaderText2.textContent = "جاري إرسال البطاقات...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -869,7 +872,7 @@
                     var data = await fetch(`/admin/SendCardToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -894,17 +897,17 @@
 
         async function SendEventLocationToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ???? ???????? ?",
-                text: "??? ??? ????? ????? ???? ???????? ?????? ????? ?? ????? ????? ???? ???????? ?? ???",
+                title: "هل تريد إرسال موقع الفعالية؟",
+                text: "سيتم إرسال موقع الفعالية لجميع الضيوف الذين لم يتم إرسال الموقع لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ???? ???????? ";
+                    loaderText2.textContent = "جاري إرسال موقع الفعالية...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -914,7 +917,7 @@
                     var data = await fetch(`/admin/SendEventLocationToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -938,17 +941,17 @@
 
         async function SendReminderMessagesToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ??? ?????? ?",
-                text: "??? ??? ????? ????? ??????? ?????? ????? ?? ????? ????? ??????? ?? ??? ",
+                title: "هل تريد إرسال رسائل التذكير لجميع الضيوف؟",
+                text: "سيتم إرسال رسائل التذكير لجميع الضيوف الذين لم يتم إرسال تذكير لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ???? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التذكير...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -958,7 +961,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -982,17 +985,17 @@
 
         async function SendReminderMessagesToOnlyAccepted(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ?????? ???????? ??? ?",
-                text: "??? ??? ????? ????? ??????? ?????? ???????? ????? ?? ????? ????? ????? ?? ???",
+                title: "هل تريد إرسال رسائل التذكير للضيوف الموافقين فقط؟",
+                text: "سيتم إرسال رسائل التذكير للضيوف الموافقين فقط",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ???????? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التذكير للموافقين...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1002,7 +1005,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToOnlyAccepted/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1026,17 +1029,17 @@
 
         async function SendReminderMessagesToOnlyReceived(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ?????? ????? ?????? ????? ????? ?????? ?? ?????? ?",
-                text: " ??? ??? ????? ????? ??????? ?????? ????? ? ????? ????? ????? ?????? ?? ?????? ? ?? ????? ????? ??????? ?? ???",
+                title: "هل تريد إرسال رسائل التذكير للضيوف الذين استلموا الرسالة فقط؟",
+                text: "سيتم إرسال رسائل التذكير للضيوف الذين استلموا الرسالة",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ??????? ?????? ?????? ??? ?? ??? ";
+                    loaderText2.textContent = "جاري إرسال التذكير للمستلمين...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1046,7 +1049,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToOnlyReceived/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1061,17 +1064,17 @@
 
         async function SendReminderMessagesToOnlyNoAnswer(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ????? ?????? ?? ?",
-                text: "??? ??? ????? ????? ??????? ????? ?????? ?? ? ?? ????? ????? ????? ?? ???",
+                title: "هل تريد إرسال رسائل التذكير للضيوف بدون رد؟",
+                text: "سيتم إرسال رسائل التذكير للضيوف الذين لم يردوا بعد",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ?? ?????? ?? ";
+                    loaderText2.textContent = "جاري إرسال التذكير لمن لم يردوا...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1081,7 +1084,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToOnlyNoAnswer/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1105,17 +1108,17 @@
 
         async function SendCongratulationMessageToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ?",
-                text: "??? ??? ????? ????? ??????? ?????? ????? ????? ???????? ? ?? ????? ????? ????? ?? ???",
+                title: "هل تريد إرسال رسائل التهنئة؟",
+                text: "سيتم إرسال رسائل التهنئة لجميع الضيوف الموافقين الذين لم يتم إرسال تهنئة لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التهنئة...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1125,7 +1128,7 @@
                     var data = await fetch(`/admin/SendCongratulationMessageToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1185,14 +1188,14 @@
         async function DeleteAllGuests(eventId) {
             console.log("working SendConfirmation");
             Swal.fire({
-                title: "?? ???? ??? ???? ???? ???????? ?",
-                text: "!?? ?????? ??????? ?????? ??? ?????",
+                title: "هل تريد حذف جميع الضيوف؟",
+                text: "لن تستطيع استرجاع البيانات بعد الحذف!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، احذف الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     processingMessage.hidden = false;
@@ -1205,14 +1208,14 @@
 
         async function DeleteAllGuestsCards(eventId) {
             Swal.fire({
-                title: "?? ???? ??? ???? ?????? ???? ???????? ?",
-                text: "!??? ??? ??? ???? ?????? ???????? , ?? ???? ????? ????? ?? ??? ????? ??????? ?? ???? ???????",
+                title: "هل تريد حذف جميع بطاقات الضيوف؟",
+                text: "سيتم حذف جميع البطاقات، يمكنك إعادة إنشائها لاحقاً",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، احذف الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     processingMessage.hidden = false;
@@ -1225,14 +1228,14 @@
 
         async function ResetAllGuestsStatus(eventId) {
             Swal.fire({
-                title: "?? ???? ??? ???? ?????? ?? ??????? ???????? ?",
-                text: "!?? ?????? ??????? ?????? ??????? ??????? ??? ?????",
+                title: "هل تريد إعادة تعيين حالة جميع الضيوف؟",
+                text: "سيتم إعادة تعيين جميع الحالات!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أعد التعيين"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1247,14 +1250,14 @@
 
         async function AllowSendConfirmationMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ????? ?????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ?????? ?? ??????? ???????",
+                title: "هل تريد السماح بإرسال رسالة التأكيد مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال رسائل التأكيد لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1268,14 +1271,14 @@
 
         async function AllowSendCardMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ??????? ???????",
+                title: "هل تريد السماح بإرسال البطاقة مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال البطاقات لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1289,14 +1292,14 @@
 
         async function AllowSendEventLocationMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ???? ???????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ???? ???????? ???????",
+                title: "هل تريد السماح بإرسال موقع الفعالية مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال موقع الفعالية لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1311,14 +1314,14 @@
 
         async function AllowSendReminderMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ??????? ???????",
+                title: "هل تريد السماح بإرسال رسالة التذكير مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال رسائل التذكير لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1333,14 +1336,14 @@
 
         async function AllowSendCongratulationMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ??????? ???????",
+                title: "هل تريد السماح بإرسال رسالة التهنئة مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال رسائل التهنئة لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1351,13 +1354,15 @@
                 }
             });
         }
-        async function SendReminderMsg(guestId) {
+
+        async function SendReminderMsg(guestId) { 
             sendingMessage.hidden = false;
            var data = await fetch(`/admin/SendReminderMessage/${guestId}`);
             var result = await data.json();
-            if (!result.success) { 
+            if (!result.success) 
+            { 
                 Swal.fire(result.message);
-        }
+             }
             sendingMessage.hidden = true;
             reloading();
         }
@@ -1401,7 +1406,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "????? ????? ?? ????? ?????? ??? ??????? (??????? ? ?????? ? ???? ????????) ? ?????? ?? ???? ????????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات الرسائل (التأكيد، البطاقة، موقع الفعالية) والتأكد من رقم الهاتف"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1416,7 +1421,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "????? ????? ?? ????? ?????? ?????? ?? (?? ??????) ? ?????? ?? ???? ????????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات البطاقة (صورة البطاقة) والتأكد من رقم الهاتف"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1431,7 +1436,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "(????? ????? ?? ????? ?????? ?????? ?? (????? ???????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات رسالة التذكير"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1446,7 +1451,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "(????? ????? ?? ????? ?????? ?????? ?? (????? ???????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات رسالة التذكير"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1540,7 +1545,7 @@
 
 
         async function GetCardsData() {
-            loaderText.textContent = "... ???? ????? ??????? ";
+            loaderText.textContent = "جاري تحديث البطاقات...";
             console.log("working SendConfirmation");
             var loading = await fetch(`/admin/GetCurrentRefreshUpdates/${@ViewBag.EventId}`);
             console.log(loading);
