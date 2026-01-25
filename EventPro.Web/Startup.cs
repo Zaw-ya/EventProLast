@@ -255,8 +255,14 @@ namespace EventPro.Web
             services.AddSingleton<IWebHookBulkMessagingQueueConsumerService, WebHookBulkMessagingQueueConsumerService>();
             services.AddSingleton<IWebHookSingleMessagingQueueProducerService, WebHookSingleMessagingQueueProducerService>();
             services.AddSingleton<IWebHookSingleMessagingQueueConsumerService, WebHookSingleMessagingQueueConsumerService>();
+            services.AddSingleton<IMessageSendingBulkQueueProducerService, MessageSendingBulkQueueProducerService>();
+            services.AddSingleton<IMessageSendingBulkQueueConsumerService, MessageSendingBulkQueueConsumerService>();
+            services.AddSingleton<IMessageSendingSingleQueueProducerService, MessageSendingSingleQueueProducerService>();
+            services.AddSingleton<IMessageSendingSingleQueueConsumerService, MessageSendingSingleQueueConsumerService>();
             services.AddHostedService<BulkMessagingConsumerBackgroundService>();
             services.AddHostedService<SingleMessagingConsumerBackgroundService>();
+            services.AddHostedService<MessageSendingBulkConsumerBackgroundService>();
+            services.AddHostedService<MessageSendingSingleConsumerBackgroundService>();
             services.AddSingleton(
 
                 new BlobServiceClient(Configuration.GetSection("Database")["BlobStorage"])
