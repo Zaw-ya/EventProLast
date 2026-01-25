@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using EventPro.Business.MemoryCacheStore.Implementaiion;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.RabbitMQMessaging.Interface;
@@ -9,11 +6,17 @@ using EventPro.Business.WhatsAppMessagesWebhook.Implementation;
 using EventPro.Business.WhatsAppMessagesWebhook.Interface;
 using EventPro.DAL.Models;
 using EventPro.Web.Services;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 using Newtonsoft.Json;
+
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+
 using Serilog;
-using System.Configuration;
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
 {
@@ -119,7 +122,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// </remarks>
         public WebHookSingleMessagingQueueConsumerService(IConnectionFactory connectionFactory,
             IConfiguration configuration, IMemoryCacheStoreService memoryCacheStoreService,
-            IServiceScopeFactory serviceScopeFactory, UrlProtector urlProtector,DistributedLockHelper distributedLockHelper,
+            IServiceScopeFactory serviceScopeFactory, UrlProtector urlProtector, DistributedLockHelper distributedLockHelper,
             IDbContextFactory<EventProContext> dbFactory)
         {
             _urlProtector = urlProtector;
@@ -140,7 +143,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
 
         #endregion
 
-        #region Public Methods
+            #region Public Methods
 
         /// <summary>
         /// Starts consuming messages from the single messaging webhook queue.
@@ -264,7 +267,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
 
             // Start consuming messages from the queue
             // autoAck: false - we manually acknowledge after processing
-            channel.BasicConsume(queue: QueueName , autoAck: false, consumer: consumer);
+            channel.BasicConsume(queue: QueueName, autoAck: false, consumer: consumer);
 
             #endregion
 

@@ -111,6 +111,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 }
                 else
                 {
+                    // 
                     templateId = profileSettings?.ConfirmArabicMaleWithHeaderImageAndWithoutGuestNameWithLink;
                 }
             }
