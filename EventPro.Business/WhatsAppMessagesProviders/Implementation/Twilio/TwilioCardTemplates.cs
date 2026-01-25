@@ -149,6 +149,12 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                                  .Where(e => e.Name == events.choosenSendingWhatsappProfile)
                                  .AsNoTracking()
                                  .FirstOrDefaultAsync();
+            // Gharabawy : فرضا العميل كان عاوز حاجه علي مزاجه الي بيحصل اني بضيف التيمبلت الي عاوز يبعتها دي
+            // ف تويليو ثم بروح اضيفها تبع الايفينت مش تبع البروفايل سيتينج
+
+            // علي عكس مثلا الحاجات الي الاستنادرد
+            //             var templateId = profileSettings?.ArabicCardWithoutGuestName;
+            // كان بيروح يجيبها من البروفايل سيتينجز 
             var templateId = events.CustomCardInvitationTemplateName;
             int counter = SetSendingCounter(guests, events);
 
