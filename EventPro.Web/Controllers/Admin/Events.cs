@@ -496,7 +496,11 @@ namespace EventPro.Web.Controllers
             City city = await db.City.Where(e => e.Id == events.CityId)
                 .Include(e => e.Country)
                 .FirstOrDefaultAsync();
-            if (city.Country.CountryName.Contains("الكويت"))
+            if (city.Country.CountryName.Contains("مصر") || city.Country.CountryName.Contains("Egypt"))
+            {
+                events.choosenSendingCountryNumber = "EGYPT";
+            }
+            else if (city.Country.CountryName.Contains("الكويت"))
             {
                 events.choosenSendingCountryNumber = "KUWAIT";
             }
@@ -2276,7 +2280,7 @@ namespace EventPro.Web.Controllers
             ViewBag.choosenSendingCountryNumber = new SelectList(
       new List<SelectListItem>
       {
-
+                                                new SelectListItem { Text = "EGYPT", Value = "EGYPT"},
                                                 new SelectListItem { Text = "SAUDI", Value = "SAUDI"},
                                                 new SelectListItem { Text = "KUWAIT", Value = "KUWAIT"},
                                                 new SelectListItem { Text = "BAHRAIN", Value = "BAHRAIN"},

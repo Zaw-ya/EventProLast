@@ -2531,6 +2531,7 @@ namespace EventPro.Services.TwilioService
                 string fromWhatsAppNumberSaudiChoosen = string.Empty;
                 string fromWhatsAppNumberKuwaitChoosen = string.Empty;
                 string FromWhatsAppNumberBahrainChoosen = string.Empty;
+                string fromWhatsAppNumberEgyptChoosen = string.Empty;
                 string ChoosenSendingNumber = string.Empty;
                 var accountSid = choosenSendingWhatsappProfileSettingsConfig["AccountSid"];
                 var authToken = choosenSendingWhatsappProfileSettingsConfig["AuthToken"];
@@ -2540,6 +2541,8 @@ namespace EventPro.Services.TwilioService
                 var fromWhatsAppNumberKuwait2 = choosenSendingWhatsappProfileSettingsConfig["FromWhatsAppNumberKuwait2"];
                 var FromWhatsAppNumberBahrain1 = choosenSendingWhatsappProfileSettingsConfig["FromWhatsAppNumberBahrain1"];
                 var FromWhatsAppNumberBahrain2 = choosenSendingWhatsappProfileSettingsConfig["FromWhatsAppNumberBahrain2"];
+                var fromWhatsAppNumberEgypt1 = choosenSendingWhatsappProfileSettingsConfig["FromWhatsAppNumberEgypt1"];
+                var fromWhatsAppNumberEgypt2 = choosenSendingWhatsappProfileSettingsConfig["FromWhatsAppNumberEgypt2"];
                 var messagingServiceSid = choosenSendingWhatsappProfileSettingsConfig["MessagingServiceSid"];
                 var statusCallbackUrl = choosenSendingWhatsappProfileSettingsConfig["StatusCallbackUrl"];
 
@@ -2548,12 +2551,14 @@ namespace EventPro.Services.TwilioService
                     fromWhatsAppNumberSaudiChoosen = fromWhatsAppNumberSaudi2;
                     fromWhatsAppNumberKuwaitChoosen = fromWhatsAppNumberKuwait2;
                     FromWhatsAppNumberBahrainChoosen = FromWhatsAppNumberBahrain2;
+                    fromWhatsAppNumberEgyptChoosen = fromWhatsAppNumberEgypt2;
                 }
                 else
                 {
                     fromWhatsAppNumberSaudiChoosen = fromWhatsAppNumberSaudi1;
                     fromWhatsAppNumberKuwaitChoosen = fromWhatsAppNumberKuwait1;
                     FromWhatsAppNumberBahrainChoosen = FromWhatsAppNumberBahrain1;
+                    fromWhatsAppNumberEgyptChoosen = fromWhatsAppNumberEgypt1;
                 }
 
                 if (choosenCountryNumber == "BAHRAIN")
@@ -2563,6 +2568,10 @@ namespace EventPro.Services.TwilioService
                 else if (choosenCountryNumber == "KUWAIT")
                 {
                     ChoosenSendingNumber = fromWhatsAppNumberKuwaitChoosen;
+                }
+                else if (choosenCountryNumber == "EGYPT")
+                {
+                    ChoosenSendingNumber = fromWhatsAppNumberEgyptChoosen;
                 }
                 else
                 {
