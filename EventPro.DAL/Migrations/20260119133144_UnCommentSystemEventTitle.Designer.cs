@@ -4,6 +4,7 @@ using EventPro.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventPro.DAL.Migrations
 {
     [DbContext(typeof(EventProContext))]
-    partial class EventProContextModelSnapshot : ModelSnapshot
+    [Migration("20260119133144_UnCommentSystemEventTitle")]
+    partial class UnCommentSystemEventTitle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1890,12 +1893,6 @@ namespace EventPro.DAL.Migrations
                     b.Property<string>("WhatsAppNumberBahrain2")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("WhatsAppNumberEgypt1")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WhatsAppNumberEgypt2")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("WhatsAppNumberKuwait1")
                         .HasColumnType("nvarchar(max)");
 
@@ -3454,25 +3451,6 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("int");
 
                     b.ToTable("vw_ConfirmationReport");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("FriendlyName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Xml")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DataProtectionKeys");
                 });
 
             modelBuilder.Entity("EventPro.DAL.Models.AuditLog", b =>
