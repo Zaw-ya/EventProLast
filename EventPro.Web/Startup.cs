@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Threading.Tasks;
 
 using Azure.Storage.Blobs;
 
@@ -114,13 +115,15 @@ namespace EventPro.Web
                 Log.Warning(ex, "Could not connect to Redis at {ConnectionString}. Using fallback providers.", redisConnectionString);
             }
 
+            services.AddDataProtection()
+                       .PersistKeysToDbContext<EventProContext>()
+                       .SetApplicationName("MyApp");
+
             if (redisConnected)
             {
                 services.AddSingleton<IConnectionMultiplexer>(redis);
                 services.AddSingleton<ITicketStore>(new RedisTicketStore(redisConnectionString));
-                services.AddDataProtection()
-                        .PersistKeysToFileSystem(new DirectoryInfo(@"c:\keys\"))
-                        .SetApplicationName("EventPro");
+               
 
                 services.AddSingleton<RedLockFactory>(sp =>
                     RedLockFactory.Create(new List<RedLockMultiplexer> { new RedLockMultiplexer(redis) }));
@@ -129,7 +132,7 @@ namespace EventPro.Web
             {
                 // Use In-Memory fallback
                 services.AddDistributedMemoryCache();
-                services.AddDataProtection().SetApplicationName("EventPro.cc");
+                //services.AddDataProtection().SetApplicationName("EventPro.cc");
 
                 // Dummy RedLockFactory to avoid DI errors
                 services.AddSingleton<RedLockFactory>(sp => null);
@@ -139,33 +142,43 @@ namespace EventPro.Web
             // Authentication
             // ------------------------------
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.Cookie.Name = ".MyApp.Auth";
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.None;
-                    options.LoginPath = "/Login";
-                    options.AccessDeniedPath = "/AccessDenied";
-                    options.ExpireTimeSpan = TimeSpan.FromHours(2);
-                    options.SlidingExpiration = true;
-                });
+                    .AddCookie(options =>
+                    {
+                        options.Cookie.Name = ".EventPro.Auth";
+                        options.Cookie.HttpOnly = true;
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                        options.Cookie.SameSite = SameSiteMode.None;
+                        options.LoginPath = "/Login";
+                        options.AccessDeniedPath = "/AccessDenied";
+                        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+                        options.SlidingExpiration = true;
 
-            services.PostConfigure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-            {
-                var sp = services.BuildServiceProvider();
-                var dataProtectionProvider = sp.GetRequiredService<IDataProtectionProvider>();
-                var ticketStore = sp.GetService<ITicketStore>();
+                        // If redis ticket found
+                        options.Events.OnSigningIn = context =>
+                        {
+                            var ticketStore = context.HttpContext.RequestServices.GetService<ITicketStore>();
+                            if (ticketStore != null)
+                                options.SessionStore = ticketStore;
 
-                if (ticketStore != null)
-                    options.SessionStore = ticketStore;
+                            return Task.CompletedTask;
+                        };
+                    });
 
-                options.TicketDataFormat = new SecureDataFormat<AuthenticationTicket>(
-                    new TicketSerializer(),
-                    dataProtectionProvider.CreateProtector(
-                        "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationMiddleware",
-                        CookieAuthenticationDefaults.AuthenticationScheme, "v2"));
-            });
+            //services.PostConfigure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            //{
+            //    var sp = services.BuildServiceProvider();
+            //    var dataProtectionProvider = sp.GetRequiredService<IDataProtectionProvider>();
+            //    var ticketStore = sp.GetService<ITicketStore>();
+
+            //    if (ticketStore != null)
+            //        options.SessionStore = ticketStore;
+
+            //    options.TicketDataFormat = new SecureDataFormat<AuthenticationTicket>(
+            //        new TicketSerializer(),
+            //        dataProtectionProvider.CreateProtector(
+            //            "Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationMiddleware",
+            //            CookieAuthenticationDefaults.AuthenticationScheme, "v2"));
+            //});
 
             // ------------------------------
             // Forward headers
