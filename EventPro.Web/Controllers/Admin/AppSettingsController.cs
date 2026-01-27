@@ -58,15 +58,39 @@ namespace EventPro.Web.Controllers.Admin
         [HttpPost]
         public async Task<IActionResult> Update(AppSettings appSettings)
         {
+            // Remove Id from validation since it might be 0 for new records
+            ModelState.Remove("Id");
+
             if (!ModelState.IsValid)
             {
-                return View(appSettings);
+                // Get all validation errors and return them
+                var errors = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}")
+                    .ToList();
+
+                var errorMessage = "الحقول المطلوبة:\n" + string.Join("\n", errors);
+                return Json(new { success = false, message = errorMessage });
             }
 
-            db.AppSettings.Update(appSettings);
-            await db.SaveChangesAsync();
-
-            return Json(new { success = true });
+            try
+            {
+                // Check if this is a new record or update
+                if (appSettings.Id == 0)
+                {
+                    await db.AppSettings.AddAsync(appSettings);
+                }
+                else
+                {
+                    db.AppSettings.Update(appSettings);
+                }
+                await db.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"حدث خطأ: {ex.Message}" });
+            }
         }
 
         #endregion
@@ -205,14 +229,19 @@ namespace EventPro.Web.Controllers.Admin
         /// <summary>
         /// POST: AppSettings/DefaultTemplates
         /// Updates an existing Twilio profile settings
+        /// Only validates essential fields: Name, AccountSid, AuthToken, MessagingServiceSid
         /// </summary>
         [AuthorizeRoles("Administrator")]
         [HttpPost]
         public async Task<IActionResult> DefaultTemplates(TwilioProfileSettings twilioProfileSettings)
         {
-            if (!ModelState.IsValid)
+            // Only validate essential Twilio credentials
+            if (string.IsNullOrWhiteSpace(twilioProfileSettings.Name) ||
+                string.IsNullOrWhiteSpace(twilioProfileSettings.AccountSid) ||
+                string.IsNullOrWhiteSpace(twilioProfileSettings.AuthToken) ||
+                string.IsNullOrWhiteSpace(twilioProfileSettings.MessagingServiceSid))
             {
-                return View(twilioProfileSettings);
+                return Json(new { success = false, message = "الرجاء التأكد من إدخال البيانات الأساسية (Name, Account SID, Auth Token, Messaging Service SID)" });
             }
 
             db.TwilioProfileSettings.Update(twilioProfileSettings);
@@ -224,15 +253,28 @@ namespace EventPro.Web.Controllers.Admin
         /// <summary>
         /// POST: AppSettings/CreateDefaultTemplates
         /// Creates a new Twilio profile in the database
-        /// Returns error message if model is invalid or save fails
+        /// Only validates essential fields: Name, AccountSid, AuthToken, MessagingServiceSid
         /// </summary>
         [AuthorizeRoles("Administrator")]
         [HttpPost]
         public async Task<IActionResult> CreateDefaultTemplates(TwilioProfileSettings twilioProfileSettings)
         {
-            if (!ModelState.IsValid)
+            // Only validate essential Twilio credentials
+            if (string.IsNullOrWhiteSpace(twilioProfileSettings.Name))
             {
-                return Json(new { success = false, message = "الرجاء التأكد من البيانات" });
+                return Json(new { success = false, message = "الرجاء إدخال اسم الملف الشخصي (Profile Name)" });
+            }
+            if (string.IsNullOrWhiteSpace(twilioProfileSettings.AccountSid))
+            {
+                return Json(new { success = false, message = "الرجاء إدخال Account SID" });
+            }
+            if (string.IsNullOrWhiteSpace(twilioProfileSettings.AuthToken))
+            {
+                return Json(new { success = false, message = "الرجاء إدخال Auth Token" });
+            }
+            if (string.IsNullOrWhiteSpace(twilioProfileSettings.MessagingServiceSid))
+            {
+                return Json(new { success = false, message = "الرجاء إدخال Messaging Service SID" });
             }
 
             twilioProfileSettings.Id = 0;

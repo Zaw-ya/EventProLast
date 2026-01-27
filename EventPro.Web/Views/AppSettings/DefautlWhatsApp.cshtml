@@ -24,8 +24,8 @@
     }
 </style>
 
-<div class="sendingMessage" hidden id="sendingMessage" syle="background-color: lightgreen">
-    <span>...???? ????? ???????</span>
+<div class="sendingMessage" hidden id="sendingMessage" style="background-color: lightgreen">
+    <span>...جاري معالجة طلبك</span>
 </div>
 
 <section>
@@ -157,10 +157,10 @@
             var posting = $.post("/AppSettings/DefautlWhatsApp", $("#SaveChanges").serialize());
             posting.done(function (data) {
                 if (data.success) {
-                        Swal.fire(` ?? ????? ????????? `);
+                        Swal.fire(` تم تحديث القالب بنجاح `);
 
                 } else {
-                    Swal.fire(data.message);
+                    Swal.fire(data.message || ` حدث خطأ ما! `);
                 }
 
             });

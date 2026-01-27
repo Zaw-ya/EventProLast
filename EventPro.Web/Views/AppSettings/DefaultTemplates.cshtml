@@ -208,6 +208,24 @@
                             </div>
 
                         </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Egypt Number 1</h4>
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberEgypt1" class="form-control text-center" />
+                            </div>
+
+                        </div>
+                            <div style="border-style:solid; border-width:1px; border-color:orangered; border-radius:5px" class="content p-3 mb-3 d-flex justify-content-between row">
+                            <div class="col-10">
+                                <h4>WhatsApp Egypt Number 2</h4>
+                            </div>
+                            <div class="col-2">
+                                <input asp-for="@Model.WhatsAppNumberEgypt2" class="form-control text-center" />
+                            </div>
+
+                        </div>
                         </div>
                         <div hidden id="confirmation" style="border-style:solid; border-width:2px; border-color:seagreen; border-radius:5px" class="content p-3 mb-3 ">
                             <h3 style="color:red">Confirmation Message Templates</h3>
@@ -1452,10 +1470,10 @@
             var posting = $.post("/AppSettings/DefaultTemplates", $("#SaveChanges").serialize());
             posting.done(function (data) {
                 if (data.success) {
-                    Swal.fire(` ?? ????? ????????? `);
+                    Swal.fire(` تم تحديث القالب بنجاح `);
 
                 } else {
-                    Swal.fire(` !??? ??? ?? `);
+                    Swal.fire(data.message || ` حدث خطأ ما! `);
                 }
             });
         }
@@ -1465,9 +1483,11 @@
             var posting = $.post("/AppSettings/CreateDefaultTemplates", $("#SaveChanges").serialize());
             posting.done(function (data) {
                 if (data.success) {
-                    Swal.fire(` ?? ????? ???? ???? `);
+                    Swal.fire(` تم إضافة قالب جديد بنجاح `).then(() => {
+                        window.location.href = '/AppSettings/DefaultTemplates';
+                    });
                 } else {
-                    Swal.fire(data.message);
+                    Swal.fire(data.message || ` حدث خطأ ما! `);
                 }
 
             });
@@ -1476,14 +1496,14 @@
         async function Delete() {
 
             Swal.fire({
-                title: "?? ???? ??? ?????? ?",
-                text: "!??? ??? ??? ?????? ? ???????? ??????",
+                title: "هل أنت متأكد من الحذف؟",
+                text: "لن تتمكن من استرجاع هذا القالب بعد الحذف!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، قم بالحذف"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     var posting = $.post("/AppSettings/DeleteDefaultTemplates", $("#SaveChanges").serialize());
