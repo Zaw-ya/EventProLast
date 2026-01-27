@@ -274,7 +274,6 @@ namespace EventPro.Web
             services.AddHostedService<SingleMessagingConsumerBackgroundService>();
             services.AddHostedService<MessageSendingBulkConsumerBackgroundService>();
             services.AddHostedService<MessageSendingSingleConsumerBackgroundService>();
-            services.AddSingleton(
 
             // ------------------------------
             // BlobStorage (try-catch)
