@@ -12,6 +12,9 @@ using EventPro.Services.UnitOFWorkService;
 using EventPro.Services.WatiService.Interface;
 using EventPro.Web.Common;
 using EventPro.Web.Filters;
+
+using Google.Apis.Logging;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +22,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +37,7 @@ namespace EventPro.Web.Controllers
         #region Properties and Dependencies
 
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AdminController> _logger;
         private readonly EventProContext db;
         private readonly IUnitOfWork _unitOfWork;
         private readonly int WAMessageLimit;
@@ -62,7 +68,7 @@ namespace EventPro.Web.Controllers
                                  IBlobStorage blobStorage,
                                  IHttpContextAccessor httpContextAccessor,
                                  IUnitOfWork unitOfWork,
-                                 ICloudinaryService cloudinaryService)
+                                 ICloudinaryService cloudinaryService, ILogger<AdminController> logger)
         {
             SetBreadcrum("Dashboard", "/");
             _configuration = configuration;
@@ -79,6 +85,7 @@ namespace EventPro.Web.Controllers
             _MemoryCacheStoreService = MemoryCacheStoreService;
             _blobStorage = blobStorage;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         #endregion
