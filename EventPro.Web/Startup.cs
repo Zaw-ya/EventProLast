@@ -267,6 +267,7 @@ namespace EventPro.Web
                 catch (Exception ex)
                 {
                     Log.Warning(ex, "BlobStorage is disabled due to invalid connection string");
+                    services.AddSingleton<IBlobStorage,DummyBlobStorage>();
                 }
             }
             else
