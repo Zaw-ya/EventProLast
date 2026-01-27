@@ -46,6 +46,8 @@ namespace EventPro.Web.Controllers
         /// Accessible by: Administrator, Operator, Agent, Supervisor, Accounting
         /// </summary>
         /// <returns>Events list view</returns>
+        /// important note:
+        // We didnt use getguest here because we need to show all events not specific to an operator
         [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
         public async Task<IActionResult> Events()
         {
