@@ -1,15 +1,3 @@
-using EventPro.DAL;
-using EventPro.DAL.Enum;
-using EventPro.DAL.Models;
-using EventPro.DAL.ViewModels;
-using EventPro.Web.Common;
-using EventPro.Web.Filters;
-using ExcelDataReader;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using QRCoder;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,6 +11,26 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
+using DocumentFormat.OpenXml.Spreadsheet;
+
+using EventPro.DAL;
+using EventPro.DAL.Enum;
+using EventPro.DAL.Models;
+using EventPro.DAL.ViewModels;
+using EventPro.Web.Common;
+using EventPro.Web.Filters;
+
+using ExcelDataReader;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+using QRCoder;
+
+using Serilog;
 namespace EventPro.Web.Controllers
 {
     public partial class AdminController : Controller
@@ -445,16 +453,39 @@ namespace EventPro.Web.Controllers
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> Guest(Guest guest)
         {
-            var AddedOrModified = 0;
+            var addedOrModified = 0;
+            var userId = HttpContext.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            _logger.LogInformation(
+                    "Guest POST started | GuestId={GuestId} | EventId={EventId} | UserId={UserId}",
+                    guest?.GuestId,
+                    guest?.EventId,
+                    userId
+                );
 
             try
             {
-                AddedOrModified = await AddOrModifyGuest(guest);
-                return Json(new { success = true, addedOrModified = AddedOrModified });
+                addedOrModified = await AddOrModifyGuest(guest);
+
+                _logger.LogInformation(
+                    "Guest POST succeeded | GuestId={GuestId} | Result={Result}",
+                    guest.GuestId,
+                    addedOrModified
+                );
+
+                return Json(new { success = true, addedOrModified });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false });
+                _logger.LogError(
+                    ex,
+                    "Guest POST failed | GuestId={GuestId} | EventId={EventId} | UserId={UserId}",
+                    guest?.GuestId,
+                    guest?.EventId,
+                    userId
+                );
+
+                return Json(new { success = false, message = "Unexpected error occurred" });
             }
         }
 
@@ -469,9 +500,24 @@ namespace EventPro.Web.Controllers
         /// <returns>1 if added, 2 if modified</returns>
         public async Task<int> AddOrModifyGuest(Guest guest)
         {
-            int guestId = 0;
-            int eventId = Convert.ToInt32(guest.EventId);
             var addedOrModified = 0;
+            var eventId = 0;
+            var guestId = 0;
+
+            // Guest come from form without EventId (data leakage), so we need to fetch it
+            var gst = await db.Guest.FirstOrDefaultAsync(p => p.GuestId == guest.GuestId);
+            // we have to check add or modify based on GuestId to decided fetch or not
+            if (guest.GuestId != 0)
+            {
+                // modify - means fetch guest existing record
+                eventId = gst.EventId.Value;
+                guestId = guest.GuestId;
+            }
+            else
+            {
+                // add - means take event id from guest object comming from form
+                eventId = guest.EventId.Value;
+            }
 
             // Get configuration paths for card generation
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
@@ -479,51 +525,95 @@ namespace EventPro.Web.Controllers
             string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
             var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            // Update existing guest
-            if (guest.GuestId > 0)
-            {
-                guestId = guest.GuestId;
-                Guest gst = await db.Guest.Where(p => p.GuestId == guest.GuestId).FirstOrDefaultAsync();
-                gst.FirstName = guest.FirstName;
-                gst.NoOfMembers = guest.NoOfMembers;
-                gst.AdditionalText = guest.AdditionalText;
-                gst.PrimaryContactNo = guest.PrimaryContactNo;
-                gst.SecondaryContactNo = guest.SecondaryContactNo;
-                gst.IsPhoneNumberValid = true;
-                gst.GuestArchieved = false;
-                eventId = Convert.ToInt32(gst.EventId);
-                guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
-                await _auditLogService.AddAsync(userId, eventId, ActionEnum.UpdateGuest, guestId, gst.FirstName);
-                await db.SaveChangesAsync();
-                addedOrModified = 2;
-            }
-            else
-            {
-                // Create new guest
-                guest.CreatedBy = userId;
-                guest.CreatedOn = DateTime.Now;
-                guest.IsPhoneNumberValid = true;
-                guest.GuestArchieved = false;
-                guest.Source = "Entry";
-                // Encrypt guest ID for QR code generation
-                guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
-                var newGuest = await db.Guest.AddAsync(guest);
-                await db.SaveChangesAsync();
-                addedOrModified = 1;
-                guest = newGuest.Entity;
-                guestId = newGuest.Entity.GuestId;
-                await _auditLogService.AddAsync(userId, eventId, ActionEnum.AddGuest, guestId, guest.FirstName);
-            }
+            _logger.LogInformation(
+                "AddOrModifyGuest started | GuestId={GuestId} | EventId={EventId} | UserId={UserId}",
+                guestId, eventId, userId
+            );
 
-            Log.Information("Event {eId} guest {gId} added/modified by {uId}", eventId, guestId, userId);
-            // Get the event card info 
-            var cardinfo = await db.CardInfo.Where(p => p.EventId == eventId).FirstOrDefaultAsync();
-            
-            await RefreshQRCode(guest, cardinfo);
-            await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
-            await db.SaveChangesAsync();
+            try
+            {
+                if (guest.GuestId > 0)
+                {
+                    _logger.LogInformation("Updating guest | GuestId={GuestId}", guest.GuestId);
 
-            return addedOrModified;
+                    if (gst == null)
+                    {
+                        _logger.LogWarning("Guest not found | GuestId={GuestId}", guest.GuestId);
+                        throw new Exception("Guest not found");
+                    }
+
+                    gst.FirstName = guest.FirstName;
+                    gst.NoOfMembers = guest.NoOfMembers;
+                    gst.AdditionalText = guest.AdditionalText;
+                    gst.PrimaryContactNo = guest.PrimaryContactNo;
+                    gst.SecondaryContactNo = guest.SecondaryContactNo;
+                    gst.IsPhoneNumberValid = true;
+                    gst.GuestArchieved = false;
+
+                    guest.Cypertext = EventProCrypto.EncryptString(
+                        _configuration["SecurityKey"],
+                        guest.GuestId.ToString()
+                    );
+
+                    
+                    await _auditLogService.AddAsync(userId, eventId, ActionEnum.UpdateGuest, guestId, gst.FirstName);
+                    await db.SaveChangesAsync();
+
+                    addedOrModified = 2;
+                }
+                else
+                {
+                    _logger.LogInformation("Creating new guest | EventId={EventId}", eventId);
+
+                    guest.CreatedBy = userId;
+                    guest.CreatedOn = DateTime.Now;
+                    guest.IsPhoneNumberValid = true;
+                    guest.GuestArchieved = false;
+                    guest.Source = "Entry";
+
+                    var newGuest = await db.Guest.AddAsync(guest);
+                    await db.SaveChangesAsync();
+
+                    guest = newGuest.Entity;
+                    guestId = guest.GuestId;
+
+                    guest.Cypertext = EventProCrypto.EncryptString(
+                        _configuration["SecurityKey"],
+                        guestId.ToString()
+                    );
+
+                    await _auditLogService.AddAsync(userId, eventId, ActionEnum.AddGuest, guestId, guest.FirstName);
+
+                    addedOrModified = 1;
+                }
+
+                _logger.LogInformation(
+                    "Guest saved successfully | GuestId={GuestId} | Mode={Mode}",
+                    guestId, addedOrModified == 1 ? "Add" : "Update"
+                );
+
+                var cardinfo = await db.CardInfo.FirstOrDefaultAsync(p => p.EventId == eventId);
+                if (cardinfo == null)
+                {
+                    _logger.LogWarning("CardInfo not found | EventId={EventId}", eventId);
+                }
+
+                await RefreshQRCode(guest, cardinfo);
+                await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
+                await db.SaveChangesAsync();
+
+                return addedOrModified;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "AddOrModifyGuest failed | GuestId={GuestId} | EventId={EventId} | UserId={UserId}",
+                    guestId, eventId, userId
+                );
+
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -2570,7 +2660,7 @@ namespace EventPro.Web.Controllers
 
                 string guestName = $"{guest.FirstName} {guest.LastName ?? ""}".Trim();
 
-                var font = new Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
+                var font = new System.Drawing.Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
 
        
 
@@ -2621,7 +2711,7 @@ namespace EventPro.Web.Controllers
                 else
                     frmt = new StringFormat();
 
-                var fMobile = new Font(cardInfo.ContactNoFontName, (float)(cardInfo.ContactNoFontSize * 0.63 * zoomRatio));
+                var fMobile = new System.Drawing.Font(cardInfo.ContactNoFontName, (float)(cardInfo.ContactNoFontSize * 0.63 * zoomRatio));
                 var stringsizeMobile = grap.MeasureString(guest.PrimaryContactNo, fMobile);
 
                 // Handle center alignment
@@ -2632,7 +2722,7 @@ namespace EventPro.Web.Controllers
                     frmt.Alignment = StringAlignment.Center;
                 }
 
-                grap.DrawString(guest.PrimaryContactNo, new Font(cardInfo.ContactNoFontName, (float)(cardInfo.ContactNoFontSize * 0.63 * zoomRatio))
+                grap.DrawString(guest.PrimaryContactNo, new System.Drawing.Font(cardInfo.ContactNoFontName, (float)(cardInfo.ContactNoFontSize * 0.63 * zoomRatio))
                 , new SolidBrush(ColorTranslator.FromHtml(cardInfo.ContactNoFontColor))
                 , new Point((int)((moXAxis * zoomRatio))
                 , (int)(cardInfo.ContactNoYaxis * zoomRatio)), frmt);
@@ -2649,7 +2739,7 @@ namespace EventPro.Web.Controllers
                 else
                     frmt = new StringFormat();
 
-                var fAdditional = new Font(cardInfo.AltTextFontName, (float)(cardInfo.AltTextFontSize * 0.63 * zoomRatio));
+                var fAdditional = new System.Drawing.Font(cardInfo.AltTextFontName, (float)(cardInfo.AltTextFontSize * 0.63 * zoomRatio));
                 var stringsizeAdditional = grap.MeasureString(guest.AdditionalText, fAdditional);
 
                 // Handle center alignment
@@ -2660,7 +2750,7 @@ namespace EventPro.Web.Controllers
                     frmt.Alignment = StringAlignment.Center;
                 }
 
-                grap.DrawString(guest.AdditionalText, new Font(cardInfo.AltTextFontName, (float)(cardInfo.AltTextFontSize * 0.63 * zoomRatio))
+                grap.DrawString(guest.AdditionalText, new System.Drawing.Font(cardInfo.AltTextFontName, (float)(cardInfo.AltTextFontSize * 0.63 * zoomRatio))
                 , new SolidBrush(ColorTranslator.FromHtml(cardInfo.AltTextFontColor))
                 , new Point((int)((atXAxis * zoomRatio))
                 , (int)(cardInfo.AltTextYaxis * zoomRatio)), frmt);
@@ -2671,7 +2761,7 @@ namespace EventPro.Web.Controllers
             {
                 double nosXAxis = (cardInfo.NosAlignment == "right") ? Convert.ToDouble(cardInfo.NosRightAxis) : Convert.ToDouble(cardInfo.Nosxaxis);
 
-                var fNos = new Font(cardInfo.NosfontName, (float)(cardInfo.NosfontSize * 0.63 * zoomRatio));
+                var fNos = new System.Drawing.Font(cardInfo.NosfontName, (float)(cardInfo.NosfontSize * 0.63 * zoomRatio));
                 var stringsizeNos = grap.MeasureString(guest.AdditionalText, fNos);
 
                 frmt = new StringFormat();
@@ -2688,7 +2778,7 @@ namespace EventPro.Web.Controllers
                     frmt.Alignment = StringAlignment.Center;
                 }
 
-                grap.DrawString(Convert.ToString(guest.NoOfMembers), new Font(cardInfo.NosfontName, (float)(cardInfo.NosfontSize * 0.63 * zoomRatio))
+                grap.DrawString(Convert.ToString(guest.NoOfMembers), new System.Drawing.Font(cardInfo.NosfontName, (float)(cardInfo.NosfontSize * 0.63 * zoomRatio))
              , new SolidBrush(ColorTranslator.FromHtml(cardInfo.NosfontColor))
              , new Point((int)((nosXAxis * zoomRatio))
              , (int)(cardInfo.Nosyaxis * zoomRatio)), frmt);
@@ -2757,44 +2847,54 @@ namespace EventPro.Web.Controllers
         /// <param name="card">Card configuration with QR color settings</param>
         private async Task RefreshQRCode(Guest guest, CardInfo card)
         {
-            int guestId = guest.GuestId;
-            int eventId = guest.EventId ?? 0;
+            _logger.LogInformation(
+                "RefreshQRCode started | GuestId={GuestId} | EventId={EventId}",
+                guest.GuestId,
+                guest.EventId
+            );
 
-            // Generate QR code with encrypted guest ID
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guestId)), QRCodeGenerator.ECCLevel.Q);
-            QRCode qrCode = new QRCode(qrCodeData);
-            Bitmap qrCodeImage;
-
-            // Handle transparent background for white foreground color
-            if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                qrCodeImage = qrCode.GetGraphic(
-                    5,
-                    ColorTranslator.FromHtml(card.BackgroundColor),
-                    Color.Transparent,
-                    false
+                if (card == null)
+                    throw new ArgumentNullException(nameof(card), "CardInfo is null");
+
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                var encrypted = EventProCrypto.EncryptString(
+                    _configuration["SecurityKey"],
+                    guest.GuestId.ToString()
+                );
+
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(encrypted, QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
+
+                Bitmap qrCodeImage = qrCode.GetGraphic(5);
+
+                using var ms = new MemoryStream();
+                qrCodeImage.Save(ms, ImageFormat.Png);
+
+                await _cloudinaryService.UploadImageAsync(
+                    ms,
+                    $"{guest.GuestId}.png",
+                    $"QR/{guest.EventId}"
+                );
+
+                _logger.LogInformation(
+                    "RefreshQRCode completed | GuestId={GuestId}",
+                    guest.GuestId
                 );
             }
-            else
+            catch (Exception ex)
             {
-                qrCodeImage = qrCode.GetGraphic(5
-                    , card.BackgroundColor
-                    , card.ForegroundColor
-                    , false);
+                _logger.LogError(
+                    ex,
+                    "RefreshQRCode failed | GuestId={GuestId} | EventId={EventId}",
+                    guest.GuestId,
+                    guest.EventId
+                );
+                throw;
             }
-
-            // Upload to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
-            string qrFolderPath = $"QR/{eventId}";
-            string qrFileName = $"{guestId}.png";
-
-            using (MemoryStream ms = new MemoryStream())
-            {
-                qrCodeImage.Save(ms, ImageFormat.Png);
-                await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
-            }
-            qrCodeImage.Dispose();
         }
+
 
         #endregion
 

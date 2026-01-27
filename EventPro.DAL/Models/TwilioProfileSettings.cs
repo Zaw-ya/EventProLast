@@ -24,6 +24,8 @@ namespace EventPro.DAL.Models
         public string? WhatsAppNumberKuwait2 { get; set; }
         public string? WhatsAppNumberBahrain1 { get; set; }
         public string? WhatsAppNumberBahrain2 { get; set; }
+        public string? WhatsAppNumberEgypt1 { get; set; }
+        public string? WhatsAppNumberEgypt2 { get; set; }
 
         //messaging templates 
 

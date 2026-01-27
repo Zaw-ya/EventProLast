@@ -4,6 +4,7 @@ using EventPro.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventPro.DAL.Migrations
 {
     [DbContext(typeof(EventProContext))]
-    partial class EventProContextModelSnapshot : ModelSnapshot
+    [Migration("20260127094826_add-dataProtectionKeys")]
+    partial class adddataProtectionKeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -896,9 +899,6 @@ namespace EventPro.DAL.Migrations
 
                     b.Property<int?>("Scanned")
                         .HasColumnType("int");
-
-                    b.Property<string>("SystemEventTitle")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("TotalAllocated")
                         .HasColumnType("int");
@@ -1888,12 +1888,6 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("WhatsAppNumberBahrain2")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WhatsAppNumberEgypt1")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WhatsAppNumberEgypt2")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("WhatsAppNumberKuwait1")

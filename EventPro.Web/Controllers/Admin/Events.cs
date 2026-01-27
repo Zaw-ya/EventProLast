@@ -46,13 +46,23 @@ namespace EventPro.Web.Controllers
         /// Accessible by: Administrator, Operator, Agent, Supervisor, Accounting
         /// </summary>
         /// <returns>Events list view</returns>
+        /// important note:
+        // We didnt use getguest here because we need to show all events not specific to an operator
         [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
-        public IActionResult Events()
+        public async Task<IActionResult> Events()
         {
             ViewBag.Icon = "nav-icon fas fa-calendar";
             SetBreadcrum("Events", "/admin");
+            // Used for checking if invoice file exists in the view
+            ViewBag.FilePath = _configuration.GetSection("Uploads").GetSection("Invoice").Value;
 
-            return View("Events - Copy");
+            var model = await db.VwEvents
+                .Where(e => e.EventTo >= DateTime.Now && e.IsDeleted != true)
+                .OrderByDescending(e => e.Id)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return View("Events", model);
         }
 
         /// <summary>
@@ -324,7 +334,7 @@ namespace EventPro.Web.Controllers
             ViewBag.FilePath = _configuration.GetSection("Uploads").GetSection("Invoice").Value;
             ViewBag.Gatekeeper = db.VwUsers.Where(p => p.RoleName == "Gatekeeper").ToList();
             ViewBag.Events = events_;
-            return View();
+            return View("Events", events_);
         }
 
         #endregion
@@ -496,7 +506,11 @@ namespace EventPro.Web.Controllers
             City city = await db.City.Where(e => e.Id == events.CityId)
                 .Include(e => e.Country)
                 .FirstOrDefaultAsync();
-            if (city.Country.CountryName.Contains("الكويت"))
+            if (city.Country.CountryName.Contains("مصر") || city.Country.CountryName.Contains("Egypt"))
+            {
+                events.choosenSendingCountryNumber = "EGYPT";
+            }
+            else if (city.Country.CountryName.Contains("الكويت"))
             {
                 events.choosenSendingCountryNumber = "KUWAIT";
             }
@@ -2276,7 +2290,7 @@ namespace EventPro.Web.Controllers
             ViewBag.choosenSendingCountryNumber = new SelectList(
       new List<SelectListItem>
       {
-
+                                                new SelectListItem { Text = "EGYPT", Value = "EGYPT"},
                                                 new SelectListItem { Text = "SAUDI", Value = "SAUDI"},
                                                 new SelectListItem { Text = "KUWAIT", Value = "KUWAIT"},
                                                 new SelectListItem { Text = "BAHRAIN", Value = "BAHRAIN"},

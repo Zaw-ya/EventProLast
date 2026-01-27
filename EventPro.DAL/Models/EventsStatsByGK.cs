@@ -5,7 +5,7 @@ namespace EventPro.DAL.Models
     public class EventsStatsByGK
     {
         public string EventTitle { get; set; }
-       // public string SystemEventTitle { get; set; }
+        public string SystemEventTitle { get; set; }
         public DateTime? EventFrom { get; set; }
         public DateTime? EventTo { get; set; }
         public string EventVenue { get; set; }

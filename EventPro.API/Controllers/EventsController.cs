@@ -38,7 +38,6 @@ namespace EventPro.API.Controllers
         private readonly ILogger<EventsController> _logger;
         private readonly IWatiService _watiService;
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
-        private readonly IBlobStorage _blobStorage;
 
         #endregion
 
@@ -53,15 +52,13 @@ namespace EventPro.API.Controllers
         /// <param name="whatsappSendingProvider">WhatsApp messaging provider service</param>
         /// <param name="blobStorage">Azure Blob storage service for file uploads</param>
         public EventsController(IConfiguration configuration, ILogger<EventsController> logger, IWatiService watiService,
-            IWhatsappSendingProviderService whatsappSendingProvider,
-            IBlobStorage blobStorage)
+            IWhatsappSendingProviderService whatsappSendingProvider)
         {
             _configuration = configuration;
             db = new EventProContext(configuration);
             _logger = logger;
             _watiService = watiService;
             _whatsappSendingProvider = whatsappSendingProvider;
-            _blobStorage = blobStorage;
         }
 
         #endregion
@@ -334,7 +331,7 @@ namespace EventPro.API.Controllers
                 var filename = file.FileName;
                 var extension = file.ContentType.ToLower().Replace(@"image/", "");
                 using var stream = file.OpenReadStream();
-                await _blobStorage.UploadAsync(stream, extension, environment + gkHistoryPath + "/" + filename, cancellationToken: default);
+                //await _blobStorage.UploadAsync(stream, extension, environment + gkHistoryPath + "/" + filename, cancellationToken: default);
                 var history = new GKEventHistory
                 {
                     CheckType = "In",
@@ -394,7 +391,7 @@ namespace EventPro.API.Controllers
                 {
                     return check;
                 }
-                if (userToken.Role != "Gatekeeper")
+                if (userToken.Role != "GateKeeper")
                 {
                     return BadRequest("Only Gatekeeper is allowed");
                 }
