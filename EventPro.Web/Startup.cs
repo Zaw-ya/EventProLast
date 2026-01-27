@@ -137,8 +137,8 @@ namespace EventPro.Web
                 services.AddSingleton<IConnectionMultiplexer>(redis);
                 services.AddSingleton<ITicketStore>(new RedisTicketStore(redisConnectionString));
                 services.AddDataProtection()
-                    .SetApplicationName("EventPro.cc")
-                    .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
+                        .PersistKeysToFileSystem(new DirectoryInfo(@"c:\keys\"))
+                        .SetApplicationName("EventPro");
 
                 services.AddSingleton<RedLockFactory>(sp =>
                 {
@@ -237,7 +237,18 @@ namespace EventPro.Web
             services.AddScoped<ITwilioWebhookService, TwilioWebhookService>();
             services.AddScoped<IWhatsappSendingProviderService, WhatsappSendingProvidersService>();
             services.AddSingleton<IUnitOFWorkDefaultWhatsappService, UnitOFWorkDefaultWhatsappService>();
-            services.AddHangfire(x => x.UseSqlServerStorage(Configuration.GetSection("Database")["ConnectionString"]));
+            services.AddSingleton<IMemoryCacheStoreService>(sp =>
+                new MemoryCacheStoreService(sp.GetService<IConnectionMultiplexer>()));
+
+            // Helpers / Filters / Middleware-related
+            services.AddScoped<UrlProtector>();
+            services.AddScoped<ForwardToPrimaryFilter>();
+            services.AddScoped<TwilioRoutingRuleForVms>();
+
+            // ------------------------------
+            // Hangfire
+            // ------------------------------
+            services.AddHangfire(x => x.UseSqlServerStorage(connectionString));
             services.AddHangfireServer();
             services.AddScoped<INotificationTokenService, NotificationTokenService>();
             services.AddDirectoryBrowser();
@@ -265,10 +276,28 @@ namespace EventPro.Web
             services.AddHostedService<MessageSendingSingleConsumerBackgroundService>();
             services.AddSingleton(
 
-                new BlobServiceClient(Configuration.GetSection("Database")["BlobStorage"])
-            );
-            services.AddSingleton<IBlobStorage, BlobStorage>();
-            services.AddScoped<ICloudinaryService, CloudinaryService>();
+            // ------------------------------
+            // BlobStorage (try-catch)
+            // ------------------------------
+            var blobConnection = Configuration.GetSection("Database")["BlobStorage"];
+            if (!string.IsNullOrWhiteSpace(blobConnection))
+            {
+                try
+                {
+                    services.AddSingleton<IBlobStorage, BlobStorage>();
+                    services.AddSingleton(new BlobServiceClient(blobConnection));
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "BlobStorage is disabled due to invalid connection string");
+                    services.AddSingleton<IBlobStorage, DummyBlobStorage>(); // fallback
+
+                }
+            }
+            else
+            {
+                Log.Warning("BlobStorage connection string is empty. Blob features disabled.");
+            }
 
             var firebasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "myinvite-1b0ca-firebase-adminsdk-yp15k-b2881aed59.json");
             if (File.Exists(firebasePath))
