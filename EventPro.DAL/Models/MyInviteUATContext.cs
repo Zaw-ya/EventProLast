@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 // Code scaffolded by EF Core assumes nullable reference types (NRTs) are not used or disabled.
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventPro.DAL.Models
 {
-    public partial class EventProContext : DbContext
+    public partial class EventProContext : DbContext,IDataProtectionKeyContext
     {
 
         //public EventProContext(DbContextOptions<EventProContext> options)
@@ -27,6 +28,8 @@ namespace EventPro.DAL.Models
         }
         public DbSet<ReportDeletedEventsByGk> ReportDeletedEventsByGk { get; set; }
         public DbSet<ConfirmationMessageResponsesKeyword> ConfirmationMessageResponsesKeyword { get; set; }
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+
 
         public DbSet<GKEventHistory> GKEventHistory { get; set; }
         public DbSet<EventLocation> EventLocations { get; set; }
