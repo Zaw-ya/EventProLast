@@ -16,6 +16,16 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Events List</h3>
+                @if (!User.IsInRole("Agent") && !User.IsInRole("Accounting"))
+                {
+                    <div class="col-md-2" style="float: right;">
+                        <a href="~/admin/_events"
+                           class="btn btn-primary btn-sm"
+                           style="width:100%; margin-bottom:0px;">
+                            Create Events
+                        </a>
+                    </div>
+                }
             </div>
                 <table id="EventsTable" class="table table-bordered table-striped text-center">
                     <thead>
