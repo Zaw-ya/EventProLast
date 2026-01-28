@@ -256,5 +256,29 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return counter;
         }
 
+        /// <summary>
+        /// Constructs a full Cloudinary URL for a given relative path and folder.
+        /// </summary>
+        /// <param name="relativePath">The relative path of the image (e.g., "123/image.jpg")</param>
+        /// <param name="folderName">The configuration key for the folder (e.g., "Card")</param>
+        /// <returns>Full absolute URL string</returns>
+        protected string GetFullImageUrl(string relativePath, string folderNameKey)
+        {
+            var cloudName = _configuration.GetSection("CloudinarySettings")["CloudName"];
+            // Retrieve the folder path from configuration, e.g., Uploads:Card -> "/card"
+            // We strip the leading slash if present to avoid double slashes when combining
+            var folderPath = _configuration.GetSection("Uploads")[folderNameKey];
+            
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                folderPath = folderNameKey; // Fallback if key is not found, assume it's the folder name itself
+            }
+            
+            // Normalize folder path: remove leading slash
+            if (folderPath.StartsWith("/")) folderPath = folderPath.Substring(1);
+            
+            // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{folder}/{file}
+            return $"https://res.cloudinary.com/{cloudName}/image/upload/{folderPath}/{relativePath}";
+        }
     }
 }

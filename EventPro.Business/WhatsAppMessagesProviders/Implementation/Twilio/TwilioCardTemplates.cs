@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using EventPro.Business.MemoryCacheStore.Interface;
+﻿using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
 using System.Text.RegularExpressions;
 using Google.Apis.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
@@ -60,7 +60,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 {
                     string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
                     string imagePathSegment =
-                        $"{events.Id}/E00000{events.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
+                        GetFullImageUrl($"{events.Id}/E00000{events.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg", "cards");
 
                     var parameters = new[] { imagePathSegment };
 
@@ -112,7 +112,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                string imagePathSegment = events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                string imagePathSegment = GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                 var parameters = new string[]
                 {
                 imagePathSegment.ToString(),
@@ -138,7 +138,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                string imagePathSegment = events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                string imagePathSegment = GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                 var parameters = new string[]
                 {
                imagePathSegment.ToString(),
@@ -162,7 +162,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                string imagePathSegment = events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                string imagePathSegment = GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                 var parameters = new string[]
                 {
                 imagePathSegment.ToString(),
@@ -189,7 +189,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                string imagePathSegment = events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                string imagePathSegment = GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                 var parameters = new string[]
                 {
                imagePathSegment.ToString(),
@@ -219,7 +219,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                string imagePathSegment = events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                string imagePathSegment = GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                 var parameters = new string[]
                 {
                imagePathSegment.ToString(),
@@ -262,7 +262,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         // Here we using the reflection to know each key in the mathes 
                         if (propName == "GuestCard")
                         {
-                            return events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                            return GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                         }
                         if (propName == "CountOfAdditionalInvitations")
                         {
