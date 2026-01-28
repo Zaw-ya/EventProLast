@@ -4,44 +4,102 @@ using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
 using System.Text.RegularExpressions;
+using Google.Apis.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
     public class TwilioCardTemplates : TwilioMessagingConfiguration, ICardMessageTemplates
     {
         private readonly EventProContext db;
+        private readonly ILogger<TwilioCardTemplates> _logger;
         public TwilioCardTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+        IMemoryCacheStoreService memoryCacheStoreService,
+        ILogger<TwilioCardTemplates> logger) : base(configuration,
+            memoryCacheStoreService,logger)
         {
             db = new EventProContext(configuration);
-
+            _logger = logger;
         }
         public async Task SendArabicCard(List<Guest> guests, Events events)
         {
+            _logger.LogInformation(
+                "SendArabicCard started. EventId {EventId}, GuestsCount {GuestsCount}",
+                events.Id,
+                guests.Count
+            );
+
             var profileSettings = await db.TwilioProfileSettings
-                                 .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                                 .AsNoTracking()
-                                 .FirstOrDefaultAsync();
-            var templateId = profileSettings?.ArabicCardWithoutGuestName;
+                .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            if (profileSettings == null)
+            {
+                _logger.LogError(
+                    "Twilio profile settings not found. EventId {EventId}, Profile {Profile}",
+                    events.Id,
+                    events.choosenSendingWhatsappProfile
+                );
+                return;
+            }
+
+            var templateId = profileSettings.ArabicCardWithoutGuestName;
+
+            _logger.LogInformation(
+                "Using Arabic template. EventId {EventId}, TemplateId {TemplateId}",
+                events.Id,
+                templateId
+            );
 
             int counter = SetSendingCounter(guests, events);
 
-            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+            try
             {
-                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                string imagePathSegment = events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
-                var parameters = new string[]
+                await Parallel.ForEachAsync(guests, parallelOptions, async (guest, _) =>
                 {
-                imagePathSegment.ToString(),
-                };
+                    string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+                    string imagePathSegment =
+                        $"{events.Id}/E00000{events.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
 
-                await SendCardAndUpdateGuest(events, templateId, guest, fullPhoneNumber, parameters, guests, profileSettings);
-                counter = UpdateCounter(guests, events, counter);
-            });
+                    var parameters = new[] { imagePathSegment };
+
+                    await SendCardAndUpdateGuest(
+                        events,
+                        templateId,
+                        guest,
+                        fullPhoneNumber,
+                        parameters,
+                        guests,
+                        profileSettings
+                    );
+
+                    counter = UpdateCounter(guests, events, counter);
+                });
+
+                _logger.LogInformation(
+                    "SendArabicCard finished successfully. EventId {EventId}",
+                    events.Id
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error while sending Arabic cards. EventId {EventId}",
+                    events.Id
+                );
+                throw;
+            }
+
             await updateDataBaseAndDisposeCache(guests, events);
-            return;
+
+            _logger.LogInformation(
+                "Database updated and cache disposed. EventId {EventId}",
+                events.Id
+            );
         }
+
         public async Task SendArabicCardwithname(List<Guest> guests, Events events)
         {
             var profileSettings = await db.TwilioProfileSettings
@@ -230,39 +288,73 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return;
         }
 
-        private async Task SendCardAndUpdateGuest(Events events, string? templateId, Guest guest, string fullPhoneNumber, string[] parameters, List<Guest> guests, TwilioProfileSettings profileSettings)
+        private async Task SendCardAndUpdateGuest(
+    Events events,
+    string? templateId,
+    Guest guest,
+    string fullPhoneNumber,
+    string[] parameters,
+    List<Guest> guests,
+    TwilioProfileSettings profileSettings)
         {
-            string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
-            if (messageSid != null)
+            _logger.LogInformation(
+                "Sending WhatsApp card. EventId {EventId}, GuestId {GuestId}, Phone {Phone}, TemplateId {TemplateId}",
+                events.Id,
+                guest.GuestId,
+                fullPhoneNumber,
+                templateId
+            );
+
+            try
             {
-                guest.ImgSentMsgId = messageSid;
-                guest.ImgSenOn = DateTime.Now.ToString();
-                guest.Qrresponse = "Message Processed Successfully";
-                guest.ImgDelivered = null;
-                guest.ImgFailed = null;
-                guest.ImgSent = null;
-                guest.ImgRead = null;
-                guest.WhatsappStatus = "sent";
+                string messageSid = await SendWhatsAppTemplateMessageAsync(
+                    fullPhoneNumber,
+                    templateId,
+                    parameters,
+                    events.CityId,
+                    events.ChoosenNumberWithinCountry,
+                    profileSettings,
+                    events.choosenSendingCountryNumber
+                );
 
-                if (guests.Count > 1)
+                if (!string.IsNullOrEmpty(messageSid))
                 {
-                    _memoryCacheStoreService.save(messageSid, 0);
-                }
+                    guest.ImgSentMsgId = messageSid;
+                    guest.ImgSenOn = DateTime.Now.ToString();
+                    guest.Qrresponse = "Message Processed Successfully";
+                    guest.WhatsappStatus = "sent";
 
+                    if (guests.Count > 1)
+                        _memoryCacheStoreService.save(messageSid, 0);
+
+                    _logger.LogInformation(
+                        "Message sent successfully. GuestId {GuestId}, MessageSid {MessageSid}",
+                        guest.GuestId,
+                        messageSid
+                    );
+                }
+                else
+                {
+                    guest.WhatsappStatus = "error";
+                    _logger.LogWarning(
+                        "Failed to send message. GuestId {GuestId}",
+                        guest.GuestId
+                    );
+                }
             }
-            else
+            catch (Exception ex)
             {
                 guest.WhatsappStatus = "error";
-                guest.ImgSentMsgId = null;
-                guest.ImgSenOn = null;
-                guest.ImgDelivered = null;
-                guest.ImgFailed = null;
-                guest.ImgSent = null;
-                guest.ImgRead = null;
+                _logger.LogError(
+                    ex,
+                    "Exception while sending message. EventId {EventId}, GuestId {GuestId}",
+                    events.Id,
+                    guest.GuestId
+                );
             }
-
             //await Task.Delay(300);
         }
+
         private async Task updateDataBaseAndDisposeCache(List<Guest> guests, Events events)
         {
             db.Guest.UpdateRange(guests);

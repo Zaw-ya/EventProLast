@@ -1,19 +1,24 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using System.Globalization;
+using System.Text.RegularExpressions;
+
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
-using System.Globalization;
-using System.Text.RegularExpressions;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
     public class TwilioReminderMessageTemplates : TwilioMessagingConfiguration, IReminderMessageTemplates
     {
         private readonly EventProContext db;
-        public TwilioReminderMessageTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+        public TwilioReminderMessageTemplates(
+            IConfiguration configuration,
+            IMemoryCacheStoreService memoryCacheStoreService,
+            ILogger<TwilioMessagingConfiguration> logger) 
+            : base(configuration, memoryCacheStoreService, logger)
         {
             db = new EventProContext(configuration);
         }

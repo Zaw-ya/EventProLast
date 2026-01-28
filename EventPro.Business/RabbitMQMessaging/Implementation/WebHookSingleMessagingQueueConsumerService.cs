@@ -2,6 +2,7 @@ using EventPro.Business.MemoryCacheStore.Implementaiion;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.RabbitMQMessaging.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Implementation;
+using EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio;
 using EventPro.Business.WhatsAppMessagesWebhook.Implementation;
 using EventPro.Business.WhatsAppMessagesWebhook.Interface;
 using EventPro.DAL.Models;
@@ -10,6 +11,7 @@ using EventPro.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 
@@ -102,6 +104,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// </summary>
         private readonly DistributedLockHelper _distributedLockHelper;
 
+        private readonly ILogger<TwilioCardTemplates> _logger;
         #endregion
 
         #region Constructor
@@ -123,7 +126,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         public WebHookSingleMessagingQueueConsumerService(IConnectionFactory connectionFactory,
             IConfiguration configuration, IMemoryCacheStoreService memoryCacheStoreService,
             IServiceScopeFactory serviceScopeFactory, UrlProtector urlProtector, DistributedLockHelper distributedLockHelper,
-            IDbContextFactory<EventProContext> dbFactory)
+            IDbContextFactory<EventProContext> dbFactory, ILogger<TwilioCardTemplates> logger)
         {
             _urlProtector = urlProtector;
             _connectionFactory = connectionFactory;
@@ -134,16 +137,17 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             // Create the webhook service with required dependencies
             // This handles the actual processing of Twilio webhooks
             _twilioWebHookService = new TwilioWebhookService(configuration,
-                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector), _distributedLockHelper, dbFactory);
+                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector, _logger), _distributedLockHelper, dbFactory);
 
             _ServiceScopeFactory = serviceScopeFactory;
             db = new EventProContext(_configuration);
             QueueName = _configuration.GetSection("RabbitMqQueues")["TwilioSingleMessagingWebHookMessages"].ToLower();
+            _logger = logger;
         }
 
         #endregion
 
-            #region Public Methods
+        #region Public Methods
 
         /// <summary>
         /// Starts consuming messages from the single messaging webhook queue.

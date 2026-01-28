@@ -23,6 +23,8 @@ using EventPro.Web.Filters;
 
 using ExcelDataReader;
 
+using iText.Kernel.Events;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -1028,32 +1030,90 @@ namespace EventPro.Web.Controllers
         [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
         public async Task<IActionResult> SendQRCode(int id)
         {
+            _logger.LogInformation("SendQRCode started for GuestId {GuestId}", id);
+
             Guest guest = await db.Guest.Where(p => p.GuestId == id)
                 .FirstOrDefaultAsync();
+            
+            if (guest == null)
+            {
+                _logger.LogWarning("Guest not found with GuestId {GuestId}", id);
+                return Json(new { success = false, message = "الضيف غير موجود" });
+            }
+            
             var guests = new List<Guest>() { guest };
 
             var _event = await db.Events.Where(p => p.Id == guest.EventId)
                 .FirstOrDefaultAsync();
 
+            if (_event == null)
+            {
+                _logger.LogWarning(
+                    "Event not found for GuestId {GuestId}, EventId {EventId}",
+                    guest.GuestId,
+                    guest.EventId
+                );
+                return Json(new { success = false, message = "الحدث غير موجود" });
+            }
+
+            _logger.LogInformation(
+                "GuestId {GuestId} belongs to EventId {EventId}",
+                guest.GuestId,
+                _event.Id
+            );
+
             // Validate guest phone number
             if (!CheckGuestsNumbersExist(guests))
+            {
+                _logger.LogWarning("Phone number validation failed for GuestId {GuestId}", guest.GuestId);
                 return Json(new { success = false, message = "رقم الجوال غير موجود" });
+            }
 
             // Validate invitation card exists
             if (!await CheckGuestsCardsExistAsync(guests, _event))
+            {
+                _logger.LogWarning("Card validation failed for GuestId {GuestId}", guest.GuestId);
                 return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
+            }
 
             try
             {
                 var sendingProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
+                if (sendingProvider == null)
+                {
+                    _logger.LogError(
+                        "Sending provider is NULL for EventId {EventId}",
+                        _event.Id
+                    );
+                    return Json(new { success = false, message = "مزود الإرسال غير مُعد" });
+                }
+
+                _logger.LogInformation(
+                    "Sending provider selected successfully for EventId {EventId}",
+                    _event.Id
+                );
+
                 await sendingProvider.SendCardMessagesAsync(guests, _event);
+
+                _logger.LogInformation(
+                    "QRCode sent successfully to GuestId {GuestId}",
+                    guest.GuestId
+                );
+
+                return Json(new { success = true });
             }
-            catch
+            catch(Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                _logger.LogError(
+                            ex,
+                            "Error while sending QRCode to GuestId {GuestId}, EventId {EventId}",
+                            guest.GuestId,
+                            _event.Id
+                        );
+
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال" });
             }
 
-            return Json(new { success = true });
         }
 
         #endregion
@@ -2517,9 +2577,46 @@ namespace EventPro.Web.Controllers
             //        return false;
             //    }
             //}
-
-            return true;
             #endregion
+            _logger.LogInformation(
+                "Checking invitation cards for EventId {EventId}, GuestsCount {GuestsCount}",
+                _event.Id,
+                guests.Count
+            );
+
+            foreach (var guest in guests)
+            {
+                var cardPublicId =
+                    $"upload/cards/{_event.Id}/E00000{_event.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
+
+                _logger.LogInformation(
+                    "Checking card for GuestId {GuestId}, PublicId {PublicId}",
+                    guest.GuestId,
+                    cardPublicId
+                );
+
+                var guestFinalInvitationUrl =
+                    await _cloudinaryService.GetLatestVersionUrlAsync(cardPublicId);
+
+                if (string.IsNullOrEmpty(guestFinalInvitationUrl))
+                {
+                    _logger.LogError(
+                        "Invitation card NOT found for GuestId {GuestId}, PublicId {PublicId}",
+                        guest.GuestId,
+                        cardPublicId
+                    );
+                    return false;
+                }
+
+                _logger.LogInformation(
+                    "Invitation card found for GuestId {GuestId}, Url {Url}",
+                    guest.GuestId,
+                    guestFinalInvitationUrl
+                );
+            }
+
+            _logger.LogInformation("All invitation cards exist for EventId {EventId}", _event.Id);
+            return true;
 
         }
 
@@ -2531,11 +2628,30 @@ namespace EventPro.Web.Controllers
         /// <returns>True if all guests have valid phone numbers(primary,secondary), false otherwise</returns>
         private bool CheckGuestsNumbersExist(List<Guest> guests)
         {
-            if (guests.Any(e => string.IsNullOrEmpty(e.PrimaryContactNo) ||
-            string.IsNullOrEmpty(e.SecondaryContactNo)))
+            _logger.LogInformation("Checking phone numbers for {GuestsCount} guests", guests.Count);
+
+            foreach (var guest in guests)
             {
-                return false;
+                if (string.IsNullOrEmpty(guest.PrimaryContactNo))
+                {
+                    _logger.LogWarning(
+                        "GuestId {GuestId} does not have PrimaryContactNo",
+                        guest.GuestId
+                    );
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(guest.SecondaryContactNo))
+                {
+                    _logger.LogWarning(
+                        "GuestId {GuestId} does not have SecondaryContactNo",
+                        guest.GuestId
+                    );
+                    return false;
+                }
             }
+            _logger.LogInformation("All guests have valid phone numbers");
+
 
             return true;
         }

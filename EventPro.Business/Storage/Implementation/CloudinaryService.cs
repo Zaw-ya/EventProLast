@@ -321,7 +321,7 @@ namespace EventPro.Business.Storage.Implementation
             var resource = await _cloudinary.GetResourceAsync(getParams);
 
             if (resource == null)
-                throw new Exception("Resource not found on Cloudinary");
+                return null;
 
             // https://res.cloudinary.com/{cloud}/image/upload/v{version}/{publicId}.{format}
             var url = _cloudinary.Api.UrlImgUp

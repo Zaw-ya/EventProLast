@@ -1,8 +1,10 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
@@ -10,8 +12,8 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
     {
         private readonly EventProContext db;
         public TwilioGateKeeperMessageTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+            IMemoryCacheStoreService memoryCacheStoreService, ILogger<TwilioMessagingConfiguration> logger) : base(configuration,
+                memoryCacheStoreService,logger)
         {
             db = new EventProContext(configuration);
         }

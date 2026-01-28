@@ -1,8 +1,11 @@
-using Microsoft.Extensions.Configuration;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Dto;
 using EventPro.DAL.Models;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 using Twilio.Base;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Rest.Api.V2010.Account.Message;
@@ -12,9 +15,11 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
     public class TwilioMessagesSync : TwilioMessagingConfiguration, IMessagesSync
     {
         private readonly EventProContext db;
-        public TwilioMessagesSync(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+        public TwilioMessagesSync(
+            IConfiguration configuration,
+            IMemoryCacheStoreService memoryCacheStoreService,
+            ILogger<TwilioMessagingConfiguration> logger)  
+            : base(configuration, memoryCacheStoreService, logger) 
         {
             db = new EventProContext(configuration);
         }
