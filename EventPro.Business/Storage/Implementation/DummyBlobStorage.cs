@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using EventPro.Business.Storage.Interface;
+﻿using EventPro.Business.Storage.Interface;
 using EventPro.DAL.Dto;
 
 namespace EventPro.Business.Storage.Implementation
@@ -16,52 +10,52 @@ namespace EventPro.Business.Storage.Implementation
 
         public Task<string> UploadAsync(Stream stream, string contentType, string fileName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(fileName);
         }
 
         public Task<FileResponse> DownloadAsync(string fileId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new FileResponse(Stream.Null, "application/octet-stream"));
         }
 
         public Task DeleteFileAsync(string fileName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
         public Task DeleteFolderAsync(string folderName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
         public Task<bool> FileExistsAsync(string filePath)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(false);
         }
 
         public Task<List<string>> GetFolderFilesAsync(string folderName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new List<string>());
         }
 
         public Task<List<string>> GetFoldersInsideAFolderAsync(string folderName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+             return Task.FromResult(new List<string>());
         }
 
         public Task<bool> FolderExistsAsync(string folderName)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(false);
         }
 
         public Task<int> CountFilesInFolderAsync(string folderPath)
         {
-            throw new NotImplementedException();
+             return Task.FromResult(0);
         }
 
         public Task<MemoryStream> DownloadFilesAsZipStreamAsync(string folderName)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new MemoryStream());
         }
     }
 }
