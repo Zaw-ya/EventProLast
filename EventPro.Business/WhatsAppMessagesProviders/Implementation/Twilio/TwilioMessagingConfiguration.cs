@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using RestSharp;
 using System.Text;
 using Twilio;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
@@ -24,6 +25,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         protected IMemoryCacheStoreService _memoryCacheStoreService;
         protected ParallelOptions parallelOptions;
         private readonly EventProContext db;
+        private readonly ILogger<TwilioMessagingConfiguration> _logger;
 
         /// <summary>
         /// Constructor that initializes the Twilio messaging configuration.
@@ -31,8 +33,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         /// </summary>
         /// <param name="configuration">Application configuration for accessing settings</param>
         /// <param name="memoryCacheStoreService">Cache service for storing sending progress counters</param>
-        public TwilioMessagingConfiguration(IConfiguration configuration ,
-            IMemoryCacheStoreService memoryCacheStoreService)
+        public TwilioMessagingConfiguration(IConfiguration configuration,
+            IMemoryCacheStoreService memoryCacheStoreService,
+            ILogger<TwilioMessagingConfiguration> logger)
         {
             _configuration = configuration;
             _memoryCacheStoreService = memoryCacheStoreService;
@@ -41,6 +44,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             {
                 MaxDegreeOfParallelism = 4 // number of cpu used
             };
+            _logger = logger;
         }
 
         /// <summary>
@@ -96,6 +100,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 }
                 else
                 {
+                    // Which nubmer the primary or secondary number to use
                     fromWhatsAppNumberSaudiChoosen = fromWhatsAppNumberSaudi1;
                     fromWhatsAppNumberKuwaitChoosen = fromWhatsAppNumberKuwait1;
                     FromWhatsAppNumberBahrainChoosen = FromWhatsAppNumberBahrain1;
@@ -128,6 +133,13 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 // Serialize the content variables dictionary to JSON
                 var contentVariablesJson = JsonConvert.SerializeObject(contentVariables);
 
+                _logger.LogInformation(
+                    "Sending WhatsApp template. To: {To}, From: {From}, TemplateId: {TemplateId}",
+                    toPhoneNumber,
+                    ChoosenSendingNumber,
+                    contentSid
+                );
+
                 // Initialize RestClient and RestRequest
                 var client = new RestClient($"https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Messages.json");
                 var request = new RestRequest("", Method.Post)
@@ -146,14 +158,27 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
                 // Execute the request
                 var response = await client.ExecuteAsync(request);
+
                 var logResponse = response.Content.ToString();
 
                 dynamic jsonResponse = JsonConvert.DeserializeObject(response.Content);
-                return jsonResponse.sid;
+                string messageSid = jsonResponse?.sid;
+
+                if (!string.IsNullOrEmpty(messageSid))
+                {
+                    _logger.LogInformation("Message sent successfully. To: {To}, MessageSid: {Sid}", toPhoneNumber, messageSid);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to send message. To: {To}, TemplateId: {TemplateId}", toPhoneNumber, contentSid);
+                }
+
+                return messageSid;
 
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Exception while sending WhatsApp template. To: {To}, TemplateId: {TemplateId}", toPhoneNumber, contentSid);
                 return null;
             }
         }
