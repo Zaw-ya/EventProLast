@@ -1,10 +1,13 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
+
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
 using EventPro.Web.Services;
-using System.Text.RegularExpressions;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
@@ -12,8 +15,8 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
     {
         private readonly EventProContext db;
         public TwilioCongratulationTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+            IMemoryCacheStoreService memoryCacheStoreService, ILogger<TwilioMessagingConfiguration> logger) : base(configuration,
+                memoryCacheStoreService, logger)
         {
             db = new EventProContext(configuration);
         }

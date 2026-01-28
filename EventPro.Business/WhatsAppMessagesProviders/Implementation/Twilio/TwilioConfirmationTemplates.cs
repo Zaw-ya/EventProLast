@@ -1,12 +1,15 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using System.Globalization;
+using System.Text.RegularExpressions;
+
 using EventPro.Business.DataProtector;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
 using EventPro.Web.Services;
-using System.Globalization;
-using System.Text.RegularExpressions;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
@@ -15,8 +18,8 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         private readonly EventProContext db;
         private readonly UrlProtector _urlProtector;
         public TwilioConfirmationTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService, UrlProtector urlProtector) : base(configuration,
-                memoryCacheStoreService)
+            IMemoryCacheStoreService memoryCacheStoreService, UrlProtector urlProtector, ILogger<TwilioMessagingConfiguration> logger) : base(configuration,
+                memoryCacheStoreService,logger)
         {
             db = new EventProContext(configuration);
             _urlProtector = urlProtector;

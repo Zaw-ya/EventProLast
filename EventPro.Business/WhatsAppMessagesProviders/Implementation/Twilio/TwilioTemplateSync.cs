@@ -1,16 +1,22 @@
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.Configuration;
-using EventPro.Business.MemoryCacheStore.Interface;
-using EventPro.Business.WhatsAppMessagesProviders.Interface;
-using EventPro.DAL.Extensions;
-using EventPro.DAL.Models;
-using Newtonsoft.Json.Linq;
-using SpecFlow.Internal.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using EventPro.Business.MemoryCacheStore.Interface;
+using EventPro.Business.WhatsAppMessagesProviders.Interface;
+using EventPro.DAL.Extensions;
+using EventPro.DAL.Models;
+
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json.Linq;
+
+using SpecFlow.Internal.Json;
+
 using Twilio.Rest.Content.V1;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
@@ -19,9 +25,11 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
     {
 
         private readonly EventProContext db;
-        public TwilioTemplateSync(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+        public TwilioTemplateSync(
+             IConfiguration configuration,
+             IMemoryCacheStoreService memoryCacheStoreService,
+             ILogger<TwilioMessagingConfiguration> logger)  
+             : base(configuration, memoryCacheStoreService, logger) 
         {
             db = new EventProContext(configuration);
         }

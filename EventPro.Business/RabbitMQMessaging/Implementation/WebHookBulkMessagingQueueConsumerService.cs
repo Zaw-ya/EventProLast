@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog;
+using EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio;
+using Microsoft.Extensions.Logging;
 
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
@@ -108,6 +110,8 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// </summary>
         private readonly DistributedLockHelper _distributedLockHelper;
 
+        private readonly ILogger<TwilioCardTemplates> _logger;
+
         #endregion
 
         #region Constructor
@@ -130,7 +134,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             IConfiguration configuration, IMemoryCacheStoreService memoryCacheStoreService,
             IServiceScopeFactory serviceScopeFactory, UrlProtector urlProtector,
             DistributedLockHelper distributedLockHelper,
-            IDbContextFactory<EventProContext> dbFactory)
+            IDbContextFactory<EventProContext> dbFactory, ILogger<TwilioCardTemplates> logger)
         {
             _urlProtector = urlProtector;
             _connectionFactory = connectionFactory;
@@ -140,11 +144,12 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
 
             // Create the webhook service with required dependencies
             _twilioWebHookService = new TwilioWebhookService(configuration,
-                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector), _distributedLockHelper, dbFactory);
+                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector, _logger), _distributedLockHelper, dbFactory);
 
             _ServiceScopeFactory = serviceScopeFactory;
             db = new EventProContext(_configuration);
             QueueName = _configuration.GetSection("RabbitMqQueues")["TwilioBulkMessagingWebHookMessages"].ToLower();
+            _logger = logger;
 
             // Note: Counter initialization is commented out in original code
             // _memoryCacheStoreService.save(QueueName, 0);
