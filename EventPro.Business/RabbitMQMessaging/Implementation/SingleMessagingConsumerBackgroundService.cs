@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using EventPro.Business.RabbitMQMessaging.Interface;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
 {
@@ -40,7 +41,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// Injected via dependency injection.
         /// </summary>
         private readonly IWebHookSingleMessagingQueueConsumerService _WebHookQueueConsumerService;
-
+        private readonly ILogger<SingleMessagingConsumerBackgroundService> _logger;
         #endregion
 
         #region Constructor
@@ -81,9 +82,41 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// </remarks>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Start consuming messages from the single messaging queue
-            // This sets up the RabbitMQ consumer which runs indefinitely
-            _WebHookQueueConsumerService.ConsumeMessage();
+            _logger.LogInformation(
+                "BulkMessagingConsumerBackgroundService started. Initializing RabbitMQ bulk consumer with flow control.");
+
+            try
+            {
+                // Start consuming messages from the bulk messaging queue
+                // Consumer runs indefinitely and handles pause/resume internally
+                _WebHookQueueConsumerService.ConsumeMessage();
+
+                _logger.LogInformation(
+                    "RabbitMQ Bulk Messaging consumer successfully started and listening for messages.");
+
+                // Keep the background service alive until application shutdown
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation(
+                    "BulkMessagingConsumerBackgroundService is stopping due to application shutdown.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(
+                    ex,
+                    "Fatal error while starting Bulk Messaging RabbitMQ consumer.");
+                throw;
+            }
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation(
+                "BulkMessagingConsumerBackgroundService is stopping. Application shutdown requested.");
+
+            await base.StopAsync(cancellationToken);
         }
 
         #endregion

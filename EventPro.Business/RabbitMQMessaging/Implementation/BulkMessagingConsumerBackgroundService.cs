@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using EventPro.Business.RabbitMQMessaging.Interface;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
 {
@@ -48,6 +49,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// Injected via dependency injection.
         /// </summary>
         private readonly IWebHookBulkMessagingQueueConsumerService _WebHookQueueConsumerServices;
+        private readonly ILogger<BulkMessagingConsumerBackgroundService> _logger;
 
         #endregion
 
@@ -92,12 +94,45 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// - This allows webhooks to be held during bulk sending to prevent overload
         ///
         /// Note: Consider implementing stoppingToken handling for graceful shutdown.
+        /// Gharabawy : Implmented this handling to log shutdown event (1/29)
         /// </remarks>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogInformation(
+               "SingleMessagingConsumerBackgroundService started. Initializing RabbitMQ consumer.");
+
             // Start consuming messages from the bulk messaging queue
             // This sets up the RabbitMQ consumer with flow control which runs indefinitely
-            _WebHookQueueConsumerServices.ConsumeMessage();
+            try
+            {
+                // Start consuming messages from the single messaging queue
+                _WebHookQueueConsumerServices.ConsumeMessage();
+
+                _logger.LogInformation(
+                    "RabbitMQ Single Messaging consumer successfully started and listening for messages.");
+
+                // Keep the background service alive until application shutdown
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation(
+                    "SingleMessagingConsumerBackgroundService is stopping due to application shutdown.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(
+                    ex,
+                    "Fatal error while starting Single Messaging RabbitMQ consumer.");
+                throw;
+            }
+        }
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation(
+                "SingleMessagingConsumerBackgroundService is stopping. Application shutdown requested.");
+
+            await base.StopAsync(cancellationToken);
         }
 
         #endregion

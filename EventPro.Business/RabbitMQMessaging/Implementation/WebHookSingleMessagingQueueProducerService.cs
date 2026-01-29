@@ -4,6 +4,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
 {
@@ -61,6 +62,8 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// Retrieved from configuration: RabbitMqQueues:TwilioSingleMessagingWebHookMessages
         /// </summary>
         private readonly String QueueName;
+
+        private readonly ILogger<WebHookBulkMessagingQueueProducerService>? _logger;
 
         #endregion
 
@@ -126,24 +129,31 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             // Convert the JSON string to a byte array for RabbitMQ
             var body = Encoding.UTF8.GetBytes(jsonString);
 
-            // Publish asynchronously with thread-safe channel access
-            await Task.Run(() =>
+            try
             {
+                // Publish asynchronously with thread-safe channel access
+                await Task.Run(() =>
+                {
                 // Lock ensures only one thread publishes at a time
                 // This prevents channel corruption from concurrent access
                 lock (channel)
                 {
+                    _logger?.LogDebug("Publishing to queue {QueueName} - size {Bytes} bytes", QueueName, body.Length);
                     // Publish to the default exchange (empty string)
                     // Routing key matches queue name for direct delivery
                     channel.BasicPublish(exchange: string.Empty,
                             routingKey: QueueName,
                             body: body,
                             basicProperties: null);
+                    _logger?.LogInformation("Successfully published to {QueueName}", QueueName);
                 }
 
-            });
-
-            return;
+                });
+            }catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error publishing message to {QueueName}", QueueName);
+                throw; // Rethrow to allow upstream handling if needed
+            }
         }
 
         #endregion
