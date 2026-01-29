@@ -1,4 +1,4 @@
-using EventPro.Business.MemoryCacheStore.Implementaiion;
+﻿using EventPro.Business.MemoryCacheStore.Implementaiion;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.RabbitMQMessaging.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Implementation;
@@ -14,6 +14,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
+
+using Org.BouncyCastle.Ocsp;
 
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -203,6 +205,8 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             // Set up the message received event handler
             consumer.Received += async (model, ea) =>
             {
+                var deliveryTag = ea.DeliveryTag;
+                var queue = QueueName;
                 try
                 {
                     #region Message Deserialization
@@ -211,10 +215,22 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
                     var body = ea.Body.ToArray();
                     var message = System.Text.Encoding.UTF8.GetString(body);
 
+                    _logger.LogDebug("[{Queue}] Received message (deliveryTag={Tag}, size={Bytes})", queue, deliveryTag, body.Length);
+
                     // Deserialize the JSON message to MessageMetadataRequest object
                     // This contains Twilio webhook data: status, body, from, to, etc.
                     MessageMetadataRequest messageRequest = JsonConvert
                    .DeserializeObject<MessageMetadataRequest>(message);
+
+                    if (messageRequest == null)
+                    {
+                        _logger.LogWarning("[{Queue}] Deserialization failed → deliveryTag={Tag}", queue, deliveryTag);
+                        channel.BasicAck(deliveryTag, false);
+                        return;
+                    }
+
+                    _logger.LogInformation("[{Queue}] Processing MessageSid={Sid} | Status={Status} | HasBody={HasBody}",
+                    queue, messageRequest.MessageSid, messageRequest.MessageStatus, !string.IsNullOrEmpty(messageRequest.Body));
 
                     #endregion
 
@@ -234,6 +250,9 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
                             // Status Update Message:
                             // Has MessageStatus (delivered, read, failed, etc.) but no Body
                             // This is a delivery status callback from Twilio
+                            _logger.LogInformation("[{Queue}] Processing DELIVERY STATUS → {Status} for MessageSid={Sid}",
+                            queue, messageRequest.MessageStatus, messageRequest.MessageSid);
+                            
                             await twilioWebHookService.ProcessStatusAsync(messageRequest);
                         }
                         else
@@ -241,8 +260,13 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
                             // Incoming Message:
                             // Has a Body - this is a message from a customer
                             // Process it as an incoming WhatsApp/SMS message
+                            _logger.LogInformation("[{Queue}] Processing INCOMING MESSAGE from {From} to {To} → Body length={Len}",
+                            queue, messageRequest.From, messageRequest.To, messageRequest.Body?.Length ?? 0);
+                            
                             await twilioWebHookService.ProcessIncomingMessageAsync(messageRequest);
                         }
+                        _logger.LogInformation("[{Queue}] Successfully processed message → MessageSid={Sid}", queue, messageRequest.MessageSid);
+                        channel.BasicAck(deliveryTag, false);
                     }
 
                     #endregion
@@ -251,18 +275,9 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
                 {
                     // Log any errors that occur during processing
                     // The message will still be acknowledged to prevent infinite loops
-                    Log.Error($"this is rabbit mq ex {ex}");
+                    _logger.LogError(ex, "[{Queue}] Failed to process message → deliveryTag={Tag}", queue, deliveryTag);
+                    channel.BasicNack(deliveryTag, false, true);
                 }
-
-                #region Message Acknowledgment
-
-                // Acknowledge the message as processed
-                // This removes it from the queue permanently
-                // multiple: false - only acknowledge this specific message
-                channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
-
-                #endregion
-
             };
 
             #endregion

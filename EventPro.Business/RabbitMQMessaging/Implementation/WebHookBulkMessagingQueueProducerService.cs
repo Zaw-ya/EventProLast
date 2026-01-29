@@ -3,6 +3,7 @@ using EventPro.Business.RabbitMQMessaging.Interface;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.RabbitMQMessaging.Implementation
 {
@@ -65,6 +66,8 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// </summary>
         private readonly String QueueName;
 
+        private readonly ILogger<WebHookBulkMessagingQueueProducerService>? _logger;
+
         #endregion
 
         #region Constructor
@@ -84,7 +87,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// Note: The channel is created twice in the original code (line 21 and 24),
         /// the second creation is used for actual operations.
         /// </remarks>
-        public WebHookBulkMessagingQueueProducerService(IConnectionFactory connectionFactory, IConfiguration configuration)
+        public WebHookBulkMessagingQueueProducerService(IConnectionFactory connectionFactory, IConfiguration configuration, ILogger<WebHookBulkMessagingQueueProducerService>? logger)
         {
             _connectionFactory = connectionFactory;
             connection = _connectionFactory.CreateConnection();
@@ -100,6 +103,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
+            _logger = logger;
         }
 
         #endregion
@@ -140,21 +144,31 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             var body = Encoding.UTF8.GetBytes(jsonString);
 
             // Publish asynchronously with thread-safe channel access
-            await Task.Run(() =>
+            try
             {
-                // Lock ensures only one thread publishes at a time
-                // This prevents channel corruption from concurrent access
-                lock (channel)
+                await Task.Run(() =>
                 {
-                    // Publish to the default exchange (empty string)
-                    // Routing key matches queue name for direct delivery
-                    channel.BasicPublish(exchange: string.Empty,
-                            routingKey: QueueName,
-                            body: body,
-                            basicProperties: null);
-                }
+                    // Lock ensures only one thread publishes at a time
+                    // This prevents channel corruption from concurrent access
+                    lock (channel)
+                    {
+                        _logger?.LogDebug("Publishing to queue {QueueName} - size {Bytes} bytes", QueueName, body.Length);
 
-            });
+                        // Publish to the default exchange (empty string)
+                        // Routing key matches queue name for direct delivery
+                        channel.BasicPublish(exchange: string.Empty,
+                                routingKey: QueueName,
+                                body: body,
+                                basicProperties: null);
+                        _logger?.LogInformation("Successfully published to {QueueName}", QueueName);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to publish message to {QueueName}", QueueName);
+                throw;
+            }
 
             return;
 
