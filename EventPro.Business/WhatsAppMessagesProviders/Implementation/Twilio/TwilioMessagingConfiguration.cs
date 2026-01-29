@@ -228,7 +228,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 counter++;
                 _memoryCacheStoreService.save(events.Id.ToString(), counter);
             }
-
+            _logger.LogInformation("Updated sending counter for Event ID: {EventId} to {Counter}", events.Id, counter);
             return counter;
         }
 
@@ -247,12 +247,14 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         /// <returns>Initial counter value (always 0)</returns>
         protected int SetSendingCounter(List<Guest> guests, Events events)
         {
+            _logger.LogInformation("Initializing sending counter for Event ID: {EventId} with {GuestCount} guests", events.Id, guests.Count);
             int counter = 0;
             if (guests.Count > 1)
             {
                 _memoryCacheStoreService.save(events.Id.ToString(), 0);
+                _logger.LogInformation("Sending counter set to 0 for Event ID: {EventId}", events.Id);
             }
-
+            _logger.LogInformation("Sending counter initialization complete for Event ID: {EventId}", events.Id);
             return counter;
         }
 
@@ -264,6 +266,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         /// <returns>Full absolute URL string</returns>
         protected string GetFullImageUrl(string relativePath, string folderNameKey)
         {
+
             var cloudName = _configuration.GetSection("CloudinarySettings")["CloudName"];
             // Retrieve the folder path from configuration, e.g., Uploads:Card -> "/card"
             // We strip the leading slash if present to avoid double slashes when combining
