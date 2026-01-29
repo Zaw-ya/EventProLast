@@ -46,7 +46,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         string propName = m.Groups[1].Value;
                         if (propName == "GuestCard")
                         {
-                            return events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                            return GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                         }
 
                         if (propName == "ReminderHeaderImage")

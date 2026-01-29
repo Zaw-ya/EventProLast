@@ -17,12 +17,14 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
     {
         private readonly EventProContext db;
         private readonly UrlProtector _urlProtector;
+        private readonly ILogger<TwilioCardTemplates> _logger;
         public TwilioConfirmationTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService, UrlProtector urlProtector, ILogger<TwilioMessagingConfiguration> logger) : base(configuration,
+            IMemoryCacheStoreService memoryCacheStoreService, UrlProtector urlProtector, ILogger<TwilioCardTemplates> logger) : base(configuration,
                 memoryCacheStoreService,logger)
         {
             db = new EventProContext(configuration);
             _urlProtector = urlProtector;
+            _logger = logger;
         }
 
         public async Task SendArabicbasic(List<Guest> guests, Events events)
@@ -1307,7 +1309,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         string propName = m.Groups[1].Value;
                         if(propName == "GuestCard")
                         {
-                            return events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                            return GetFullImageUrl(events.Id + "/E00000" + events.Id + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", "cards");
                         }
 
                         if (propName == "CountOfAdditionalInvitations")
@@ -1359,54 +1361,88 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         private async Task SendMessageAndUpdateStatus(Events events, string templateId, Guest guest, string fullPhoneNumber, string yesButtonId, string noButtonId, string eventLocationButtonId, string[] parameters, List<Guest> guests, TwilioProfileSettings profileSettings)
         {
-            // Ali hani // Send the WhatsApp template message and get the message SID for tracking status , 
-            string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
-            if (messageSid != null)
+            try
             {
-                guest.MessageId = messageSid;
-                guest.Response = "Message Processed Successfully";
-                guest.YesButtonId = yesButtonId;
-                guest.NoButtonId = noButtonId;
-                guest.EventLocationButtonId = eventLocationButtonId;
-                guest.WasentOn = DateTime.Now.ToString();
-                guest.TextDelivered = null;
-                guest.TextRead = null;
-                guest.TextSent = null;
-                guest.TextFailed = null;
-                guest.ConguratulationMsgId = null;
-                guest.ConguratulationMsgFailed = null;
-                guest.ConguratulationMsgDelivered = null;
-                guest.ConguratulationMsgSent = null;
-                guest.ConguratulationMsgRead = null;
-                guest.ImgDelivered = null;
-                guest.ImgFailed = null;
-                guest.ImgRead = null;
-                guest.ImgSent = null;
-                guest.ImgSentMsgId = null;
-                guest.WaresponseTime = null;
-                guest.whatsappMessageEventLocationId = null;
-                guest.EventLocationSent = null;
-                guest.EventLocationRead = null;
-                guest.EventLocationDelivered = null;
-                guest.EventLocationFailed = null;
-                guest.waMessageEventLocationForSendingToAll = null;
-                guest.ReminderMessageId = null;
-                guest.ReminderMessageSent = null;
-                guest.ReminderMessageRead = null;
-                guest.ReminderMessageDelivered = null;
-                guest.ReminderMessageFailed = null;
+                _logger.LogInformation(
+                    "Attempting to send WhatsApp message. EventId {EventId}, GuestId {GuestId}, TemplateId {TemplateId}, To {To}",
+                    events.Id,
+                    guest.GuestId,
+                    templateId,
+                    fullPhoneNumber
+                );
 
-                if (guests.Count > 1)
+                // Ali hani // Send the WhatsApp template message and get the message SID for tracking status , 
+                string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
+                
+                if (messageSid != null)
                 {
-                    _memoryCacheStoreService.save(messageSid, 0);
+                    _logger.LogInformation(
+                        "WhatsApp message sent successfully. EventId {EventId}, GuestId {GuestId}, MessageSid {MessageSid}",
+                        events.Id,
+                        guest.GuestId,
+                        messageSid
+                    );
+
+                    guest.MessageId = messageSid;
+                    guest.Response = "Message Processed Successfully";
+                    guest.YesButtonId = yesButtonId;
+                    guest.NoButtonId = noButtonId;
+                    guest.EventLocationButtonId = eventLocationButtonId;
+                    guest.WasentOn = DateTime.Now.ToString();
+                    guest.TextDelivered = null;
+                    guest.TextRead = null;
+                    guest.TextSent = null;
+                    guest.TextFailed = null;
+                    guest.ConguratulationMsgId = null;
+                    guest.ConguratulationMsgFailed = null;
+                    guest.ConguratulationMsgDelivered = null;
+                    guest.ConguratulationMsgSent = null;
+                    guest.ConguratulationMsgRead = null;
+                    guest.ImgDelivered = null;
+                    guest.ImgFailed = null;
+                    guest.ImgRead = null;
+                    guest.ImgSent = null;
+                    guest.ImgSentMsgId = null;
+                    guest.WaresponseTime = null;
+                    guest.whatsappMessageEventLocationId = null;
+                    guest.EventLocationSent = null;
+                    guest.EventLocationRead = null;
+                    guest.EventLocationDelivered = null;
+                    guest.EventLocationFailed = null;
+                    guest.waMessageEventLocationForSendingToAll = null;
+                    guest.ReminderMessageId = null;
+                    guest.ReminderMessageSent = null;
+                    guest.ReminderMessageRead = null;
+                    guest.ReminderMessageDelivered = null;
+                    guest.ReminderMessageFailed = null;
+
+                    if (guests.Count > 1)
+                    {
+                        _memoryCacheStoreService.save(messageSid, 0);
+                    }
+                }
+                else
+                {
+                    _logger.LogError(
+                        "WhatsApp message sending failed (SID is null). EventId {EventId}, GuestId {GuestId}",
+                        events.Id,
+                        guest.GuestId
+                    );
+                    guest.MessageId = null;
+                    guest.Response = "WA Error";
                 }
             }
-            else
+            catch (Exception ex)
             {
+                _logger.LogError(
+                    ex,
+                    "Exception in SendMessageAndUpdateStatus. EventId {EventId}, GuestId {GuestId}",
+                    events.Id,
+                    guest.GuestId
+                );
                 guest.MessageId = null;
-                guest.Response = "WA Error";
+                guest.Response = "WA Error Exception";
             }
-
         }
 
     }
