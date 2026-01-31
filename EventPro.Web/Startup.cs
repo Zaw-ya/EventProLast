@@ -228,15 +228,16 @@ namespace EventPro.Web
             services.AddScoped<IEmailSender, NotificationService>();
 
             // Queue / Background messaging services
-            services.AddScoped<IWebHookBulkMessagingQueueProducerService, WebHookBulkMessagingQueueProducerService>();
-            services.AddScoped<IWebHookBulkMessagingQueueConsumerService, WebHookBulkMessagingQueueConsumerService>();
-            services.AddScoped<IWebHookSingleMessagingQueueProducerService, WebHookSingleMessagingQueueProducerService>();
-            services.AddScoped<IWebHookSingleMessagingQueueConsumerService, WebHookSingleMessagingQueueConsumerService>();
+            services.AddSingleton<IWebHookBulkMessagingQueueProducerService, WebHookBulkMessagingQueueProducerService>();
+            services.AddSingleton<IWebHookBulkMessagingQueueConsumerService, WebHookBulkMessagingQueueConsumerService>();
+            services.AddSingleton<IWebHookSingleMessagingQueueProducerService, WebHookSingleMessagingQueueProducerService>();
+            services.AddSingleton<IWebHookSingleMessagingQueueConsumerService, WebHookSingleMessagingQueueConsumerService>();
 
-            services.AddScoped<IMessageSendingBulkQueueProducerService, MessageSendingBulkQueueProducerService>();
-            services.AddScoped<IMessageSendingBulkQueueConsumerService, MessageSendingBulkQueueConsumerService>();
-            services.AddScoped<IMessageSendingSingleQueueProducerService, MessageSendingSingleQueueProducerService>();
-            services.AddScoped<IMessageSendingSingleQueueConsumerService, MessageSendingSingleQueueConsumerService>();
+            services.AddSingleton<IMessageSendingBulkQueueProducerService, MessageSendingBulkQueueProducerService>();
+            services.AddSingleton<IMessageSendingBulkQueueConsumerService, MessageSendingBulkQueueConsumerService>();
+            services.AddSingleton<IMessageSendingSingleQueueProducerService, MessageSendingSingleQueueProducerService>();
+            services.AddSingleton<IMessageSendingSingleQueueConsumerService, MessageSendingSingleQueueConsumerService>();
+
 
             // Singletons
             services.AddSingleton<IUnitOFWorkDefaultWhatsappService, UnitOFWorkDefaultWhatsappService>();
@@ -244,7 +245,7 @@ namespace EventPro.Web
                 new MemoryCacheStoreService(sp.GetService<IConnectionMultiplexer>()));
 
             // Helpers / Filters / Middleware-related
-            services.AddScoped<UrlProtector>();
+            services.AddSingleton<UrlProtector>();
             services.AddScoped<ForwardToPrimaryFilter>();
             services.AddScoped<TwilioRoutingRuleForVms>();
 

@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 using DocumentFormat.OpenXml.Spreadsheet;
 
+using EventPro.Business.Helpers;
 using EventPro.DAL;
 using EventPro.DAL.Enum;
 using EventPro.DAL.Models;
@@ -544,12 +545,18 @@ namespace EventPro.Web.Controllers
                         throw new Exception("Guest not found");
                     }
 
+                    // Normalize country code (stored in SecondaryContactNo)
+                    var normalizedCountryCode = PhoneNumberHelper.NormalizeCountryCode(guest.SecondaryContactNo);
+
+                    // Normalize and validate primary phone number
+                    var phoneValidation = PhoneNumberHelper.ValidateAndNormalize(guest.PrimaryContactNo, normalizedCountryCode);
+
                     gst.FirstName = guest.FirstName;
                     gst.NoOfMembers = guest.NoOfMembers;
                     gst.AdditionalText = guest.AdditionalText;
-                    gst.PrimaryContactNo = guest.PrimaryContactNo;
-                    gst.SecondaryContactNo = guest.SecondaryContactNo;
-                    gst.IsPhoneNumberValid = true;
+                    gst.PrimaryContactNo = phoneValidation.NormalizedPhoneNumber;
+                    gst.SecondaryContactNo = phoneValidation.NormalizedCountryCode;
+                    gst.IsPhoneNumberValid = phoneValidation.IsValid;
                     gst.GuestArchieved = false;
 
                     guest.Cypertext = EventProCrypto.EncryptString(
@@ -567,9 +574,15 @@ namespace EventPro.Web.Controllers
                 {
                     _logger.LogInformation("Creating new guest | EventId={EventId}", eventId);
 
+                    // Normalize country code and phone number for new guest
+                    var newGuestCountryCode = PhoneNumberHelper.NormalizeCountryCode(guest.SecondaryContactNo);
+                    var newGuestPhoneValidation = PhoneNumberHelper.ValidateAndNormalize(guest.PrimaryContactNo, newGuestCountryCode);
+
+                    guest.PrimaryContactNo = newGuestPhoneValidation.NormalizedPhoneNumber;
+                    guest.SecondaryContactNo = newGuestPhoneValidation.NormalizedCountryCode;
                     guest.CreatedBy = userId;
                     guest.CreatedOn = DateTime.Now;
-                    guest.IsPhoneNumberValid = true;
+                    guest.IsPhoneNumberValid = newGuestPhoneValidation.IsValid;
                     guest.GuestArchieved = false;
                     guest.Source = "Entry";
 
@@ -2237,17 +2250,25 @@ namespace EventPro.Web.Controllers
                                 row["GuestName"] != null)
 
                             {
+                                // Read raw values as strings to preserve leading zeros
+                                var rawCountryCode = row["CountryCode"]?.ToString()?.Trim() ?? "";
+                                var rawContactNo = row["ContactNo"]?.ToString()?.Trim() ?? "";
+
+                                // Normalize and validate phone number
+                                var normalizedCountryCode = PhoneNumberHelper.NormalizeCountryCode(rawCountryCode);
+                                var phoneValidation = PhoneNumberHelper.ValidateAndNormalize(rawContactNo, normalizedCountryCode);
+
                                 Guest guest = new Guest();
                                 guest.FirstName = Convert.ToString(row["GuestName"]);
                                 guest.AdditionalText = Convert.ToString(row["AdditionalText"]);
                                 guest.NoOfMembers = Convert.ToInt32(row["Members"]);
-                                guest.SecondaryContactNo = Convert.ToString(int.Parse(row["CountryCode"].ToString())).Trim();
-                                guest.PrimaryContactNo = Convert.ToString(double.Parse(row["ContactNo"].ToString())).Trim();
+                                guest.SecondaryContactNo = phoneValidation.NormalizedCountryCode;
+                                guest.PrimaryContactNo = phoneValidation.NormalizedPhoneNumber;
                                 guest.CreatedBy = userId;
                                 guest.CreatedOn = DateTime.UtcNow;
                                 guest.EventId = eventId;
                                 guest.Source = "Upload";
-                                guest.IsPhoneNumberValid = true;
+                                guest.IsPhoneNumberValid = phoneValidation.IsValid;
                                 guest.GuestArchieved = false;
                                 // Encrypt guest ID for QR code
                                 guest.Cypertext = EventProCrypto.EncryptString(_configuration.GetSection("SecurityKey").Value, Convert.ToString(guest.GuestId));
