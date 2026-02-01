@@ -154,21 +154,27 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                    guests.Count);
                 await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
                 {
+                 
                     string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                    events.ParentTitle.Trim(),
+                    events.EventTitle.Trim(),
+                    evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                    evntDate.ToString("dd/MM/yyyy"),
+                    events.EventVenue.ToString().Trim(),
+                    messagrHeaderImage,
+                    yesButtonId,
+                    noButtonId,
+                    eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -241,17 +247,20 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -318,18 +327,22 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage.ToString(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -466,18 +479,21 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -528,45 +544,24 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                   
-                    // Ali: Get BackgroundImage from CardInfo table and extract filename only
-                    string imageFilename = string.Empty;
-                    var cardInfo = await db.CardInfo.Where(c => c.EventId == events.Id).AsNoTracking().FirstOrDefaultAsync();
-                    
-                    if (cardInfo != null && !string.IsNullOrEmpty(cardInfo.BackgroundImage))
-                    {
-                        // BackgroundImage is a full URL: https://.../card/filename.jpg
-                        // We need just "filename.jpg"
-                        try 
-                        {
-                            var uri = new Uri(cardInfo.BackgroundImage);
-                            string path = uri.LocalPath; // /.../card/filename.jpg
-                            imageFilename = System.IO.Path.GetFileName(path);
-                        }
-                        catch
-                        {
-                            // Fallback if not a valid URI, try simple string split
-                            var parts = cardInfo.BackgroundImage.Split('/');
-                            imageFilename = parts.Last();
-                        }
-                    }
 
-                    imageFilename = Uri.EscapeDataString(imageFilename ?? "");
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
 
                     var parameters = new string[]
                     {
-
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.Trim(),
-                imageFilename, // Ali: filename only from CardInfo
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.Trim(),
+                        messagrHeaderImage, 
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -614,24 +609,22 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 _logger.LogInformation("SendArabicFemaleWithHeaderText: Starting to send messages in parallel.");
                 await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
                 {
-
-
                     string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderText,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        events.MessageHeaderText,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -684,15 +677,15 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -743,18 +736,22 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -805,19 +802,24 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.Trim(),
-                events.MessageHeaderImage,
-                events.MessageHeaderText,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.Trim(),
+                        messagrHeaderImage, 
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -870,16 +872,16 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderText,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        events.MessageHeaderText,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -930,17 +932,20 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -995,15 +1000,15 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1054,18 +1059,23 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage.ToString(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1108,14 +1118,14 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1156,12 +1166,16 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                 
                     var parameters = new string[]
                     {
-                events.MessageHeaderImage.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1204,10 +1218,10 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1248,13 +1262,16 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                events.MessageHeaderImage.ToString(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        messagrHeaderImage,
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1297,15 +1314,15 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd", new CultureInfo("ar-SA")),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd", new CultureInfo("ar-SA")),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1346,13 +1363,16 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.MessageHeaderImage.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1395,11 +1415,11 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1440,14 +1460,17 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.MessageHeaderImage.ToString(),
-                events.MessageHeaderText.ToString(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        messagrHeaderImage,
+                        events.MessageHeaderText.ToString(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1501,14 +1524,14 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1562,15 +1585,15 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1622,18 +1645,21 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1685,20 +1711,22 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderImage,
-                events.MessageHeaderText,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        events.MessageHeaderText,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
@@ -1750,18 +1778,22 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
+
+                    string messagrHeaderImage = events.MessageHeaderImage;
+                    if (!string.IsNullOrEmpty(messagrHeaderImage))
+                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
                     var parameters = new string[]
                     {
-                guest.FirstName.Trim(),
-                events.ParentTitle.Trim(),
-                events.EventTitle.Trim(),
-                evntDate.ToString("dddd"),
-                evntDate.ToString("dd/MM/yyyy"),
-                events.EventVenue.ToString().Trim(),
-                events.MessageHeaderText,
-                yesButtonId,
-                noButtonId,
-                eventLocationButtonId
+                        guest.FirstName.Trim(),
+                        events.ParentTitle.Trim(),
+                        events.EventTitle.Trim(),
+                        evntDate.ToString("dddd"),
+                        evntDate.ToString("dd/MM/yyyy"),
+                        events.EventVenue.ToString().Trim(),
+                        messagrHeaderImage,
+                        yesButtonId,
+                        noButtonId,
+                        eventLocationButtonId
                     };
 
                     await SendMessageAndUpdateStatus(events, templateId, guest, fullPhoneNumber, yesButtonId, noButtonId, eventLocationButtonId, parameters, guests, profileSettings);
