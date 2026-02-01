@@ -238,6 +238,12 @@ namespace EventPro.Web
             services.AddSingleton<IMessageSendingSingleQueueProducerService, MessageSendingSingleQueueProducerService>();
             services.AddSingleton<IMessageSendingSingleQueueConsumerService, MessageSendingSingleQueueConsumerService>();
 
+            // ------------------------------
+            // Hosted Services (Background Workers)
+            // ------------------------------
+            services.AddHostedService<SingleMessagingConsumerBackgroundService>();
+            services.AddHostedService<BulkMessagingConsumerBackgroundService>();
+
 
             // Singletons
             services.AddSingleton<IUnitOFWorkDefaultWhatsappService, UnitOFWorkDefaultWhatsappService>();
