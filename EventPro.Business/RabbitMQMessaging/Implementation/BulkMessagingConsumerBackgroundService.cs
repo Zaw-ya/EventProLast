@@ -63,9 +63,11 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         /// This should be registered as a Singleton in the DI container to ensure
         /// flow control state is shared across the application.
         /// </param>
-        public BulkMessagingConsumerBackgroundService(IWebHookBulkMessagingQueueConsumerService webHookQueueConsumerServices)
+        public BulkMessagingConsumerBackgroundService(IWebHookBulkMessagingQueueConsumerService webHookQueueConsumerServices,
+            ILogger<BulkMessagingConsumerBackgroundService> logger)
         {
             _WebHookQueueConsumerServices = webHookQueueConsumerServices;
+            _logger = logger;
         }
 
         #endregion
@@ -99,7 +101,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation(
-               "SingleMessagingConsumerBackgroundService started. Initializing RabbitMQ consumer.");
+               "BulkMessagingConsumerBackgroundService started. Initializing RabbitMQ consumer.");
 
             // Start consuming messages from the bulk messaging queue
             // This sets up the RabbitMQ consumer with flow control which runs indefinitely
@@ -109,7 +111,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
                 _WebHookQueueConsumerServices.ConsumeMessage();
 
                 _logger.LogInformation(
-                    "RabbitMQ Single Messaging consumer successfully started and listening for messages.");
+                    "RabbitMQ Bulk Messaging consumer successfully started and listening for messages.");
 
                 // Keep the background service alive until application shutdown
                 await Task.Delay(Timeout.Infinite, stoppingToken);
@@ -117,13 +119,13 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             catch (OperationCanceledException)
             {
                 _logger.LogInformation(
-                    "SingleMessagingConsumerBackgroundService is stopping due to application shutdown.");
+                    "BulkMessagingConsumerBackgroundService is stopping due to application shutdown.");
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(
                     ex,
-                    "Fatal error while starting Single Messaging RabbitMQ consumer.");
+                    "Fatal error while starting Bulk Messaging RabbitMQ consumer.");
                 throw;
             }
         }
