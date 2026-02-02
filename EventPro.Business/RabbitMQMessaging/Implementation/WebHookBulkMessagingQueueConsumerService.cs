@@ -144,6 +144,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             DistributedLockHelper distributedLockHelper,
             IDbContextFactory<EventProContext> dbFactory, ILogger<TwilioCardTemplates> logger)
         {
+            _logger = logger;
             _urlProtector = urlProtector;
             _connectionFactory = connectionFactory;
             _configuration = configuration;
@@ -152,12 +153,11 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
 
             // Create the webhook service with required dependencies
             _twilioWebHookService = new TwilioWebhookService(configuration,
-                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector, _logger), _distributedLockHelper, dbFactory);
+                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector, _logger), _distributedLockHelper, dbFactory , _logger);
 
             _ServiceScopeFactory = serviceScopeFactory;
             db = new EventProContext(_configuration);
             QueueName = _configuration.GetSection("RabbitMqQueues")["TwilioBulkMessagingWebHookMessages"].ToLower();
-            _logger = logger;
 
             // Note: Counter initialization is commented out in original code
             // _memoryCacheStoreService.save(QueueName, 0);

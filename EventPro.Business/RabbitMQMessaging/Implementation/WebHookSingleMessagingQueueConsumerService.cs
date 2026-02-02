@@ -130,6 +130,7 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             IServiceScopeFactory serviceScopeFactory, UrlProtector urlProtector, DistributedLockHelper distributedLockHelper,
             IDbContextFactory<EventProContext> dbFactory, ILogger<TwilioCardTemplates> logger)
         {
+            _logger = logger;
             _urlProtector = urlProtector;
             _connectionFactory = connectionFactory;
             _configuration = configuration;
@@ -139,12 +140,11 @@ namespace EventPro.Business.RabbitMQMessaging.Implementation
             // Create the webhook service with required dependencies
             // This handles the actual processing of Twilio webhooks
             _twilioWebHookService = new TwilioWebhookService(configuration,
-                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector, _logger), _distributedLockHelper, dbFactory);
+                new WhatsappSendingProvidersService(_configuration, _memoryCacheStoreService, _urlProtector, _logger), _distributedLockHelper, dbFactory , _logger);
 
             _ServiceScopeFactory = serviceScopeFactory;
             db = new EventProContext(_configuration);
             QueueName = _configuration.GetSection("RabbitMqQueues")["TwilioSingleMessagingWebHookMessages"].ToLower();
-            _logger = logger;
         }
 
         #endregion
