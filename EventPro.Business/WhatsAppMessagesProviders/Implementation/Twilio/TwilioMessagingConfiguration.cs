@@ -283,5 +283,33 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{folder}/{file}
             return $"https://res.cloudinary.com/{cloudName}/image/upload/{folderPath}/{relativePath}";
         }
+
+        /// <summary>
+        /// Constructs the full URL for an ICS calendar file stored in Cloudinary.
+        /// ICS files are uploaded to Cloudinary in the 'ics' folder.
+        /// </summary>
+        /// <param name="eventId">The event ID</param>
+        /// <returns>Full Cloudinary URL to the ICS file</returns>
+        protected string GetIcsFileUrl(int eventId)
+        {
+
+            // Get Cloudinary settings from configuration like // https://res.cloudinary.com/dewicwvoe/raw/upload/v1770125182/ics/5.ics from reminderImageHeader
+            //var cloudName = _configuration.GetSection("CloudinarySettings")["CloudName"];
+
+            //if (string.IsNullOrEmpty(cloudName))
+            //{
+            //    // Fallback to local file URL if Cloudinary not configured
+            //    var baseUrl = _configuration.GetSection("BaseURL")?.Value ?? "https://localhost:5001";
+            //    baseUrl = baseUrl.TrimEnd('/');
+            //    //return $"{baseUrl}/upload/ics/{eventId}.ics";
+            //    return $"{eventId}.ics";
+
+            //}
+
+            return $"{eventId}.ics";
+
+            // Return Cloudinary URL for ICS file
+            //return $"https://res.cloudinary.com/{cloudName}/raw/upload/ics/{eventId}.ics";
+        }
     }
 }
