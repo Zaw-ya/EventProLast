@@ -383,6 +383,14 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         public async Task SendReminderMessageAsync(List<Guest> guests, Events events)
         {
+            _logger.LogInformation(
+                "SendReminderMessageAsync called. EventId={EventId}, ReminderMessageTempName={TempName}, " +
+                "ReminderTempId={TempId}, ReminderMsgHeaderImg={HeaderImg}",
+                events.Id,
+                events.ReminderMessageTempName,
+                events.ReminderTempId ?? "NULL",
+                events.ReminderMsgHeaderImg ?? "NULL");
+
             if (events.ReminderMessageTempName == "TemplateWithVariables" && !string.IsNullOrEmpty(events.ReminderTempId))
             {
                 await messagesTemplates.ReminderMessageTemplate.Value.SendCustomTemplateWithVariables(guests, events);
@@ -462,6 +470,16 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 {
                     await messagesTemplates.ReminderMessageTemplate.Value
                         .SendReminderWithTempIdWithHeaderImage(guests, events);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "No matching reminder template condition found. EventId={EventId}, " +
+                        "ReminderMessageTempName={TempName}, ReminderTempId={TempId}, ReminderMsgHeaderImg={HeaderImg}",
+                        events.Id,
+                        events.ReminderMessageTempName,
+                        events.ReminderTempId ?? "NULL",
+                        events.ReminderMsgHeaderImg ?? "NULL");
                 }
             }
         }
