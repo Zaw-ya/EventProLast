@@ -31,6 +31,8 @@ using Microsoft.IdentityModel.Tokens;
 
 using Serilog;
 
+using EventPro.Business.Storage.Interface;
+
 namespace EventPro.Web.Controllers
 {
     /// <summary>
@@ -2066,10 +2068,10 @@ namespace EventPro.Web.Controllers
         /// <returns>ICS file content as string</returns>
         private string GenerateCalendarEventICS(Events evnt)
         {
-            var location = "https://maps.app.goo.gl/" + evnt.GmapCode;
+            //var location = "https://maps.app.goo.gl/" + evnt.GmapCode;
 
             // Arab Standard Time zone (UTC+3)
-            TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
+            //TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
 
             // Default party start time (20:00 or 8 PM)
             DateTime eventDate = evnt.EventFrom.Value.Date;
@@ -2077,9 +2079,8 @@ namespace EventPro.Web.Controllers
 
             // Party end time (23:00 or 11 PM)
             DateTime eventEndTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 23, 0, 0);
-
             // Alert 2 days before
-            TimeSpan alertOffset = TimeSpan.FromDays(2);
+            //TimeSpan alertOffset = TimeSpan.FromDays(2);
 
             // Current UTC time
             DateTime utcNow = DateTime.UtcNow;
@@ -2097,8 +2098,8 @@ namespace EventPro.Web.Controllers
             sb.AppendLine($"DTSTART;TZID=Arab Standard Time:{eventStartTime:yyyyMMddTHHmmss}");
             sb.AppendLine($"DTEND;TZID=Arab Standard Time:{eventEndTime:yyyyMMddTHHmmss}");
 
-            sb.AppendLine($"SUMMARY:{evnt.SystemEventTitle}");
-            sb.AppendLine($"LOCATION:{evnt.EventVenue}");
+            sb.AppendLine($"SUMMARY:{evnt.EventTitle}");
+            sb.AppendLine($"LOCATION:{evnt.LinkGuestsLocationEmbedSrc}");
 
             // Reminder 2 days before
             sb.AppendLine("BEGIN:VALARM");
@@ -2114,12 +2115,35 @@ namespace EventPro.Web.Controllers
         }
 
         /// <summary>
-        /// Saves the ICS file content to blob storage.
-        /// Deletes existing file if present before uploading new content.
+        // Saves the ICS file content to Cloudinary storage.
+        // Uploads the ICS file and returns the Cloudinary URL.
         /// </summary>
         /// <param name="icsContent">ICS file content</param>
         /// <param name="fileName">File name (without extension)</param>
-        public async Task SaveReminderIcsFileAsync(string icsContent, string fileName)
+        /// <returns>Cloudinary URL of the uploaded ICS file</returns>
+        public async Task<string> SaveReminderIcsFileAsync(string icsContent, string fileName)
+        {
+            try
+            {
+                // Convert ICS content to memory stream
+                var stream = new MemoryStream(Encoding.UTF8.GetBytes(icsContent));
+                
+                // Upload to Cloudinary in 'ics' folder
+                var icsUrl = await _cloudinaryService.UploadRawFileAsync(stream, $"{fileName}.ics", "ics");
+                
+                Log.Information($"ICS file uploaded to Cloudinary: {icsUrl}");
+               
+                return icsUrl;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, $"Failed to upload ICS file to Cloudinary: {ex.Message}");
+                return null;
+            }
+        }
+
+        /*
+                public async Task SaveReminderIcsFileAsync(string icsContent, string fileName)
         {
 
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
@@ -2145,7 +2169,7 @@ namespace EventPro.Web.Controllers
             }
 
         }
-
+         */
         /// <summary>
         /// Creates and saves a reminder ICS file for an event.
         /// Combines ICS generation and storage operations.
