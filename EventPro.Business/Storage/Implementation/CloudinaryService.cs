@@ -200,6 +200,72 @@ namespace EventPro.Business.Storage.Implementation
             }
         }
 
+a        /// <summary>
+        /// Uploads any file type to Cloudinary as raw resource.
+        /// Useful for ICS calendar files, text files, and other non-image/video files.
+        /// </summary>
+        /// <param name="stream">File stream</param>
+        /// <param name="fileName">Full file name with extension</param>
+        /// <param name="folder">Optional folder path</param>
+        /// <returns>Secure URL of uploaded file</returns>
+        public async Task<string> UploadRawFileAsync(Stream stream, string fileName, string folder = null)
+        {
+            if (stream == null || stream.Length == 0)
+            {
+                throw new ArgumentException("Stream cannot be null or empty", nameof(stream));
+            }
+
+            try
+            {
+                if (stream.CanSeek)
+                {
+                    stream.Position = 0;
+                }
+
+                // Allow ICS files and other common file types
+                var allowedExtensions = new[] { ".ics", ".txt", ".csv", ".json", ".xml", ".pdf" };
+                var fileExtension = Path.GetExtension(fileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    throw new ArgumentException($"Invalid file type. Only {string.Join(", ", allowedExtensions)} files are allowed.");
+                }
+
+                if (stream.Length > 5 * 1024 * 1024) // 5MB limit for raw files
+                {
+                    throw new ArgumentException("File size must be less than 5MB.");
+                }
+
+                var uploadParams = new RawUploadParams()
+                {
+                    File = new FileDescription(fileName, stream),
+                    PublicId = Path.GetFileNameWithoutExtension(fileName),
+                    Overwrite = true,
+                    UseFilename = true,
+                    UniqueFilename = false
+                };
+
+                if (!string.IsNullOrEmpty(folder))
+                {
+                    uploadParams.Folder = folder;
+                }
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Cloudinary upload error: {uploadResult.Error.Message}");
+                }
+
+                // Return the raw URL from Cloudinary for consistency
+                return uploadResult.SecureUrl?.ToString() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to upload raw file to Cloudinary: {ex.Message}", ex);
+            }
+        }
+
         public async Task<string> UpdateImageAsync(string publicId, Stream stream, string fileName)
         {
             var uploadParams = new ImageUploadParams()
