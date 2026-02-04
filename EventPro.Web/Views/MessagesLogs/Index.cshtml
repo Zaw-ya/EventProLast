@@ -173,7 +173,7 @@
                     <!-- Chat Area -->
                 <div class="chat-area position-relative">
                     <div class="sendingMessage" hidden id="sendingMessage">
-                        <span>...???? ????? ?????</span>
+                        <span>...جاري تحميل الرسائل</span>
                     </div>
                     <div class="emptyMessage" id="emptyMessages">
                       <strong>search to display messages logs</strong>
@@ -215,13 +215,13 @@
             var emptyMessages = document.getElementById('emptyMessages');
             if (number == "" || profile == "") {
 
-                Swal.fire('????? ????? ???? ????????');
+                Swal.fire('الرجاء ادخال جميع البيانات');
                 return;
             }
 
             sendingMessage.hidden = false;
             emptyMessages.hidden = true;
-            var data = await fetch(`/MessagesLogs/GetGuestMessages?phoneNumber=${number}&&profileName=${profile}`);
+            var data = await fetch(`/MessagesLogs/GetGuestMessages?phoneNumber=${number}&profileName=${profile}`);
             var result = await data.json();
             if (!result.success) {
                 Swal.fire(result.message);
@@ -238,7 +238,7 @@
             document.getElementById("chatMessages").innerHTML = "";
             messages.forEach((message) => {
                 const messageDiv = document.createElement('div');
-                if (message.EventProMessage)
+                if (message.eventProMessage)
                 {
                     messageDiv.classList.add('chat-message');
                     messageDiv.classList.add('sent');

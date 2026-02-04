@@ -6,8 +6,12 @@ using EventPro.DAL.Dto;
 using EventPro.DAL.Models;
 using EventPro.Web.Filters;
 using EventPro.Web.Services;
+using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace EventPro.Web.Controllers
 {
@@ -50,6 +54,42 @@ namespace EventPro.Web.Controllers
             }
 
             return Json(new { success = true, messages = messages });
+        }
+
+        [AuthorizeRoles("Administrator", "Supervisor")]
+        public async Task<IActionResult> Media(string messageSid, string mediaSid, string profileName)
+        {
+            try
+            {
+                var twilioProfile = await _context.TwilioProfileSettings
+                    .Where(e => e.Name == profileName)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+
+                if (twilioProfile == null)
+                    return NotFound();
+
+                var apiUrl = $"https://api.twilio.com/2010-04-01/Accounts/{twilioProfile.AccountSid}/Messages/{messageSid}/Media/{mediaSid}";
+
+                using var httpClient = new HttpClient();
+                var credentials = Convert.ToBase64String(
+                    System.Text.Encoding.ASCII.GetBytes($"{twilioProfile.AccountSid}:{twilioProfile.AuthToken}"));
+                httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Basic", credentials);
+
+                var response = await httpClient.GetAsync(apiUrl);
+                if (!response.IsSuccessStatusCode)
+                    return NotFound();
+
+                var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+                var stream = await response.Content.ReadAsStreamAsync();
+
+                return File(stream, contentType);
+            }
+            catch
+            {
+                return NotFound();
+            }
         }
 
         private void SetBreadcrum(string title, string link)
