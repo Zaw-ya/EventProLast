@@ -25,6 +25,8 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             db = new EventProContext(configuration);
             _logger = logger;
         }
+
+        // Done 
         public async Task SendArabicCard(List<Guest> guests, Events events)
         {
             _logger.LogInformation(
@@ -103,7 +105,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 events.Id
             );
         }
-
+        // Done
         public async Task SendArabicCardwithname(List<Guest> guests, Events events)
         {
             _logger.LogInformation("Starting SendArabicCardwithname for EventId={EventId}, GuestsCount={Count}",
@@ -158,7 +160,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             _logger.LogInformation("Finished SendArabicCardwithname for EventId={EventId}", events.Id);
         }
 
-
+        // Done
         public async Task SendEnglishCard(List<Guest> guests, Events events)
         {
             _logger.LogInformation("Starting SendEnglishCard for EventId={EventId}, GuestsCount={Count}",
