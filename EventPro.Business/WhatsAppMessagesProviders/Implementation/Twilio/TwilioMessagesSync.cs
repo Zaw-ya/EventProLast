@@ -2,7 +2,7 @@ using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Dto;
 using EventPro.DAL.Models;
-
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -18,8 +18,8 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         public TwilioMessagesSync(
             IConfiguration configuration,
             IMemoryCacheStoreService memoryCacheStoreService,
-            ILogger<TwilioMessagingConfiguration> logger)  
-            : base(configuration, memoryCacheStoreService, logger) 
+            ILogger<TwilioMessagingConfiguration> logger)
+            : base(configuration, memoryCacheStoreService, logger)
         {
             db = new EventProContext(configuration);
         }
@@ -160,6 +160,11 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         {
             await SetTwilioAccountConfigurationAsync(profileName);
 
+            var twilioProfile = await db.TwilioProfileSettings
+                .Where(e => e.Name == profileName)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
             var messageLogs = new List<MessageLog>();
 
 
@@ -170,26 +175,26 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                                    limit: 100
                                      );
 
-                await GetMessagesMediaAndUpdateAsync(messageLogs, messagesSent,true);
+                await GetMessagesMediaAndUpdateAsync(messageLogs, messagesSent, true, twilioProfile);
             });
 
 
             await Task.Run(async () =>
-             {
-                 var messagesReceived = await MessageResource.ReadAsync(
-                                       from: $"whatsapp:+{number}",
-                                       limit: 100
-                                        );
+            {
+                var messagesReceived = await MessageResource.ReadAsync(
+                                      from: $"whatsapp:+{number}",
+                                      limit: 100
+                                       );
 
-                 await GetMessagesMediaAndUpdateAsync(messageLogs, messagesReceived,false);
-             });
+                await GetMessagesMediaAndUpdateAsync(messageLogs, messagesReceived, false, twilioProfile);
+            });
 
 
             return messageLogs.OrderBy(e => e.DateSent).ToList();
 
         }
 
-        private async Task GetMessagesMediaAndUpdateAsync(List<MessageLog> messageLogs, ResourceSet<MessageResource> messagesSent,bool IsEventProMessage)
+        private async Task GetMessagesMediaAndUpdateAsync(List<MessageLog> messageLogs, ResourceSet<MessageResource> messagesSent, bool IsEventProMessage, TwilioProfileSettings twilioProfile)
         {
             await Parallel.ForEachAsync(messagesSent, parallelOptions, async (message, CancellationToken) =>
             {
@@ -209,7 +214,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
                 if (Int32.Parse(message.NumMedia) > 0)
                 {
-                    mediaFile = await getMediaUrl(message.Sid);
+                    mediaFile = await getMediaUrl(message.Sid, twilioProfile);
 
                     log.HasMedia = true;
                     log.MediaUrl = mediaFile.Url;
@@ -220,7 +225,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             });
         }
 
-        private async Task<MediaFile> getMediaUrl(string sid)
+        private async Task<MediaFile> getMediaUrl(string sid, TwilioProfileSettings twilioProfile)
         {
             var mediaFile = new MediaFile();
             try
@@ -229,9 +234,12 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                                             pathMessageSid: sid
                                               );
 
-                mediaFile.Url = mediaFiles.FirstOrDefault().Uri.ToString().Replace(".json", "").Replace("\"", "");
-                mediaFile.Url = "https://api.twilio.com" + mediaFile.Url;
-                var Extention = mediaFiles.FirstOrDefault().ContentType.ToString();
+                var media = mediaFiles.FirstOrDefault();
+
+                // Use proxy endpoint to serve media with Twilio auth server-side
+                mediaFile.Url = $"/MessagesLogs/Media?messageSid={sid}&mediaSid={media.Sid}&profileName={Uri.EscapeDataString(twilioProfile.Name)}";
+
+                var Extention = media.ContentType.ToString();
                 if (Extention.Contains("image"))
                 {
                     mediaFile.Extention = "image";
