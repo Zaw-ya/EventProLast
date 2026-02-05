@@ -20,37 +20,6 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         {
             db = new EventProContext(configuration);
         }
-
-        public async Task SendCongratulationMessageToOwner(List<Guest> guests, Events events, string message)
-        {
-            var profileSettings = await db.TwilioProfileSettings
-                                 .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                                 .AsNoTracking()
-                                 .FirstOrDefaultAsync();
-            var templateId = await db.TwilioProfileSettings
-                             .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                             .AsNoTracking()
-                             .Select(e => e.ArabicCongratulationMessageToEventOwner)
-                             .FirstOrDefaultAsync();
-            await SendMessageToOwnerAndUpdateGuest(guests, events, message, templateId);
-            return;
-        }
-
-        public async Task SendCongratulationMessageToOwnerEnglish(List<Guest> guests, Events events, string message)
-        {
-            var profileSettings = await db.TwilioProfileSettings
-                                  .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                                  .AsNoTracking()
-                                  .FirstOrDefaultAsync();
-            var templateId = await db.TwilioProfileSettings
-                             .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                             .AsNoTracking()
-                             .Select(e => e.EnglishCongratulationMessageToEventOwner)
-                             .FirstOrDefaultAsync();
-            await SendMessageToOwnerAndUpdateGuest(guests, events, message, templateId);
-            return;
-        }
-
         public async Task SendTemp1(List<Guest> guests, Events events)
         {
             var profileSettings = await db.TwilioProfileSettings
@@ -62,16 +31,6 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return;
         }
 
-        public async Task SendTemp10(List<Guest> guests, Events events)
-        {
-            var profileSettings = await db.TwilioProfileSettings
-                                 .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                                 .AsNoTracking()
-                                 .FirstOrDefaultAsync();
-            var templateId = profileSettings?.ThanksTemp10;
-            await SendDefaultMessageToGuestAndUpdateGuest(guests, events, templateId, profileSettings);
-            return;
-        }
 
         public async Task SendTemp2(List<Guest> guests, Events events)
         {
@@ -160,240 +119,18 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await SendDefaultMessageToGuestAndUpdateGuest(guests, events, templateId, profileSettings);
             return;
         }
-
-        public async Task SendThanksById(List<Guest> guests, Events events)
+        
+        public async Task SendTemp10(List<Guest> guests, Events events)
         {
-            var twilioProfile = await db.TwilioProfileSettings
-                    .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync();
-            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
-            {
-                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                var conguratulationId = Guid.NewGuid().ToString();
-                var templateId = events.ThanksTempId;
-                string[] parameters;
-                if (events.SendingType == "Basic")
-                {
-                    parameters = new string[] { conguratulationId, };
-
-                }
-                else
-                {
-                    parameters = new string[] { guest.FirstName.Trim(), conguratulationId, };
-                }
-                await SendCustomMessageAndUpdateGuest(events, guest, fullPhoneNumber, conguratulationId, templateId, parameters, twilioProfile);
-            });
-            db.Guest.UpdateRange(guests);
-            await db.SaveChangesAsync();
+            var profileSettings = await db.TwilioProfileSettings
+                                 .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                                 .AsNoTracking()
+                                 .FirstOrDefaultAsync();
+            var templateId = profileSettings?.ThanksTemp10;
+            await SendDefaultMessageToGuestAndUpdateGuest(guests, events, templateId, profileSettings);
             return;
         }
-        public async Task SendThanksCustom(List<Guest> guests, Events events)
-        {
-            int counter = SetSendingCounter(guests, events);
-            var twilioProfile = await db.TwilioProfileSettings
-                                .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                                .AsNoTracking()
-                                .FirstOrDefaultAsync();
 
-            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
-            {
-                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                var conguratulationId = Guid.NewGuid().ToString();
-                var templateId = "";
-                string[] parameters;
-                if (events.SendingType == "Basic")
-                {
-                    templateId = twilioProfile?.CustomThanksWithoutGuestName;
-                    parameters = new string[] { events.ThanksMessage, conguratulationId, };
-
-                }
-                else
-                {
-                    templateId = twilioProfile?.CustomThanksWithGuestName;
-                    parameters = new string[] { guest.FirstName.Trim(), events.ThanksMessage, conguratulationId, };
-                }
-                await SendCustomMessageAndUpdateGuest(events, guest, fullPhoneNumber, conguratulationId, templateId, parameters, twilioProfile);
-                counter = UpdateCounter(guests, events, counter);
-            });
-            await updateDataBaseAndDisposeCache(guests, events);
-            return;
-        }
-        private async Task SendCustomMessageAndUpdateGuest(Events events, Guest guest, string fullPhoneNumber, string conguratulationId, string? templateId, string[] parameters, TwilioProfileSettings profileSettings)
-        {
-            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
-            if (messageSid != null)
-            {
-                guest.ConguratulationMsgId = messageSid;
-                guest.ConguratulationMsgLinkId = conguratulationId;
-                guest.ConguratulationMsgCount = 1;
-                guest.ConguratulationMsgSent = null;
-                guest.ConguratulationMsgRead = null;
-                guest.ConguratulationMsgDelivered = null;
-                guest.ConguratulationMsgFailed = null;
-
-                _memoryCacheStoreService.save(messageSid, 0);
-            }
-
-            //await Task.Delay(1000);
-        }
-        private async Task SendDefaultMessageToGuestAndUpdateGuest(List<Guest> guests, Events events, string? templateId, TwilioProfileSettings profileSettings)
-        {
-            int counter = SetSendingCounter(guests, events);
-
-            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
-            {
-                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                var conguratulationId = Guid.NewGuid().ToString();
-                var parameters = new string[]
-                {
-                guest.FirstName.Trim(),
-                events.EventTitle.Trim(),
-                conguratulationId,
-
-                };
-
-                var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
-                if (messageSid != null)
-                {
-                    guest.ConguratulationMsgId = messageSid;
-                    guest.ConguratulationMsgLinkId = conguratulationId;
-                    guest.ConguratulationMsgCount = 1;
-                    guest.ConguratulationMsgSent = null;
-                    guest.ConguratulationMsgRead = null;
-                    guest.ConguratulationMsgDelivered = null;
-                    guest.ConguratulationMsgFailed = null;
-
-                    if (guests.Count > 1)
-                    {
-                        _memoryCacheStoreService.save(messageSid, 0);
-                    }
-                }
-                counter = UpdateCounter(guests, events, counter);
-                //await Task.Delay(300);
-            });
-            await updateDataBaseAndDisposeCache(guests, events);
-        }
-
-        private async Task SendDefaultMessageToGuestWithHeaderImageAndUpdateGuest(List<Guest> guests, Events events, string? templateId, TwilioProfileSettings profileSettings)
-        {
-            int counter = SetSendingCounter(guests, events);
-
-            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
-            {
-                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                var conguratulationId = Guid.NewGuid().ToString();
-                var parameters = new string[]
-                {
-                events.CongratulationMsgHeaderImg,
-                guest.FirstName.Trim(),
-                events.EventTitle.Trim(),
-                conguratulationId,
-
-                };
-
-                var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
-                if (messageSid != null)
-                {
-                    guest.ConguratulationMsgId = messageSid;
-                    guest.ConguratulationMsgLinkId = conguratulationId;
-                    guest.ConguratulationMsgCount = 1;
-                    guest.ConguratulationMsgSent = null;
-                    guest.ConguratulationMsgRead = null;
-                    guest.ConguratulationMsgDelivered = null;
-                    guest.ConguratulationMsgFailed = null;
-
-                    if (guests.Count > 1)
-                    {
-                        _memoryCacheStoreService.save(messageSid, 0);
-                    }
-                }
-                counter = UpdateCounter(guests, events, counter);
-                //await Task.Delay(300);
-            });
-            await updateDataBaseAndDisposeCache(guests, events);
-        }
-
-        private async Task updateDataBaseAndDisposeCache(List<Guest> guests, Events events)
-        {
-            db.Guest.UpdateRange(guests);
-            await db.SaveChangesAsync();
-            if (guests.Count > 1)
-            {
-                await Task.Delay(10000);
-                _memoryCacheStoreService.delete(events.Id.ToString());
-                foreach (var guest in guests)
-                {
-                    if (guest.ConguratulationMsgId != null)
-                    {
-                        _memoryCacheStoreService.delete(guest.ConguratulationMsgId);
-                    }
-                }
-            }
-        }
-
-        private async Task SendMessageToOwnerAndUpdateGuest(List<Guest> guests, Events events, string message, string? templateId)
-        {
-            var twilioProfile = await db.TwilioProfileSettings
-                    .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync();
-            int counter = SetSendingCounter(guests, events);
-            foreach (var guest in guests)
-            {
-                var eventSentOnNum = events.ConguratulationsMsgSentOnNumber;
-                var detectTheEvet = events;
-                string fullPhoneNumber = $"+{eventSentOnNum}";
-                var parameters = new string[]
-                {
-                guest.FirstName.Trim(),
-                message,
-                };
-                string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, detectTheEvet.CityId, 1, twilioProfile, events.choosenSendingCountryNumber);
-                if (messageSid != null)
-                {
-                    guest.ConguratulationMsgCount = 0;
-                }
-                else
-                {
-                    throw new Exception();
-                }
-                counter = UpdateCounter(guests, events, counter);
-            }
-            await updateDataBaseAndDisposeCache(guests, events);
-        }
-
-        public async Task SendThanksCustomWithHeaderImage(List<Guest> guests, Events events)
-        {
-            int counter = SetSendingCounter(guests, events);
-            var twilioProfile = await db.TwilioProfileSettings
-                                .Where(e => e.Name == events.choosenSendingWhatsappProfile)
-                                .AsNoTracking()
-                                .FirstOrDefaultAsync();
-
-            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
-            {
-                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
-                var conguratulationId = Guid.NewGuid().ToString();
-                var templateId = "";
-                string[] parameters;
-                if (events.SendingType == "Basic")
-                {
-                    templateId = twilioProfile?.CustomThanksWithoutGuestNameWithHeaderImage;
-                    parameters = new string[] { events.CongratulationMsgHeaderImg, events.ThanksMessage, conguratulationId, };
-
-                }
-                else
-                {
-                    templateId = twilioProfile?.CustomThanksWithGuestNameWithHeaderImage;
-                    parameters = new string[] { events.CongratulationMsgHeaderImg, guest.FirstName.Trim(), events.ThanksMessage, conguratulationId, };
-                }
-                await SendCustomMessageAndUpdateGuest(events, guest, fullPhoneNumber, conguratulationId, templateId, parameters, twilioProfile);
-                counter = UpdateCounter(guests, events, counter);
-            });
-            await updateDataBaseAndDisposeCache(guests, events);
-            return;
-        }
 
         public async Task SendTemp1WithHeaderImage(List<Guest> guests, Events events)
         {
@@ -505,6 +242,34 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return;
         }
 
+
+        public async Task SendThanksById(List<Guest> guests, Events events)
+        {
+            var twilioProfile = await db.TwilioProfileSettings
+                    .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+            {
+                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+                var conguratulationId = Guid.NewGuid().ToString();
+                var templateId = events.ThanksTempId;
+                string[] parameters;
+                if (events.SendingType == "Basic")
+                {
+                    parameters = new string[] { conguratulationId, };
+
+                }
+                else
+                {
+                    parameters = new string[] { guest.FirstName.Trim(), conguratulationId, };
+                }
+                await SendCustomMessageAndUpdateGuest(events, guest, fullPhoneNumber, conguratulationId, templateId, parameters, twilioProfile);
+            });
+            db.Guest.UpdateRange(guests);
+            await db.SaveChangesAsync();
+            return;
+        }
         public async Task SendThanksByIdWithHeaderImage(List<Guest> guests, Events events)
         {
             var twilioProfile = await db.TwilioProfileSettings
@@ -532,6 +297,100 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await db.SaveChangesAsync();
             return;
         }
+
+        public async Task SendThanksCustom(List<Guest> guests, Events events)
+        {
+            int counter = SetSendingCounter(guests, events);
+            var twilioProfile = await db.TwilioProfileSettings
+                                .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync();
+
+            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+            {
+                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+                var conguratulationId = Guid.NewGuid().ToString();
+                var templateId = "";
+                string[] parameters;
+                if (events.SendingType == "Basic")
+                {
+                    templateId = twilioProfile?.CustomThanksWithoutGuestName;
+                    parameters = new string[] { events.ThanksMessage, conguratulationId, };
+
+                }
+                else
+                {
+                    templateId = twilioProfile?.CustomThanksWithGuestName;
+                    parameters = new string[] { guest.FirstName.Trim(), events.ThanksMessage, conguratulationId, };
+                }
+                await SendCustomMessageAndUpdateGuest(events, guest, fullPhoneNumber, conguratulationId, templateId, parameters, twilioProfile);
+                counter = UpdateCounter(guests, events, counter);
+            });
+            await updateDataBaseAndDisposeCache(guests, events);
+            return;
+        }
+        public async Task SendThanksCustomWithHeaderImage(List<Guest> guests, Events events)
+        {
+            int counter = SetSendingCounter(guests, events);
+            var twilioProfile = await db.TwilioProfileSettings
+                                .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync();
+
+            await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+            {
+                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+                var conguratulationId = Guid.NewGuid().ToString();
+                var templateId = "";
+                string[] parameters;
+                if (events.SendingType == "Basic")
+                {
+                    templateId = twilioProfile?.CustomThanksWithoutGuestNameWithHeaderImage;
+                    parameters = new string[] { events.CongratulationMsgHeaderImg, events.ThanksMessage, conguratulationId, };
+
+                }
+                else
+                {
+                    templateId = twilioProfile?.CustomThanksWithGuestNameWithHeaderImage;
+                    parameters = new string[] { events.CongratulationMsgHeaderImg, guest.FirstName.Trim(), events.ThanksMessage, conguratulationId, };
+                }
+                await SendCustomMessageAndUpdateGuest(events, guest, fullPhoneNumber, conguratulationId, templateId, parameters, twilioProfile);
+                counter = UpdateCounter(guests, events, counter);
+            });
+            await updateDataBaseAndDisposeCache(guests, events);
+            return;
+        }
+
+
+        public async Task SendCongratulationMessageToOwner(List<Guest> guests, Events events, string message)
+        {
+            var profileSettings = await db.TwilioProfileSettings
+                                 .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                                 .AsNoTracking()
+                                 .FirstOrDefaultAsync();
+            var templateId = await db.TwilioProfileSettings
+                             .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                             .AsNoTracking()
+                             .Select(e => e.ArabicCongratulationMessageToEventOwner)
+                             .FirstOrDefaultAsync();
+            await SendMessageToOwnerAndUpdateGuest(guests, events, message, templateId);
+            return;
+        }
+        public async Task SendCongratulationMessageToOwnerEnglish(List<Guest> guests, Events events, string message)
+        {
+            var profileSettings = await db.TwilioProfileSettings
+                                  .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                                  .AsNoTracking()
+                                  .FirstOrDefaultAsync();
+            var templateId = await db.TwilioProfileSettings
+                             .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                             .AsNoTracking()
+                             .Select(e => e.EnglishCongratulationMessageToEventOwner)
+                             .FirstOrDefaultAsync();
+            await SendMessageToOwnerAndUpdateGuest(guests, events, message, templateId);
+            return;
+        }
+
 
         public async Task SendCustomTemplateWithVariables(List<Guest> guests, Events events)
         {
@@ -583,5 +442,155 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             await db.SaveChangesAsync();
             return;
         }
+
+        private async Task SendCustomMessageAndUpdateGuest(Events events, Guest guest, string fullPhoneNumber, string conguratulationId, string? templateId, string[] parameters, TwilioProfileSettings profileSettings)
+        {
+            var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
+            if (messageSid != null)
+            {
+                guest.ConguratulationMsgId = messageSid;
+                guest.ConguratulationMsgLinkId = conguratulationId;
+                guest.ConguratulationMsgCount = 1;
+                guest.ConguratulationMsgSent = null;
+                guest.ConguratulationMsgRead = null;
+                guest.ConguratulationMsgDelivered = null;
+                guest.ConguratulationMsgFailed = null;
+
+                _memoryCacheStoreService.save(messageSid, 0);
+            }
+
+            //await Task.Delay(1000);
+        }
+        private async Task SendDefaultMessageToGuestAndUpdateGuest(List<Guest> guests, Events events, string? templateId, TwilioProfileSettings profileSettings)
+        {
+            int counter = SetSendingCounter(guests, events);
+
+            foreach (var guest in guests)
+            {
+                //await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+                //{
+                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+                var conguratulationId = Guid.NewGuid().ToString();
+                var parameters = new string[]
+                {
+                guest.FirstName.Trim(),
+                events.EventTitle.Trim(),
+                conguratulationId,
+
+                };
+
+                var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
+                if (messageSid != null)
+                {
+                    guest.ConguratulationMsgId = messageSid;
+                    guest.ConguratulationMsgLinkId = conguratulationId;
+                    guest.ConguratulationMsgCount = 1;
+                    guest.ConguratulationMsgSent = null;
+                    guest.ConguratulationMsgRead = null;
+                    guest.ConguratulationMsgDelivered = null;
+                    guest.ConguratulationMsgFailed = null;
+
+                    if (guests.Count > 1)
+                    {
+                        _memoryCacheStoreService.save(messageSid, 0);
+                    }
+                }
+                counter = UpdateCounter(guests, events, counter);
+                //await Task.Delay(300);
+                //});
+            }
+            await updateDataBaseAndDisposeCache(guests, events);
+        }
+        private async Task SendDefaultMessageToGuestWithHeaderImageAndUpdateGuest(List<Guest> guests, Events events, string? templateId, TwilioProfileSettings profileSettings)
+        {
+            int counter = SetSendingCounter(guests, events);
+
+            foreach (var guest in guests)
+            {
+                //await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
+                //{
+                string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
+                var conguratulationId = Guid.NewGuid().ToString();
+                var parameters = new string[]
+                {
+                events.CongratulationMsgHeaderImg,
+                guest.FirstName.Trim(),
+                events.EventTitle.Trim(),
+                conguratulationId,
+
+                };
+
+                var messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
+                if (messageSid != null)
+                {
+                    guest.ConguratulationMsgId = messageSid;
+                    guest.ConguratulationMsgLinkId = conguratulationId;
+                    guest.ConguratulationMsgCount = 1;
+                    guest.ConguratulationMsgSent = null;
+                    guest.ConguratulationMsgRead = null;
+                    guest.ConguratulationMsgDelivered = null;
+                    guest.ConguratulationMsgFailed = null;
+
+                    if (guests.Count > 1)
+                    {
+                        _memoryCacheStoreService.save(messageSid, 0);
+                    }
+                }
+                counter = UpdateCounter(guests, events, counter);
+                //await Task.Delay(300);
+                //});
+            }
+            await updateDataBaseAndDisposeCache(guests, events);
+        }
+
+        private async Task updateDataBaseAndDisposeCache(List<Guest> guests, Events events)
+        {
+            db.Guest.UpdateRange(guests);
+            await db.SaveChangesAsync();
+            if (guests.Count > 1)
+            {
+                await Task.Delay(10000);
+                _memoryCacheStoreService.delete(events.Id.ToString());
+                foreach (var guest in guests)
+                {
+                    if (guest.ConguratulationMsgId != null)
+                    {
+                        _memoryCacheStoreService.delete(guest.ConguratulationMsgId);
+                    }
+                }
+            }
+        }
+
+        private async Task SendMessageToOwnerAndUpdateGuest(List<Guest> guests, Events events, string message, string? templateId)
+        {
+            var twilioProfile = await db.TwilioProfileSettings
+                    .Where(e => e.Name == events.choosenSendingWhatsappProfile)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+            int counter = SetSendingCounter(guests, events);
+            foreach (var guest in guests)
+            {
+                var eventSentOnNum = events.ConguratulationsMsgSentOnNumber;
+                var detectTheEvet = events;
+                string fullPhoneNumber = $"+{eventSentOnNum}";
+                var parameters = new string[]
+                {
+                guest.FirstName.Trim(),
+                message,
+                };
+                string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, detectTheEvet.CityId, 1, twilioProfile, events.choosenSendingCountryNumber);
+                if (messageSid != null)
+                {
+                    guest.ConguratulationMsgCount = 0;
+                }
+                else
+                {
+                    throw new Exception();
+                }
+                counter = UpdateCounter(guests, events, counter);
+            }
+            await updateDataBaseAndDisposeCache(guests, events);
+        }
+
     }
 }
