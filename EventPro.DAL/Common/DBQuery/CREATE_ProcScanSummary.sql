@@ -25,9 +25,9 @@ BEGIN
         e.SystemEventTitle ,
         
 
-        -- Total guests (sum of NoOfMembers)
+        -- Total guests (sum of NoOfMembers, cast to bigint to prevent overflow)
         (
-            SELECT ISNULL(SUM(g.NoOfMembers), 0)
+            SELECT ISNULL(SUM(CAST(g.NoOfMembers AS BIGINT)), 0)
             FROM Guest g
             WHERE g.EventId = e.id
         ) AS TotalGuests,

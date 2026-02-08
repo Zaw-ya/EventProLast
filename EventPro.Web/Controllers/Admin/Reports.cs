@@ -413,7 +413,7 @@ namespace EventPro.Web.Controllers
                 EventVenue = e.EventVenue,
                 linkedTo = e.LinkedEvent,
                 Location = !string.IsNullOrEmpty(e.City.Country.CountryName) ? e.City.Country.CountryName + "/" + e.City.CityName : e.City.Country.CountryName,
-                TotalGuests = e.Guest.Sum(c => c.NoOfMembers) // Sum all members across guests
+                TotalGuests = (long?)e.Guest.Sum(c => (long)Convert.ToInt64(c.NoOfMembers ?? 0))
 
             }).ToListAsync();
 
