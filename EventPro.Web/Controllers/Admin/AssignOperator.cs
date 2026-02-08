@@ -35,6 +35,11 @@ namespace EventPro.Web.Controllers
                         .AsNoTracking()
                         .FirstOrDefaultAsync();
 
+
+            ViewBag.Icon = await db.CardInfo.Where(p => p.EventId == id).Select(p => p.BackgroundImage)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
             // Set event location for display
             ViewBag.EventLocation = model.Glocation;
 
