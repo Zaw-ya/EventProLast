@@ -637,7 +637,11 @@
                        style="cursor: pointer;">
                         <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card
                     </a>      
-                    <a onclick="SetAccept(${row.id})" a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" style="cursor: pointer;"  class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept</a>
+                    <a onclick="downloadCardAndSetAccept(${@ViewBag.EventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg')"
+                       class="dropdown-item"
+                       style="cursor: pointer;">
+                        <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept
+                    </a>
                     <a
                                onclick="downloadLatestQr(${@ViewBag.EventId}, ${row.id}, 'barcode_${row.id}.png')"
                                class="dropdown-item latest-qr-link"
@@ -1493,6 +1497,37 @@
                     icon: 'error',
                     title: 'خطأ في الاتصال',
                     text: 'حدث خطأ أثناء جلب رابط الدعوة'
+                });
+            }
+        }
+
+        async function downloadCardAndSetAccept(eventId, guestId, noOfMembers, defaultFileName) {
+            try {
+                const response = await fetch(`/admin/GetLatestCardUrl?eventId=${eventId}&guestId=${guestId}&noOfMembers=${noOfMembers}`);
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    const a = document.createElement('a');
+                    a.href = data.url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    await fetch(`/admin/SetAcceptResponse/${guestId}`);
+                    reloading();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Could not fetch card URL'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'An error occurred while fetching the card URL'
                 });
             }
         }
