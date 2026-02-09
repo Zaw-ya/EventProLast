@@ -36,7 +36,6 @@ namespace EventPro.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly EventProContext db;
         private readonly ILogger<EventsController> _logger;
-        private readonly IWatiService _watiService;
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
 
         #endregion
@@ -48,16 +47,14 @@ namespace EventPro.API.Controllers
         /// </summary>
         /// <param name="configuration">Application configuration settings</param>
         /// <param name="logger">Logger for recording controller activities</param>
-        /// <param name="watiService">WATI WhatsApp service integration</param>
         /// <param name="whatsappSendingProvider">WhatsApp messaging provider service</param>
         /// <param name="blobStorage">Azure Blob storage service for file uploads</param>
-        public EventsController(IConfiguration configuration, ILogger<EventsController> logger, IWatiService watiService,
+        public EventsController(IConfiguration configuration, ILogger<EventsController> logger,
             IWhatsappSendingProviderService whatsappSendingProvider)
         {
             _configuration = configuration;
             db = new EventProContext(configuration);
             _logger = logger;
-            _watiService = watiService;
             _whatsappSendingProvider = whatsappSendingProvider;
         }
 
