@@ -1,68 +1,66 @@
 @{
     Layout = "~/Views/Shared/_Admin.cshtml";
-    var chartLabels = ViewBag.ChartLabels as List<string>;
-    var chartData = ViewBag.ChartData as List<int>;
-    var clientCount = ViewBag.ClientCount != null ? (int)ViewBag.ClientCount : 0;
-    var gkCount = ViewBag.GatekeeperCount != null ? (int)ViewBag.GatekeeperCount : 0;
-    var userCount = ViewBag.UsersCount != null ? (int)ViewBag.UsersCount : 0;
-    var otherCount = userCount - (clientCount + gkCount);
 }
 
+<!-- Content Wrapper. Contains page content -->
+<!-- /.content-header -->
+<!-- Main content -->
 <section class="content">
     <div class="container-fluid">
         <!-- Small boxes (Stat box) -->
-        <div class="row pt-3">
+        <div class="row">
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-info">
                     <div class="inner">
-                        <h3>@(ViewBag.EventsCount ?? 0)</h3>
-                        <p>Total Events</p>
+                        <h3>@(ViewBag.CategoryCount != null ? ViewBag.CategoryCount : 0)</h3>
+                        <p>Event Category</p>
                     </div>
                     <div class="icon">
-                        <i class="fas fa-calendar-alt"></i>
+                        <i class="fas fa-calendar"></i>
                     </div>
-                    <a href="~/admin/events" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    <a href="~/admin/eventcategory" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
-            <!-- ./col -->
-            <div class="col-lg-3 col-6">
-                <!-- small box -->
-                <div class="small-box bg-success">
-                    <div class="inner">
-                        <h3>@(ViewBag.UsersCount ?? 0)</h3>
-                        <p>Total Users</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <a href="~/admin/users" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
+
             <!-- ./col -->
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-warning">
                     <div class="inner">
-                        <h3>@clientCount</h3>
-                        <p>Clients</p>
+                        <h3>@(ViewBag.UsersCount != null ? ViewBag.UsersCount : 0)</h3>
+                        <p>User</p>
                     </div>
                     <div class="icon">
-                        <i class="fas fa-user-tie"></i>
+                        <i class="fas fa-users"></i>
                     </div>
                     <a href="~/admin/users?type=client" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
             </div>
             <!-- ./col -->
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>@(ViewBag.EventsCount != null ? ViewBag.EventsCount : 0)<sup style="font-size: 20px"></sup></h3>
+                        <p>Events</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-flag"></i>
+                    </div>
+                    <a href="~/admin/events" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
             <div class="col-lg-3 col-6">
                 <!-- small box -->
                 <div class="small-box bg-danger">
                     <div class="inner">
-                        <h3>@gkCount</h3>
-                        <p>Gatekeepers</p>
+                        <h3>@(ViewBag.GatekeeperCount != null ? ViewBag.GatekeeperCount : 0)</h3>
+                        <p>Gate Keepers</p>
                     </div>
                     <div class="icon">
-                        <i class="fas fa-user-shield"></i>
+                        <i class="fas fa-users"></i>
                     </div>
                     <a href="~/admin/users?type=gatekeeper" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                 </div>
@@ -70,163 +68,218 @@
             <!-- ./col -->
         </div>
         <!-- /.row -->
-
-        <!-- Events Tabs Section -->
+        <!-- Main row -->
         <div class="row">
-            <div class="col-12">
-                <div class="card card-primary card-outline card-tabs">
-                    <div class="card-header p-0 pt-1 border-bottom-0">
-                        <ul class="nav nav-tabs" id="custom-tabs-three-tab" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="tabs-upcoming-tab" data-toggle="pill" href="#tabs-upcoming" role="tab" aria-controls="tabs-upcoming" aria-selected="true">
-                                    <i class="far fa-calendar-plus mr-2"></i>Upcoming Events
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="tabs-inprogress-tab" data-toggle="pill" href="#tabs-inprogress" role="tab" aria-controls="tabs-inprogress" aria-selected="false">
-                                    <i class="fas fa-spinner mr-2"></i>In Progress
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="tabs-past-tab" data-toggle="pill" href="#tabs-past" role="tab" aria-controls="tabs-past" aria-selected="false">
-                                    <i class="far fa-calendar-check mr-2"></i>Recent Past Events
-                                </a>
-                            </li>
+            <!-- Left col -->
+            <!-- PRODUCT LIST -->
+            <div class="card  col-md-4">
+                <div class="card-header">
+                    <h3 class="card-title">Past Events</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body p-0">
+                    @if (ViewBag.PastEvents != null && ViewBag.PastEvents.Count > 0)
+                    {
+                        <ul class="products-list product-list-in-card pl-2 pr-2">
+                            @foreach (var evt in ViewBag.PastEvents)
+                            {
+                                <li class="item">
+                                    <div class="product-img">
+                                        @{
+                                            var card = evt.CardInfo != null ? ((IEnumerable<EventPro.DAL.Models.CardInfo>)evt.CardInfo).FirstOrDefault() : null;
+                                        }
+                                        @if (card != null && card.BackgroundImage != null)
+                                        {
+                                            <img src="@card.BackgroundImage" class="grid-icon" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/upload/card/default.png" class="grid-icon" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                                            @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                                            @if (evt.EventFrom != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
+
+                                                <br />
+                                            }
+                                            @if (evt.EventTo != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
+                                            }
+                                        </a>
+                                     @*    @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                        {
+                                            <span class="product-description">
+                                                @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
+                                            </span>
+                                        } *@
+                                    </div>
+                                </li>
+                            }
                         </ul>
-                    </div>
-                    <div class="card-body">
-                        <div class="tab-content" id="custom-tabs-three-tabContent">
-                            <div class="tab-pane fade show active" id="tabs-upcoming" role="tabpanel" aria-labelledby="tabs-upcoming-tab">
-                                @await Html.PartialAsync("_EventListPartial", (List<EventPro.DAL.Models.Events>)ViewBag.UpcomingEvents)
-                            </div>
-                            <div class="tab-pane fade" id="tabs-inprogress" role="tabpanel" aria-labelledby="tabs-inprogress-tab">
-                                @await Html.PartialAsync("_EventListPartial", (List<EventPro.DAL.Models.Events>)ViewBag.InProgressEvents)
-                            </div>
-                            <div class="tab-pane fade" id="tabs-past" role="tabpanel" aria-labelledby="tabs-past-tab">
-                                @await Html.PartialAsync("_EventListPartial", (List<EventPro.DAL.Models.Events>)ViewBag.PastEvents)
-                            </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center">
+                            <p>No past events found</p>
                         </div>
+                    }
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer text-center">
+                    <a href="~/admin/events" class="uppercase">View All Events</a>
+                </div>
+                <!-- /.card-footer -->
+            </div>
+
+            <div class="card  col-md-4">
+                <div class="card-header">
+                    <h3 class="card-title">In Progress Events</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-        </div>
+                <!-- /.card-header -->
+                <div class="card-body p-0">
+                    @if (ViewBag.InProgressEvents != null && ViewBag.InProgressEvents.Count > 0)
+                    {
+                        <ul class="products-list product-list-in-card pl-2 pr-2">
+                            @foreach (var evt in ViewBag.InProgressEvents)
+                            {
+                                <li class="item">
+                                    <div class="product-img">
+                                        @{
+                                            var card = evt.CardInfo != null ? ((IEnumerable<EventPro.DAL.Models.CardInfo>)evt.CardInfo).FirstOrDefault() : null;
+                                        }
+                                        @if (card != null && card.BackgroundImage != null)
+                                        {
+                                            <img src="@card.BackgroundImage" class="grid-icon" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/upload/card/default.png" class="grid-icon" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                                            @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                                            @if (evt.EventFrom != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
 
-        <!-- Charts Section -->
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card card-primary card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="far fa-chart-bar"></i>
-                            Events Overview (@DateTime.Now.Year)
-                        </h3>
-                         <div class="card-tools">
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                <i class="fas fa-minus"></i>
-                            </button>
+                                                <br />
+                                            }
+                                            @if (evt.EventTo != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
+                                            }
+                                        </a>
+                                     @*    @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                        {
+                                            <span class="product-description">
+                                                @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
+                                            </span>
+                                        } *@
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center">
+                            <p>No in-progress events found</p>
                         </div>
-                    </div>
-                    <div class="card-body">
-                         <canvas id="eventsBarChart" style="min-height: 350px; height: 350px; max-height: 350px; max-width: 100%;"></canvas>
+                    }
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer text-center">
+                    <a href="~/admin/events" class="uppercase">View All Events</a>
+                </div>
+                <!-- /.card-footer -->
+            </div>
+
+            <div class="card  col-md-4">
+                <div class="card-header">
+                    <h3 class="card-title">Upcoming Events</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                 <div class="card card-primary card-outline">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-chart-pie"></i>
-                            User Distribution
-                        </h3>
-                        <div class="card-tools">
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                <i class="fas fa-minus"></i>
-                            </button>
+                <!-- /.card-header -->
+                <div class="card-body p-0">
+                    @if (ViewBag.UpcomingEvents != null && ViewBag.UpcomingEvents.Count > 0)
+                    {
+                        <ul class="products-list product-list-in-card pl-2 pr-2">
+                            @foreach (var evt in ViewBag.UpcomingEvents)
+                            {
+                                <li class="item">
+                                    <div class="product-img">
+                                        @{
+                                            var card = evt.CardInfo != null ? ((IEnumerable<EventPro.DAL.Models.CardInfo>)evt.CardInfo).FirstOrDefault() : null;
+                                        }
+                                        @if (card != null && card.BackgroundImage != null)
+                                        {
+                                            <img src="@card.BackgroundImage" class="grid-icon" />
+                                        }
+                                        else
+                                        {
+                                            <img src="~/upload/card/default.png" class="grid-icon" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <a href="~/admin/viewevent/@evt.Id" class="product-title">
+                                            @(evt.GmapCode != null ? evt.GmapCode : "") - @(evt.SystemEventTitle != null ? evt.SystemEventTitle : "No Title")
+                                            @if (evt.EventFrom != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventFrom).ToString("dd-MMM-yyyy")</span>
+
+                                                <br />
+                                            }
+                                            @if (evt.EventTo != null)
+                                            {
+                                                <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
+                                            }
+                                        </a>
+                                     @*    @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                        {
+                                            <span class="product-description">
+                                                @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
+                                            </span>
+                                        } *@
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center">
+                            <p>No upcoming events found</p>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="usersDonutChart" style="min-height: 350px; height: 350px; max-height: 350px; max-width: 100%;"></canvas>
-                    </div>
-                 </div>
+                    }
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer text-center">
+                    <a href="~/admin/events" class="uppercase">View All Events</a>
+                </div>
+                <!-- /.card-footer -->
             </div>
         </div>
-
-      
-    </div>
+        <!-- /.row (main row) -->
+    </div><!-- /.container-fluid -->
 </section>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        $(function () {
-            // --- Events Bar Chart ---
-            var barChartCanvas = $('#eventsBarChart').get(0).getContext('2d');
-            var chartLabels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartLabels))
-            var chartData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartData))
-
-            var barChartData = {
-                labels: chartLabels,
-                datasets: [
-                    {
-                        label: 'Events Created',
-                        backgroundColor: 'rgba(60,141,188,0.9)',
-                        borderColor: 'rgba(60,141,188,0.8)',
-                        pointRadius: false,
-                        pointColor: '#3b8bba',
-                        pointStrokeColor: 'rgba(60,141,188,1)',
-                        pointHighlightFill: '#fff',
-                        pointHighlightStroke: 'rgba(60,141,188,1)',
-                        data: chartData
-                    }
-                ]
-            }
-
-            var barChartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                datasetFill: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                         ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
-            }
-
-            new Chart(barChartCanvas, {
-                type: 'bar',
-                data: barChartData,
-                options: barChartOptions
-            });
-
-            // --- Users Donut Chart ---
-            var donutChartCanvas = $('#usersDonutChart').get(0).getContext('2d');
-            var donutData = {
-                labels: [
-                    'Clients',
-                    'Gatekeepers',
-                    'Others'
-                ],
-                datasets: [
-                    {
-                        data: [@clientCount, @gkCount, @otherCount],
-                        backgroundColor: ['#f39c12', '#f56954', '#00c0ef'],
-                    }
-                ]
-            }
-            var donutOptions = {
-                maintainAspectRatio: false,
-                responsive: true,
-            }
-
-             new Chart(donutChartCanvas, {
-                type: 'doughnut',
-                data: donutData,
-                options: donutOptions
-            });
-
-        });
-    </script>
-}
+<!-- /.content -->

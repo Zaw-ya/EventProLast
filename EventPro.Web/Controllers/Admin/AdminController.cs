@@ -112,9 +112,6 @@ namespace EventPro.Web.Controllers
             ViewBag.ClientCount = 0;
             ViewBag.Icon = "nav-icon fas fa-tachometer-alt";
             
-            // Charts Data
-            ViewBag.ChartLabels = new List<string>();
-            ViewBag.ChartData = new List<int>();
 
             ViewBag.UpcomingEvents = new List<VwEvents>();
             ViewBag.InProgressEvents = new List<VwEvents>();
@@ -128,26 +125,6 @@ namespace EventPro.Web.Controllers
                 ViewBag.UsersCount = await db.Users.CountAsync(u => u.Approved == true); // Assuming 'Approved' means active user
                 ViewBag.GatekeeperCount = await db.Users.CountAsync(u => u.Role == RoleIds.GateKeeper && u.Approved == true);
                 ViewBag.ClientCount = await db.Users.CountAsync(u => u.Role == RoleIds.Client && u.Approved == true);
-
-                // 2. Chart Data: Events per Month (Current Year)
-                var currentYear = DateTime.Now.Year;
-                var monthlyStats = await db.Events
-                    .Where(e => e.EventFrom.HasValue && e.EventFrom.Value.Year == currentYear && e.IsDeleted != true)
-                    .GroupBy(e => e.EventFrom.Value.Month)
-                    .Select(g => new { Month = g.Key, Count = g.Count() })
-                    .ToListAsync();
-                
-                var months = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames.Take(12).ToList();
-                var dataPoints = new int[12];
-                foreach(var stat in monthlyStats)
-                {
-                    if(stat.Month >= 1 && stat.Month <= 12)
-                        dataPoints[stat.Month - 1] = stat.Count;
-                }
-
-                ViewBag.ChartLabels = months;
-                ViewBag.ChartData = dataPoints.ToList();
-
 
                 // 3. Activity Feed Lists
                 // Load upcoming events (future events only, ordered by date, top 5)
