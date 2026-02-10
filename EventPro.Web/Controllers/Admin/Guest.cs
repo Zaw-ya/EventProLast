@@ -3004,7 +3004,22 @@ namespace EventPro.Web.Controllers
                 QRCodeData qrCodeData = qrGenerator.CreateQrCode(encrypted, QRCodeGenerator.ECCLevel.Q);
                 QRCode qrCode = new QRCode(qrCodeData);
 
-                Bitmap qrCodeImage = qrCode.GetGraphic(5);
+                Bitmap qrCodeImage;
+                if (!string.IsNullOrEmpty(card.BackgroundColor) && !string.IsNullOrEmpty(card.ForegroundColor))
+                {
+                    if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+                    {
+                        qrCodeImage = qrCode.GetGraphic(5, ColorTranslator.FromHtml(card.BackgroundColor), System.Drawing.Color.Transparent, false);
+                    }
+                    else
+                    {
+                        qrCodeImage = qrCode.GetGraphic(5, card.BackgroundColor, card.ForegroundColor, false);
+                    }
+                }
+                else
+                {
+                    qrCodeImage = qrCode.GetGraphic(5);
+                }
 
                 using var ms = new MemoryStream();
                 qrCodeImage.Save(ms, ImageFormat.Png);

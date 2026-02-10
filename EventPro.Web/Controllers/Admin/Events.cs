@@ -58,13 +58,13 @@ namespace EventPro.Web.Controllers
             // Used for checking if invoice file exists in the view
             ViewBag.FilePath = _configuration.GetSection("Uploads").GetSection("Invoice").Value;
 
-            var model = await db.VwEvents
-                .Where(e => e.EventTo >= DateTime.Now && e.IsDeleted != true)
-                .OrderByDescending(e => e.Id)
-                .AsNoTracking()
-                .ToListAsync();
+            //var model = await db.VwEvents
+            //    .Where(e => e.EventTo >= DateTime.Now && e.IsDeleted != true)
+            //    .OrderByDescending(e => e.Id)
+            //    .AsNoTracking()
+            //    .ToListAsync();
 
-            return View("Events", model);
+            return View("Events - Copy");
         }
 
         /// <summary>
@@ -267,6 +267,11 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             var model = await db.VwEvents.Where(p => p.Id == id)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+
+            ViewBag.Icon = await db.CardInfo.Where(p => p.EventId == id).Select(p => p.BackgroundImage)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 

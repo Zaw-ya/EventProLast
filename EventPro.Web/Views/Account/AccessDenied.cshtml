@@ -7,8 +7,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>??? ???? ?????? ??????</title>
-  <meta name="description" content="???? ?????: ?? ???? ?????? ?????? ??? ??? ??????." />
+  <title>تم رفض الوصول للصفحة</title>
+  <meta name="description" content="خطأ أمني: لا يحق لك الوصول لهذه الصفحة." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet" />
@@ -179,49 +179,50 @@
 <body>
   <main class="card" role="alert" aria-live="assertive">
     <div class="container">
-      <span class="badge" aria-label="?????: ??? ??????">
-        <!-- ??? (SVG) -->
+      <span class="badge" aria-label="تنبيه: رفض الوصول">
+        <!-- قفل (SVG) -->
         <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
           <path d="M17 11H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="1.6"/>
           <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6"/>
           <circle cx="12" cy="15" r="1.6" fill="currentColor" />
         </svg>
-        ?? ?????
+        رفض الوصول
       </span>
 
-      <h1>??? ???? ?????? ?????? ??? ??? ??????</h1>
+      <h1>عذراً، لا يمكنك الوصول لهذه الصفحة في الوقت الحالي</h1>
       <p>
-        ???? ??? ????? ?????? ??? ???? ????? ?????? ??????. ??? ??? ????? ?? ??? ???? ??????
-         ??????? ?? ?????? ???? ????????.
+        ليس لديك الصلاحية للوصول إلى هذه الصفحة أو أن الجلسة قد انتهت. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل
+         مع المسؤول أو المحاولة مرة أخرى لاحقاً.
       </p>
 
-      <div class="actions" role="group" aria-label="???????">
-        <a class="btn btn-primary" asp-controller="Admin" asp-action="Index" aria-label="???????? ??? ?????? ????????">
-          <!-- ??? -->
+      <div class="actions" role="group" aria-label="الإجراءات">
+        <a class="btn btn-primary" asp-controller="Admin" asp-action="Index" aria-label="الانتقال إلى الصفحة الرئيسية">
+          <!-- بيت -->
           <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" stroke-width="1.6"/>
           </svg>
-          ????????
+          الرئيسية
         </a>
 
-        <button class="btn btn-secondary" onclick="history.back()" aria-label="?????? ??? ?????? ???????">
-          <!-- ??? ???? -->
+        <button class="btn btn-secondary" onclick="history.back()" aria-label="العودة إلى الصفحة السابقة">
+          <!-- سهم رجوع -->
           <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 12h10M7 12l4-4M7 12l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          ????
-        </button>     
+          رجوع
+        </button>
       </div>
 
     </div>
   </main>
 
   <script>
-    // ????? ???? ????? ???? ???? ?? ??????? ?? ?????
+    // توليد رقم مرجعي عشوائي لتتبع الخطأ أو الدعم الفني
     (function(){
       const rnd = crypto && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(2)) : new Uint32Array([Date.now()>>>0, Math.random()*1e9>>>0]);
       const ref = [...rnd].map(n=>n.toString(16).padStart(8,'0')).join('-').slice(0,19).toUpperCase();
-      document.getElementById('ref').textContent = ref;
+      const el = document.getElementById('ref');
+      if (el) el.textContent = ref;
     })();
   </script>
 </body>
