@@ -7,6 +7,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using System;
+using System.Windows;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,8 @@ using EventPro.Business.Storage.Interface;
 using Serilog;
 using System.Threading.Tasks;
 using System.Net.Http;
+using OpenQA.Selenium.Interactions;
+using System.Windows.Forms;
 
 namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 {
@@ -371,64 +374,12 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
                             button.Click();
                         }
 
-                        //IWebElement textArea2 = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendingTextBox)));
-                        //textArea2.SendKeys(attentionMsg);
-                        //IWebElement sendButton2 = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendTextButton)));
-                        //sendButton2.Click();
+                       
 
                         return;
                     }
 
-                    IWebElement searchNewChatButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(searchNewChat)));
-                    searchNewChatButton.SendKeys(mobile.Trim());
-                    Thread.Sleep(1500);
-                    try
-                    {
-                        IWebElement newChatContactButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(newChatContact)));
-                        newChatContactButton.Click();
-                    }
-                    catch
-                    {
-                       // searchNewChatButton.SendKeys(Keys.Backspace);
-                        Thread.Sleep(1500);
-                        IWebElement newChatContactButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(newChatContact)));
-                        newChatContactButton.Click();
-                    }
-                    Thread.Sleep(500);
-                    IWebElement textButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendingTextBox)));
-                    //textButton.SendKeys(Keys.LeftControl + "A");
-                    //textButton.SendKeys(Keys.Backspace);
-                    if (string.IsNullOrEmpty(evnt.MessageHeaderImage))
-                    {
-                        textButton.SendKeys(msg);
-                        IWebElement sendButton2 = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendTextButton)));
-                        sendButton2.Click();
-                    }
-                    else
-                    {
-                        img = "H:\\Upload\\Prod\\preview\\" + evnt.MessageHeaderImage;
-                        IWebElement sendingOptionsButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendingOptions)));
-                        sendingOptionsButton.Click();
-                        driver.FindElement(By.XPath(sendImage)).SendKeys(img);
-                        if (evnt.MessageHeaderImage.EndsWith(".mp4"))
-                        {
-                            var sendVideoTextButton1 = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendVideoTextButton)));
-                            sendVideoTextButton1.SendKeys(msg);
-                        }
-                        else
-                        {
-                            IWebElement sendImageTextButton1 = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendImageTextButton)));
-                            sendImageTextButton1.SendKeys(msg);
-                        }
-
-                        IWebElement button = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendImageButton)));
-                        button.Click();
-                    }
-
-                    IWebElement textArea = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendingTextBox)));
-                    textArea.SendKeys(attentionMsg);
-                    IWebElement sendButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendTextButton)));
-                    sendButton.Click();
+                   
                 }
             }
             catch (Exception ex)
@@ -533,45 +484,34 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
                 }
                 Log.Information("Image downloaded successfully");
 
-                //string base64Image = Convert.ToBase64String(await File.ReadAllBytesAsync(tempFilePath));
-                //Log.Debug("Image converted to Base64, length: {Length}", base64Image.Length);
 
-                Log.Debug("Opening attachment options");
-                var attachBtn = wait.Until(drv => drv.FindElement(By.XPath(sendingOptions)));
-                attachBtn.Click();
-
-                Log.Debug("Uploading image file");
-                var fileInput = wait.Until(drv =>
+                Bitmap bmp;
+                using (var stream = new MemoryStream(await File.ReadAllBytesAsync(tempFilePath)))
                 {
-                    var el = drv.FindElement(By.XPath(sendImage));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                });
-                fileInput.SendKeys(tempFilePath);
-
-                if (!string.IsNullOrWhiteSpace(msg))
-                {
-                    Log.Debug("Typing caption text");
-                    var captionBox = wait.Until(drv => drv.FindElement(By.XPath(sendImageTextButton)));
-                    captionBox.SendKeys(msg);
+                    bmp = new Bitmap(stream);
                 }
+                var t = new Thread(() =>
+                {
+                    Clipboard.SetImage(bmp);
+                });
+                t.SetApartmentState(ApartmentState.STA);
+                t.Start();
+                t.Join();
 
+                // focus chat box
+                chatBox.Click();
 
-                Log.Debug("Clicking send image button");
-                var sendBtn = wait.Until(drv => drv.FindElement(By.XPath(sendImageButton)));
-                sendBtn.Click();
+                // paste (Ctrl+V)
+                Actions actions = new Actions(driver);
+                actions.KeyDown(OpenQA.Selenium.Keys.Control)
+                       .SendKeys("v")
+                       .KeyUp(OpenQA.Selenium.Keys.Control)
+                       .Perform();
 
                 Log.Information("Image + caption sent successfully");
 
-                //string resultStr = result?.ToString() ?? "no-result";
-                //if (!resultStr.Contains("success"))
-                //    throw new Exception($"Image paste failed: {resultStr}");
-                //Log.Information("Image pasted successfully via clipboard");
-
-                // 7️⃣ اضغط send
-                Log.Debug("Waiting for send button - XPath: {XPath}", sendTextButton);
-                var sendButton = wait.Until(drv => drv.FindElement(By.XPath(sendTextButton)));
-                sendButton.Click();
-                Log.Information("Send button clicked, message + image sent");
+                var sendBtn = wait.Until(drv => drv.FindElement(By.XPath(sendImageButton)));
+                sendBtn.Click();
 
                 await Task.Delay(3000);
                 Log.Information("SendImage completed successfully - GuestId: {GuestId}", guest.GuestId);
@@ -653,29 +593,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
                         return;
                     }
                 }
-                //IWebElement searchNewChatButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(searchNewChat)));
-                //searchNewChatButton.SendKeys(mobile.Trim());
-                //Thread.Sleep(1500);
-                //try
-                //{
-                //    IWebElement newChatContactButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(newChatContact)));
-                //    newChatContactButton.Click();
-                //}
-                //catch
-                //{
-                //    // searchNewChatButton.SendKeys(Keys.Backspace);
-                //    Thread.Sleep(1500);
-                //    IWebElement newChatContactButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(newChatContact)));
-                //    newChatContactButton.Click();
-                //}
-                //Thread.Sleep(500);
-                //IWebElement textButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendingTextBox)));
-                ////textButton.SendKeys(Keys.LeftControl + "A");
-                ////textButton.SendKeys(Keys.Backspace);
-
-                //textButton.SendKeys(msg);
-                //IWebElement sendButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendTextButton)));
-                //sendButton.Click();
+                
             }
             catch (Exception ex)
             {
