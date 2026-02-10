@@ -8,5 +8,6 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Interface
         IDefaultWhatsappServcieBahrain DefaultWhatsappServcieBahrain { get; }
         IDefaultWhatsappServcieKuwait defaultWhatsappServcieKuwait { get; }
         IDefaultWhatsappServcieSaudi defaultWhatsappServcieSaudi { get; }
+        IDefaultWhatsappServcieEgypt defaultWhatsappServcieEgypt { get; }
     }
 }

@@ -3,26 +3,30 @@ using Microsoft.Extensions.Configuration;
 using EventPro.Web.Services.DefaultWhatsapp.Implementation;
 using EventPro.Web.Services.DefaultWhatsapp.Interface;
 using EventPro.Web.Services.DefaultWhatsappService.Interface;
+using EventPro.Business.Storage.Interface;
 
 namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 {
     public class UnitOFWorkDefaultWhatsappService : IUnitOFWorkDefaultWhatsappService
     {
-        private readonly IConfiguration _configuration;
-        public UnitOFWorkDefaultWhatsappService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public UnitOFWorkDefaultWhatsappService(
+        IDefaultWhatsappServcieEgypt egyptService,
+        IDefaultWhatsappServcieSaudi saudiService,
+        IDefaultWhatsappServcieKuwait kuwaitService,
+        IDefaultWhatsappServcieBahrain bahrainService,
+        IDefaultWhatsappService defaultService)
         {
-            _configuration = configuration;
-            DefaultWhatsappService = new DefaultWhatsappService(_configuration, httpContextAccessor);
-            DefaultWhatsappServcieBahrain = new DefaultWhatsappServcieBahrain(_configuration, httpContextAccessor);
-            defaultWhatsappServcieKuwait = new DefaultWhatsappServcieKuwait(_configuration, httpContextAccessor);
-            defaultWhatsappServcieSaudi = new DefaultWhatsappServcieSaudi(_configuration, httpContextAccessor);
+            defaultWhatsappServcieEgypt = egyptService;
+            defaultWhatsappServcieSaudi = saudiService;
+            defaultWhatsappServcieKuwait = kuwaitService;
+            DefaultWhatsappServcieBahrain = bahrainService;
+            DefaultWhatsappService = defaultService;
         }
+
         public IDefaultWhatsappService DefaultWhatsappService { get; private set; }
-
         public IDefaultWhatsappServcieBahrain DefaultWhatsappServcieBahrain { get; private set; }
-
         public IDefaultWhatsappServcieKuwait defaultWhatsappServcieKuwait { get; private set; }
-
         public IDefaultWhatsappServcieSaudi defaultWhatsappServcieSaudi { get; private set; }
+        public IDefaultWhatsappServcieEgypt defaultWhatsappServcieEgypt { get; private set; }
     }
 }

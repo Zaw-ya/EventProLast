@@ -37,6 +37,8 @@ using EventPro.Web.CustomMiddleware;
 using EventPro.Web.Filters;
 using EventPro.Web.Seeds;
 using EventPro.Web.Services;
+using EventPro.Web.Services.DefaultWhatsapp.Implementation;
+using EventPro.Web.Services.DefaultWhatsapp.Interface;
 using EventPro.Web.Services.DefaultWhatsappService.Implementation;
 using EventPro.Web.Services.DefaultWhatsappService.Interface;
 using EventPro.Web.Services.Interface;
@@ -218,13 +220,21 @@ namespace EventPro.Web
             // Repository & Unit of Work
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IUnitOFWorkService, UnitOFWorkService>();
+            services.AddSingleton<IUnitOFWorkService, UnitOFWorkService>();
+
+            services.AddScoped<IDefaultWhatsappService, DefaultWhatsappService>();
+            services.AddScoped<IDefaultWhatsappServcieEgypt, DefaultWhatsappServiceEgypt>();
+            services.AddScoped<IDefaultWhatsappServcieSaudi, DefaultWhatsappServcieSaudi>();
+            services.AddScoped<IDefaultWhatsappServcieKuwait, DefaultWhatsappServcieKuwait>();
+            services.AddScoped<IDefaultWhatsappServcieBahrain, DefaultWhatsappServcieBahrain>();
+            //services.AddScoped<IUnitOFWorkDefaultWhatsappService, UnitOFWorkDefaultWhatsappService>();
+
 
             // Messaging / WhatsApp / Twilio related
             services.AddScoped<IWhatsappSendingProviderService, WhatsappSendingProvidersService>();
             services.AddScoped<ITwilioWebhookService, TwilioWebhookService>();
             services.AddScoped<IFirbaseAPI, FirbaseAPI>();           // Firebase
-            services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddSingleton<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IEmailSender, NotificationService>();
 
             // Queue / Background messaging services
@@ -246,7 +256,7 @@ namespace EventPro.Web
 
 
             // Singletons
-            services.AddSingleton<IUnitOFWorkDefaultWhatsappService, UnitOFWorkDefaultWhatsappService>();
+            services.AddScoped<IUnitOFWorkDefaultWhatsappService, UnitOFWorkDefaultWhatsappService>();
             services.AddSingleton<IMemoryCacheStoreService>(sp =>
                 new MemoryCacheStoreService(sp.GetService<IConnectionMultiplexer>()));
 

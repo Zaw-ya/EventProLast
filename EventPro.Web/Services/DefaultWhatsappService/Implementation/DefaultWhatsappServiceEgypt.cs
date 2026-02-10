@@ -1,15 +1,18 @@
+﻿using EventPro.Business.Storage.Interface;
+using EventPro.Web.Services.DefaultWhatsappService.Interface;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using EventPro.Web.Services.DefaultWhatsapp.Interface;
-using OpenQA.Selenium.Chrome;
-using EventPro.Business.Storage.Interface;
 
-namespace EventPro.Web.Services.DefaultWhatsapp.Implementation
+using OpenQA.Selenium.Chrome;
+
+namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 {
-    public class DefaultWhatsappServcieKuwait : DefaultWhatsappService.Implementation.DefaultWhatsappService, IDefaultWhatsappServcieKuwait
+    public class DefaultWhatsappServiceEgypt : DefaultWhatsappService, IDefaultWhatsappServcieEgypt
     {
-        public DefaultWhatsappServcieKuwait(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ICloudinaryService cloudinaryService) : base(configuration, httpContextAccessor, cloudinaryService)
+        public DefaultWhatsappServiceEgypt(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ICloudinaryService cloudinaryService) : base(configuration, httpContextAccessor, cloudinaryService)
         {
+
         }
         public override ChromeOptions ChromeOptions()
         {
@@ -38,15 +41,3 @@ namespace EventPro.Web.Services.DefaultWhatsapp.Implementation
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
