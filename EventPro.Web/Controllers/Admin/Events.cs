@@ -1540,7 +1540,7 @@ namespace EventPro.Web.Controllers
                 {
                     Id = gkh.Event_Id,
                     EventTitle = gkh.Event.SystemEventTitle,
-                    Icon = gkh.Event.TypeNavigation.Icon,
+                    Icon = gkh.Event.CardInfo.Select(c => c.BackgroundImage).FirstOrDefault(),
                     EventFrom = gkh.Event.EventFrom,
                     EventTo = gkh.Event.EventTo,
                     EventVenue = gkh.Event.EventVenue,

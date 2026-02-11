@@ -1,43 +1,99 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EventPro.DAL.Models;
+using Microsoft.AspNetCore.Hosting;
 using EventPro.Web.Filters;
-using EventPro.Web.Services;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace EventPro.Web.Controllers
 {
-    /*
-     * Unforunately, no authentication scheme is specified yet.
-     * So I have to use the indian company method to verify logging in and roles
-     * till this point.
-     */
     public class LogsController : Controller
     {
-        private readonly EventProContext context;
+        private readonly IWebHostEnvironment _env;
 
-        public LogsController(EventProContext context)
+        public LogsController(IWebHostEnvironment env)
         {
-            this.context = context;
-        }
-
-        public IActionResult Index()
-        {
-            return View(null);
+            _env = env;
         }
 
         [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> IndexData(DateTime from, DateTime to)
+        public IActionResult Index()
         {
-            ViewBag.From = from.ToString("yyyy-MM-dd");
-            ViewBag.To = to.ToString("yyyy-MM-dd");
-            return View("Index", await context.SeriLog
-                .Where(s => s.TimeStamp >= from && s.TimeStamp <= to)
-                .ToListAsync());
+            var logsPath = Path.Combine(_env.ContentRootPath, "Logs");
+
+            var files = new List<LogFileInfo>();
+
+            if (Directory.Exists(logsPath))
+            {
+                files = Directory.GetFiles(logsPath, "*.txt")
+                    .Select(f => new FileInfo(f))
+                    .OrderByDescending(f => f.LastWriteTime)
+                    .Select(f => new LogFileInfo
+                    {
+                        FileName = f.Name,
+                        Size = f.Length,
+                        LastModified = f.LastWriteTime
+                    })
+                    .ToList();
+            }
+
+            return View(files);
         }
 
+        [AuthorizeRoles("Administrator")]
+        public IActionResult ViewFile(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return BadRequest();
 
+            // Prevent path traversal
+            fileName = Path.GetFileName(fileName);
+
+            var filePath = Path.Combine(_env.ContentRootPath, "Logs", fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Log file not found.");
+
+            var content = System.IO.File.ReadAllText(filePath);
+
+            ViewBag.FileName = fileName;
+            ViewBag.Content = content;
+
+            return View();
+        }
+
+        [AuthorizeRoles("Administrator")]
+        public IActionResult DownloadFile(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return BadRequest();
+
+            fileName = Path.GetFileName(fileName);
+
+            var filePath = Path.Combine(_env.ContentRootPath, "Logs", fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Log file not found.");
+
+            return PhysicalFile(filePath, "text/plain", fileName);
+        }
+    }
+
+    public class LogFileInfo
+    {
+        public string FileName { get; set; }
+        public long Size { get; set; }
+        public DateTime LastModified { get; set; }
+
+        public string SizeFormatted
+        {
+            get
+            {
+                if (Size < 1024) return $"{Size} B";
+                if (Size < 1024 * 1024) return $"{Size / 1024.0:F1} KB";
+                return $"{Size / (1024.0 * 1024.0):F1} MB";
+            }
+        }
     }
 }
