@@ -55,7 +55,12 @@ namespace EventPro.Web.Controllers
             if (!System.IO.File.Exists(filePath))
                 return NotFound("Log file not found.");
 
-            var content = System.IO.File.ReadAllText(filePath);
+            string content;
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(stream))
+            {
+                content = reader.ReadToEnd();
+            }
 
             ViewBag.FileName = fileName;
             ViewBag.Content = content;
