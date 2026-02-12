@@ -160,9 +160,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
 
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
 
                     var parameters = new string[]
                     {
@@ -171,7 +171,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                     evntDate.ToString("dd/MM/yyyy"),
                     events.EventVenue.ToString().Trim(),
-                    messagrHeaderImage,
+                        GetrHeaderImage(events),
                     yesButtonId,
                     noButtonId,
                     eventLocationButtonId
@@ -247,9 +247,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
                         events.ParentTitle.Trim(),
@@ -257,7 +257,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -327,9 +327,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
 
                     var parameters = new string[]
                     {
@@ -338,7 +338,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         events.MessageHeaderText.ToString(),
                         yesButtonId,
                         noButtonId,
@@ -479,9 +479,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
                         guest.FirstName.Trim(),
@@ -490,7 +490,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                        GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -545,9 +545,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
 
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
 
                     var parameters = new string[]
                     {
@@ -557,7 +557,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.Trim(),
-                        messagrHeaderImage, 
+                            GetrHeaderImage(events), 
                         events.MessageHeaderText.ToString(),
                         yesButtonId,
                         noButtonId,
@@ -736,9 +736,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
 
                     var parameters = new string[]
                     {
@@ -748,7 +748,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -803,9 +803,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
 
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
 
                     var parameters = new string[]
                     {
@@ -815,7 +815,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd", new CultureInfo("ar-SA")),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.Trim(),
-                        messagrHeaderImage, 
+                            GetrHeaderImage(events), 
                         events.MessageHeaderText.ToString(),
                         yesButtonId,
                         noButtonId,
@@ -932,9 +932,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
                         events.ParentTitle.Trim(),
@@ -942,7 +942,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd"),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -1060,9 +1060,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
 
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
 
                     var parameters = new string[]
                     {
@@ -1071,7 +1071,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd"),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         events.MessageHeaderText.ToString(),
                         yesButtonId,
                         noButtonId,
@@ -1166,13 +1166,13 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                  
                     var parameters = new string[]
                     {
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -1262,12 +1262,12 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         events.MessageHeaderText.ToString(),
                         yesButtonId,
                         noButtonId,
@@ -1363,13 +1363,13 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
                         guest.FirstName.Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -1460,13 +1460,13 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
                         guest.FirstName.Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         events.MessageHeaderText.ToString(),
                         yesButtonId,
                         noButtonId,
@@ -1645,9 +1645,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                   
+                        
                     var parameters = new string[]
                     {
                         guest.FirstName.Trim(),
@@ -1656,7 +1656,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd"),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                        GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -1711,9 +1711,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string yesButtonId = UrlEncryptionHelper.Encrypt("yesButton" + events.Id + guest.GuestId);
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                    
+                
+                        
                     var parameters = new string[]
                     {
                         guest.FirstName.Trim(),
@@ -1722,7 +1722,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd"),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                            GetrHeaderImage(events),
                         events.MessageHeaderText,
                         yesButtonId,
                         noButtonId,
@@ -1779,9 +1779,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     string noButtonId = UrlEncryptionHelper.Encrypt("noButton" + events.Id + guest.GuestId);
                     string eventLocationButtonId = UrlEncryptionHelper.Encrypt("eventLocationButton" + events.Id + guest.GuestId);
 
-                    string messagrHeaderImage = events.MessageHeaderImage;
-                    if (!string.IsNullOrEmpty(messagrHeaderImage))
-                        messagrHeaderImage = Regex.Replace(messagrHeaderImage, @".*events\/", "");
+                 
                     var parameters = new string[]
                     {
                         guest.FirstName.Trim(),
@@ -1790,7 +1788,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                         evntDate.ToString("dddd"),
                         evntDate.ToString("dd/MM/yyyy"),
                         events.EventVenue.ToString().Trim(),
-                        messagrHeaderImage,
+                        GetrHeaderImage(events),
                         yesButtonId,
                         noButtonId,
                         eventLocationButtonId
@@ -1904,6 +1902,16 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                     }
                 }
             }
+        }
+
+        private string GetrHeaderImage(Events events)
+        {
+            var headerImage = events.MessageHeaderImage ?? string.Empty;
+            if (!string.IsNullOrEmpty(headerImage))
+            {
+                headerImage = Regex.Replace(headerImage, @".*events/", "");
+            }
+            return headerImage;
         }
 
         private async Task SendMessageAndUpdateStatus(Events events, string templateId, Guest guest, string fullPhoneNumber, string yesButtonId, string noButtonId, string eventLocationButtonId, string[] parameters, List<Guest> guests, TwilioProfileSettings profileSettings)
