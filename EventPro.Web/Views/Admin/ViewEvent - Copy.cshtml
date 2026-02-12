@@ -15,7 +15,7 @@
                 <div class="card card-primary card-outline">
                     <div class="card-body box-profile">
                         <div class="text-center">
-                            <img class="profile-user-img img-fluid img-circle" src=@ViewBag.Icon alt="User profile picture">
+                            <img class="profile-user-img img-fluid img-circle" src="@ViewBag.Icon" alt="User profile picture">
                         </div>
 
                         <h3 class="profile-username text-center">
@@ -45,10 +45,10 @@
                             </li>
                             <li class="list-group-item">
                                 @{
-                                    var time = context
+                                    var evt = context
                                     .Events
-                                    .FirstOrDefault(e => e.Id == Model.Id)
-                                    .AttendanceTime.GetValueOrDefault().ToString("HH:mm");
+                                    .FirstOrDefault(e => e.Id == Model.Id);
+                                    var time = evt?.AttendanceTime.GetValueOrDefault().ToString("HH:mm") ?? "--";
                                 }
                                 <b>Attendance Time</b> <a class="float-right">@time</a>
                             </li>
@@ -232,10 +232,6 @@
 
 
 @section Scripts {
-    <script src="~/assets/plugins/datatables/js/jquery.datatables.min.js"></script>
-    <script src="~/assets/plugins/datatables/js/jquery.datatables.js"></script>
-    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.min.js"></script>
-    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.js"></script>
     <script>
 
         $(document).ready(function () {
@@ -271,9 +267,8 @@
                     { "data": "name", "name": "Name", "autowidth": true, "orderable": false },
                     {
                         "render": function (data, type, row) {
-                            return `<a href="tel:${row.phoneNumber}" if(${row.isValidPhoneNumber}{
-                                            style="color:green;"} else{
-                                                    style="color:red;"})>${row.phoneNumber}</a>`
+                            var color = row.isValidPhoneNumber ? "green" : "red";
+                            return `<a href="tel:${row.phoneNumber}" style="color:${color};">${row.phoneNumber}</a>`;
                         }, "autowidth": true, "data": null, "orderable": false
                     },
                     { "data": "scannedInfo", "name": "ScannedInfo", "autowidth": true, "orderable": false },
@@ -300,7 +295,7 @@
                         "processing": true,
                         "filter": true,
                         "ajax": {
-                            "url": "/admin/GetAssignedGateKeepers?eventId= " + @Model.Id,
+                            "url": "/admin/GetAssignedGateKeepers?eventId=" + @Model.Id,
                             "type": "POST",
                             "dataType": "json"
                         },
