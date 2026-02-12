@@ -270,6 +270,8 @@ namespace EventPro.Web.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
+            if (model == null)
+                return NotFound("Event not found.");
 
             ViewBag.Icon = await db.CardInfo.Where(p => p.EventId == id).Select(p => p.BackgroundImage)
                 .AsNoTracking()
