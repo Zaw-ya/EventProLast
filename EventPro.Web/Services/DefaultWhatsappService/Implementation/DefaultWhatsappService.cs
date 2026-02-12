@@ -1,3 +1,5 @@
+﻿using System;
+
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -11,10 +13,27 @@ using System.Windows;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms;
+
 using EventPro.Business.Storage.Interface;
+using EventPro.DAL.Models;
+using EventPro.Web.Services.DefaultWhatsappService.Interface;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Interactions;
+using OpenQA.Selenium.Support.UI;
+
 using Serilog;
+
 using System.Threading.Tasks;
 using System.Net.Http;
 using OpenQA.Selenium.Interactions;
@@ -283,121 +302,118 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
         /// </summary>
         /// <param name="evnt">Event containing message templates and settings</param>
         /// <param name="guest">Guest to send message to</param>
-        public void SendMessage(Events evnt, Guest guest)
+
+
+        public async Task SendMessage(Events evnt, Guest guest)
         {
             UpdateDefaultWhatsAppSettings();
-            ChromeOptions options = ChromeOptions();
-            IWebDriver driver = new ChromeDriver(options);
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
-            string img = string.Empty;
+            var options = ChromeOptions();
+
+            var service = ChromeDriverService.CreateDefaultService();
+            service.HideCommandPromptWindow = true;
+
+            using IWebDriver driver = new ChromeDriver(service, options, TimeSpan.FromMinutes(3));
+
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(120));
+            string tempFilePath = null;
+
             try
             {
-                lock (driver)
+                string msg = string.Empty;
+                string attentionMsg = string.Empty;
+
+
+                if (evnt.FailedSendingConfiramtionMessagesLinksLanguage == "Arabic")
                 {
-                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
-                    string msg = string.Empty;
-                    var attentionMsg = string.Empty;
-                    if (evnt.FailedSendingConfiramtionMessagesLinksLanguage == "Arabic")
+                    attentionMsg = attentionMessageArabic;
+                    if (evnt.ShowFailedSendingEventLocationLink == true)
                     {
-                        attentionMsg = attentionMessageArabic;
-                        if (evnt.ShowFailedSendingEventLocationLink == true)
-                        {
-                            msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
-                            //        +
-                            //"\n\r" + "\r\n?????? ?????? ?? ???????? ?? ?????? , ???? ??? ?????? ?????? :\r\n https://www.EventPro.cc/DefaultWhatsapp/AcceptOrDecline?id=" + guest.GuestId + guest.EventId +
-                            //"\r\n????? ???????? , ???? ??? ?????? ?????? :\r\n https://www.EventPro.cc/DefaultWhatsapp/EventLocation?id=" + guest.GuestId + guest.EventId;
-                        }
-                        else
-                        {
-                            msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
-                            //        +
-                            //"\n\r" + "\r\n?????? ?????? ?? ???????? ?? ?????? , ???? ??? ?????? ?????? :\r\n https://www.EventPro.cc/DefaultWhatsapp/AcceptOrDecline?id=" + guest.GuestId + guest.EventId;
-
-                        }
-                    }
-                    else if (evnt.FailedSendingConfiramtionMessagesLinksLanguage == "English")
-                    {
-                        attentionMsg = attentionMessageEnglish;
-                        if (evnt.ShowFailedSendingEventLocationLink == true)
-                        {
-                            msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
-                            //    +
-                            //"\n\r" + "\r\n To Confirm or decline , Press the link below : \r\n https://www.EventPro.cc/DefaultWhatsapp/AcceptOrDecline?id=" + guest.GuestId + guest.EventId +
-                            //"\r\n For Event Location , Press the link below :\r\n https://www.EventPro.cc/DefaultWhatsapp/EventLocation?id=" + guest.GuestId + guest.EventId;
-                        }
-                        else
-                        {
-                            msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
-                            //        +
-                            //"\n\r" + "\r\n To Confirm or decline , Press the link below : \r\n https://www.EventPro.cc/DefaultWhatsapp/AcceptOrDecline?id=" + guest.GuestId + guest.EventId;
-
-                        }
+                        msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
                     }
                     else
                     {
-                        throw new Exception();
+                        msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
                     }
-
-                    string mobile = guest.SecondaryContactNo + guest.PrimaryContactNo;
-                    try
+                }
+                else if (evnt.FailedSendingConfiramtionMessagesLinksLanguage == "English")
+                {
+                    attentionMsg = attentionMessageEnglish;
+                    if (evnt.ShowFailedSendingEventLocationLink == true)
                     {
-                        throw new Exception(); // to use reloading page
-                        IWebElement addNewChatButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(addNewChat)));
-                        addNewChatButton.Click();
+                        msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;
                     }
-                    catch
+                    else
                     {
-                        driver.Navigate().GoToUrl("https://web.whatsapp.com/send?phone=" + mobile + "&text=" + Uri.EscapeDataString(msg));
-                        if (string.IsNullOrEmpty(evnt.MessageHeaderImage))
-                        {
-                            IWebElement sendingButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendTextButton)));
-                            sendingButton.Click();
+                        msg = guest.FirstName + "\n\r" + evnt.FailedGuestsMessag;                        
+                    }
+                }
+                else
+                {
+                    throw new Exception("Unsupported language");
+                }
 
-                        }
-                        else
-                        {
-                            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
-                            var request = _httpContextAccessor.HttpContext.Request;
-                            var baseUrl = $"{request.Scheme}://{request.Host}";
-                            string imgUrl = $"{baseUrl}/upload/preview/" + evnt.MessageHeaderImage;
-                            img = Path.Combine(Path.GetTempPath(), "tempImage.jpg");
+                string mobile = (guest.SecondaryContactNo + guest.PrimaryContactNo).TrimStart('+', '0');
 
-                            using (WebClient client = new WebClient())
-                            {
-                                client.DownloadFile(imgUrl, img);
-                            }
-                            IWebElement sendingOptionsButton = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendingOptions)));
-                            sendingOptionsButton.Click();
-                            driver.FindElement(By.XPath(sendImage)).SendKeys(img);
-                            System.Threading.Thread.Sleep(2000);
-                            IWebElement button = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(By.XPath(sendImageButton)));
-                            button.Click();
-                        }
+                driver.Navigate().GoToUrl($"https://web.whatsapp.com/send?phone={mobile}&text={Uri.EscapeDataString(msg)}");
 
-                       
+                var chatBox = wait.Until(drv => drv.FindElement(By.XPath(sendingTextBox)));
 
-                        return;
+                if (string.IsNullOrEmpty(evnt.MessageHeaderImage))
+                {
+                    var sendBtn = wait.Until(drv => drv.FindElement(By.XPath(sendTextButton)));
+                    sendBtn.Click();
+                }
+                else
+                {
+                    string imgUrl = evnt.MessageHeaderImage;
+                    tempFilePath = Path.GetTempFileName() + ".jpg";
+
+                    using (var httpClient = new HttpClient())
+                    {
+                        var bytes = await httpClient.GetByteArrayAsync(imgUrl);
+                        await File.WriteAllBytesAsync(tempFilePath, bytes);
                     }
 
-                   
+                    Bitmap bmp;
+                    using (var stream = new MemoryStream(await File.ReadAllBytesAsync(tempFilePath)))
+                    {
+                        bmp = new Bitmap(stream);
+                    }
+
+                    var t = new Thread(() =>
+                    {
+                        Clipboard.SetImage(bmp);
+                    });
+                    t.SetApartmentState(ApartmentState.STA);
+                    t.Start();
+                    t.Join();
+
+                    chatBox.Click();
+
+                    Actions actions = new Actions(driver);
+                    actions.KeyDown(OpenQA.Selenium.Keys.Control)
+                           .SendKeys("v")
+                           .KeyUp(OpenQA.Selenium.Keys.Control)
+                           .Perform();
+
+                    IWebElement sendBtn = wait.Until(drv => drv.FindElement(By.XPath(sendImageButton)));
+                    sendBtn.Click();
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                driver.Navigate().GoToUrl("https://web.whatsapp.com/send");
-                throw ex;
+                try { driver.Navigate().GoToUrl("https://web.whatsapp.com/send"); } catch { }
+                throw;
             }
             finally
             {
-                driver.Dispose();
-                driver.Quit();
+                if (!string.IsNullOrEmpty(tempFilePath) && File.Exists(tempFilePath))
+                    File.Delete(tempFilePath);
 
-                if (File.Exists(img))
-                {
-                    File.Delete(img);
-                }
+                driver.Quit();
             }
         }
+
 
         /// <summary>
         /// [PRIORITY: HIGH - Card/Invitation image sending]
