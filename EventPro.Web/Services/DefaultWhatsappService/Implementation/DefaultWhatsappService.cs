@@ -17,7 +17,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
+//using System.Windows.Forms;
 
 using EventPro.Business.Storage.Interface;
 using EventPro.DAL.Models;
@@ -37,7 +37,7 @@ using Serilog;
 using System.Threading.Tasks;
 using System.Net.Http;
 using OpenQA.Selenium.Interactions;
-using System.Windows.Forms;
+//using System.Windows.Forms;
 
 namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 {
@@ -382,7 +382,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 
                     var t = new Thread(() =>
                     {
-                        Clipboard.SetImage(bmp);
+                        //Clipboard.SetImage(bmp);
                     });
                     t.SetApartmentState(ApartmentState.STA);
                     t.Start();
@@ -508,7 +508,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
                 }
                 var t = new Thread(() =>
                 {
-                    Clipboard.SetImage(bmp);
+                    //Clipboard.SetImage(bmp);
                 });
                 t.SetApartmentState(ApartmentState.STA);
                 t.Start();
