@@ -1,7 +1,7 @@
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using EventPro.DAL.Models;
-using EventPro.Services.WatiService.Interface;
+using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.Web.Services.Interface;
 using System;
 using System.Collections.Generic;
@@ -16,14 +16,14 @@ namespace EventPro.Web.Controllers.Api
         private IBackgroundJobClient _backgroundJobClient;
         private IRecurringJobManager _recurringJobManager;
         private INotificationTokenService _NotificationTokenService;
-        private readonly IWatiService _watiService;
-        public HangfireController(IBackgroundJobClient backgroundJobClient, IWatiService watiService,
+        private readonly IGateKeeperMessageTemplates _gateKeeperMessageTemplates;
+        public HangfireController(IBackgroundJobClient backgroundJobClient, IGateKeeperMessageTemplates gateKeeperMessageTemplates,
             IRecurringJobManager recurringJobManager, INotificationTokenService notificationTokenService)
         {
             _backgroundJobClient = backgroundJobClient;
             _recurringJobManager = recurringJobManager;
             _NotificationTokenService = notificationTokenService;
-            _watiService = watiService;
+            _gateKeeperMessageTemplates = gateKeeperMessageTemplates;
         }
 
         [HttpGet]
@@ -49,7 +49,7 @@ namespace EventPro.Web.Controllers.Api
         public bool CreateReccuringJob()
         {
             _NotificationTokenService.SendNotifyTokensAsync();
-            // _recurringJobManager.AddOrUpdate("NotifyBeforeEvent4",() => _NotificationTokenService.SendNotifyTokensAsync(),Cron.Daily(00,47));            
+            //_recurringJobManager.AddOrUpdate("NotifyBeforeEvent4", () => _NotificationTokenService.SendNotifyTokensAsync(), Cron.Daily(00, 1));
             return true;
         }
 
@@ -72,11 +72,11 @@ namespace EventPro.Web.Controllers.Api
             {
                 AttendanceTime = DateTime.Now,
                 GkDetails = gkDetails,
-                EventTitle = "???? ",
-                EventVenue = "?????? ???????",
-                Title = "??????"
+                EventTitle = "حفل ",
+                EventVenue = "الرياض الحمراء",
+                Title = "تذكير"
             };
-            await _watiService.SendGateKeeperReminderMessage(model);
+            await _gateKeeperMessageTemplates.SendGateKeeperReminderWhatsAppAsync(model);
             return true;
         }
     }
