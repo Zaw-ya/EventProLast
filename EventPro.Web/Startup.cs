@@ -14,6 +14,7 @@ using EventPro.Business.RabbitMQMessaging.Interface;
 using EventPro.Business.Storage.Implementation;
 using EventPro.Business.Storage.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Implementation;
+using EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.Business.WhatsAppMessagesWebhook.Implementation;
 using EventPro.Business.WhatsAppMessagesWebhook.Interface;
@@ -213,6 +214,7 @@ namespace EventPro.Web
             // Business / Core services
             services.AddScoped<IWatiService, WatiService>();
             services.AddScoped<ITwilioService, TwilioService>();
+            services.AddScoped<IGateKeeperMessageTemplates, TwilioGateKeeperMessageTemplates>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IAuditLogService, AuditLogService>();
             services.AddScoped<INotificationTokenService, NotificationTokenService>();
@@ -233,7 +235,7 @@ namespace EventPro.Web
             // Messaging / WhatsApp / Twilio related
             services.AddScoped<IWhatsappSendingProviderService, WhatsappSendingProvidersService>();
             services.AddScoped<ITwilioWebhookService, TwilioWebhookService>();
-            services.AddScoped<IFirbaseAPI, FirbaseAPI>();           // Firebase
+            services.AddScoped<IFirbaseAPI, FirbaseAPI>();           // Firebase Cloud Messaging (FCM) service
             services.AddSingleton<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IEmailSender, NotificationService>();
 
@@ -305,18 +307,34 @@ namespace EventPro.Web
                 Log.Warning("BlobStorage connection string is empty. Blob features disabled.");
             }
 
+            #region Firebase Admin SDK Initialization
             // ------------------------------
-            // Firebase
+            // Firebase Admin SDK
             // ------------------------------
-            var firebasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "myinvite-1b0ca-firebase-adminsdk-yp15k-b2881aed59.json");
-            if (File.Exists(firebasePath))
+            // Initializes Firebase using the service account JSON key file.
+            // The filename is read from appsettings ("FireBaseJSON") so it can differ per environment:
+            //   - Production: myinvite-1b0ca-firebase-adminsdk-*.json  (project: myinvite-8fce8)
+            //   - UAT:        myinvite-uat-firebase-adminsdk-*.json    (project: myinvite-uat)
+            // Firebase Console: https://console.firebase.google.com/u/0/project/myinvite-uat
+            var firebaseJsonFileName = Configuration["FireBaseJSON"];
+            if (string.IsNullOrEmpty(firebaseJsonFileName))
             {
-                FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile(firebasePath) });
+                Log.Warning("Firebase: 'FireBaseJSON' key is missing from appsettings. Firebase features disabled.");
             }
             else
             {
-                Log.Warning("Firebase admin SDK file not found. Features disabled.");
+                var firebasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJsonFileName);
+                if (File.Exists(firebasePath))
+                {
+                    FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile(firebasePath) });
+                    Log.Information("Firebase Admin SDK initialized with project: {ProjectId}", Configuration["FireBaseProjId"]);
+                }
+                else
+                {
+                    Log.Warning("Firebase admin SDK file not found at {Path}. Firebase features disabled.", firebasePath);
+                }
             }
+            #endregion
 
             // ------------------------------
             // Distributed Lock Helper
@@ -382,7 +400,16 @@ namespace EventPro.Web
 
             app.Use((context, next) => { context.Request.Scheme = "https"; return next(); });
 
-            app.UseSerilogRequestLogging();
+            app.UseSerilogRequestLogging(options =>
+            {
+                // Suppress Hangfire dashboard polling from filling up logs
+                options.GetLevel = (httpContext, elapsed, ex) =>
+                {
+                    if (httpContext.Request.Path.StartsWithSegments("/Admin/Notifications/stats"))
+                        return Serilog.Events.LogEventLevel.Debug;
+                    return Serilog.Events.LogEventLevel.Information;
+                };
+            });
             app.UseRouting();
             app.UseCookiePolicy();
             app.UseAuthentication();
@@ -404,8 +431,12 @@ namespace EventPro.Web
                 "0 */6 * * *",
                 new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
 
-            // مثال لو فيه notification jobs:
-            // RecurringJob.AddOrUpdate("NotifyBeforeEvent", () => notifyService.SendNotifyTokensAsync(), "*/5 * * * *");
+            //var notificationCron = Configuration["NotificationTimeCronLocalTime"] ?? "00 06 * * *";
+            //RecurringJob.AddOrUpdate<INotificationTokenService>(
+            //    "NotifyBeforeEvent",
+            //    x => x.SendNotifyTokensAsync(),
+            //    notificationCron,
+            //    new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
         }
 
     }
