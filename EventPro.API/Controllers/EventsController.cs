@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using EventPro.API.Models;
 using EventPro.API.Services;
 using EventPro.API.Services.WatiService.Interface;
@@ -14,9 +7,17 @@ using EventPro.DAL.Common;
 using EventPro.DAL.Dto;
 using EventPro.DAL.Models;
 using EventPro.DAL.VMModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,6 +38,7 @@ namespace EventPro.API.Controllers
         private readonly EventProContext db;
         private readonly ILogger<EventsController> _logger;
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
+        private readonly ICloudinaryService _cloudinaryService;
 
         #endregion
 
@@ -50,11 +52,12 @@ namespace EventPro.API.Controllers
         /// <param name="whatsappSendingProvider">WhatsApp messaging provider service</param>
         /// <param name="blobStorage">Azure Blob storage service for file uploads</param>
         public EventsController(IConfiguration configuration, ILogger<EventsController> logger,
-            IWhatsappSendingProviderService whatsappSendingProvider)
+            IWhatsappSendingProviderService whatsappSendingProvider , ICloudinaryService cloudinaryService)
         {
             _configuration = configuration;
             db = new EventProContext(configuration);
             _logger = logger;
+            _cloudinaryService = cloudinaryService;
             _whatsappSendingProvider = whatsappSendingProvider;
         }
 
@@ -225,7 +228,7 @@ namespace EventPro.API.Controllers
                 {
                     return check;
                 }
-                if (userToken.Role != "Gatekeeper")
+                if (userToken.Role != "GateKeeper")
                 {
                     return BadRequest("Only Gatekeeper is allowed");
                 }
@@ -272,14 +275,15 @@ namespace EventPro.API.Controllers
                 }
                 catch (Exception ex)
                 {
-
+                    _logger.LogError($"Error occured while sending whatsapp message in UnassignFromEvent,: {ex.Message} ,GK_Id{userToken?.UserId}");
                 }
 
-                return Ok();
+                return Ok("sucess removed from event");
 
             }
             catch (Exception ex)
             {
+                _logger.LogError($"Error occured in UnassignFromEvent,: {ex.Message} ,GK_Id{userToken?.UserId}");
                 return BadRequest();
             }
 
@@ -304,12 +308,13 @@ namespace EventPro.API.Controllers
             UserToken userToken = new UserToken();
             var check = UserFromHeaders.BadToken(Request.Headers, userToken, _configuration);
             var headers = Request.Headers;
-            string longitude = headers.Where(p => p.Key == "longitude").Select(p => p.Value).FirstOrDefault();
-            string latitude = headers.Where(p => p.Key == "latitude").Select(p => p.Value).FirstOrDefault();
+            string longitude = headers.Where(p => p.Key == "longitude").Select(p => p.Value.ToString()).FirstOrDefault() ?? "0";
+            string latitude = headers.Where(p => p.Key == "latitude").Select(p => p.Value.ToString()).FirstOrDefault() ?? "0";
             _logger.LogInformation($"CheckIn-eventId:{eventId},GK_Id:{userToken?.UserId},latitude:{latitude},longitude:{longitude}");
 
             try
             {
+                _logger.LogInformation($"CheckIn-FileReceived:{file != null},eventId:{eventId},GK_Id:{userToken?.UserId}");
                 if (file == null)
                 {
                     return BadRequest("Picture isn't uploaded correctly.");
@@ -318,16 +323,25 @@ namespace EventPro.API.Controllers
                 {
                     return check;
                 }
-                if (userToken.Role != "Gatekeeper")
+                _logger.LogInformation($"CheckIn-UserAuthenticated:eventId:{eventId},GK_Id:{userToken?.UserId}");
+                if (userToken.Role != "GateKeeper")
                 {
                     return BadRequest("Only Gatekeeper is allowed");
                 }
 
                 var gkHistoryPath = _configuration.GetSection("GKHistoryPath").Value;
                 string environment = _configuration.GetSection("environment").Value;
-                var filename = file.FileName;
+                //var filename = file.FileName;
                 var extension = file.ContentType.ToLower().Replace(@"image/", "");
                 using var stream = file.OpenReadStream();
+
+                var fileName = $"{eventId}{Path.GetExtension(file.FileName)}";
+
+                var imageUrl = await _cloudinaryService.UploadImageAsync(
+                    stream,
+                    fileName,
+                    "GatekeeperEventLocation"
+                );
                 //await _blobStorage.UploadAsync(stream, extension, environment + gkHistoryPath + "/" + filename, cancellationToken: default);
                 var history = new GKEventHistory
                 {
@@ -335,10 +349,12 @@ namespace EventPro.API.Controllers
                     Event_Id = eventId,
                     GK_Id = userToken.UserId,
                     LogDT = DateTime.Now,
-                    ImagePath = filename,
+                    ImagePath = imageUrl,
                     longitude = longitude,
                     latitude = latitude
                 };
+
+                _logger.LogInformation(eventId + " " + userToken.UserId + " " + imageUrl);
 
                 await db.GKEventHistory.AddAsync(history);
                 await db.SaveChangesAsync();
@@ -350,7 +366,7 @@ namespace EventPro.API.Controllers
                 }
                 catch (Exception ex)
                 {
-
+                    _logger.LogError($"Error occured while sending whatsapp message in CheckIn,: {ex.Message} ,GK_Id{userToken?.UserId}");
                 }
 
 
@@ -377,8 +393,8 @@ namespace EventPro.API.Controllers
         {
             UserToken userToken = new UserToken();
             var headers = Request.Headers;
-            string longitude = headers.Where(p => p.Key == "longitude").Select(p => p.Value).FirstOrDefault();
-            string latitude = headers.Where(p => p.Key == "latitude").Select(p => p.Value).FirstOrDefault();
+            string longitude = headers.Where(p => p.Key == "longitude").Select(p => p.Value.ToString()).FirstOrDefault() ?? "0";
+            string latitude = headers.Where(p => p.Key == "latitude").Select(p => p.Value.ToString()).FirstOrDefault() ?? "0";
             _logger.LogInformation($"CheckOut-eventId:{eventId},GK_Id:{userToken?.UserId},latitude:{latitude},longitude:{longitude}");
 
             try
