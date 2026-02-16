@@ -123,6 +123,13 @@
     </Content>
   </ItemGroup>
 
+  <!-- Firebase Admin SDK key files: copy to output so Startup.cs can find them -->
+  <ItemGroup>
+    <None Update="*-firebase-adminsdk*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <None Update="pdf.js\fonts\arial-Regular.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
