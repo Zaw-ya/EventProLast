@@ -7,5 +7,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Interface
         Task SendCheckInMessage( GKEventHistory gkEventHistory);
         Task SendCheckOutMessage( GKEventHistory gkEventHistory);
         Task SendGateKeeperUnassignEventMessage( GKEventHistory gkEventHistory);
+        Task SendGateKeeperTodayReminderWhatsAppAsync (GKWhatsRemiderMsgModel gkWhatsRemider);
+        Task SendGateKeeperReminderWhatsAppAsync (GKWhatsRemiderMsgModel gkWhatsRemider);
     }
 }

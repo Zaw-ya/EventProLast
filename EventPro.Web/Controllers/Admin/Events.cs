@@ -271,11 +271,16 @@ namespace EventPro.Web.Controllers
                 .FirstOrDefaultAsync();
 
             if (model == null)
+            {
+                Log.Warning("ViewEvent: Event {EventId} not found", id);
                 return NotFound("Event not found.");
+            }
 
             ViewBag.Icon = await db.CardInfo.Where(p => p.EventId == id).Select(p => p.BackgroundImage)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
+
+            Log.Information("ViewEvent: ID={EventId}, Title={EventTitle}", id, model.SystemEventTitle);
 
             SetBreadcrum("Events", "/admin");
             return View("ViewEvent - Copy", model);
@@ -481,6 +486,7 @@ namespace EventPro.Web.Controllers
                 }
                 catch (Exception ex)
                 {
+                    Log.Error(ex, "Create Event: File upload failed for file {FileName}", file.FileName);
                     ModelState.AddModelError(string.Empty, ex.Message);
                     // Re-populate ViewBag data
                     ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
@@ -532,6 +538,9 @@ namespace EventPro.Web.Controllers
                 events.choosenSendingCountryNumber = "SAUDI";
             }
 
+            Log.Information("Creating new event: Title={EventTitle}, Venue={Venue}, City={CityId}, Country={Country}, From={From}, To={To}, CreatedBy={UserId}",
+                events.EventTitle, events.EventVenue, events.CityId, events.choosenSendingCountryNumber, events.EventFrom, events.EventTo, userId);
+
             await db.Events.AddAsync(events);
             await db.SaveChangesAsync();
 
@@ -549,10 +558,15 @@ namespace EventPro.Web.Controllers
             // Audit Log
             await _auditLogService.AddAsync(userId, events.Id);
 
+            #region Firebase FCM - Send push notification on event creation
+            // Send FCM push notification to all devices subscribed to the event's city topic.
+            // Firebase Admin SDK is initialized in Startup.cs using the JSON key from appsettings ("FireBaseJSON").
+            // This block uses FirebaseMessaging.DefaultInstance which relies on that initialization.
             try
             {
                 if (events.ShowOnCalender == true)
                 {
+                    // Build the notification payload targeting the city topic
                     var request = new MessageRequest()
                     {
                         Topic = $"{events.CityId}",
@@ -568,6 +582,8 @@ namespace EventPro.Web.Controllers
                             Body = request.Body
                         },
                     };
+
+                    // Route to topic (city) or direct device token
                     if (string.IsNullOrEmpty(request.Tokens))
                     {
                         message.Topic = request.Topic;
@@ -576,24 +592,33 @@ namespace EventPro.Web.Controllers
                     {
                         message.Token = request.Tokens;
                     }
+
+                    // Fallback: initialize Firebase if not already done in Startup.cs
+                    // Reads the JSON key filename from appsettings ("FireBaseJSON")
                     if (FirebaseApp.DefaultInstance == null)
                     {
+                        var firebaseJson = _configuration["FireBaseJSON"];
                         FirebaseApp.Create(new AppOptions()
                         {
-                            Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EventPro-1b0ca-firebase-adminsdk-yp15k-b2881aed59.json")),
+                            Credential = GoogleCredential.FromFile(
+                                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJson)),
                         });
                     }
 
+                    // Send the notification via FCM V1 API
                     var messaging = FirebaseMessaging.DefaultInstance;
                     var result = await messaging.SendAsync(message);
+                    Log.Information("Firebase FCM: Push notification sent for event {EventId} to topic {Topic}, result: {Result}", events.Id, request.Topic, result);
                 }
             }
             catch (Exception ex)
             {
+                Log.Error(ex, "Firebase FCM: Failed to send push notification for event {EventId}", events.Id);
             }
+            #endregion
 
             await CreateReminderIcsFileAsync(events);
-            Log.Information($"Event with ID: {events.Id} created by:{userId}");
+            Log.Information("Event created successfully: ID={EventId}, Title={EventTitle}, CreatedBy={UserId}", events.Id, events.EventTitle, userId);
 
             // Redirect to Events Page
             return RedirectToAction(AppAction.Events, AppController.Admin);
@@ -721,6 +746,7 @@ namespace EventPro.Web.Controllers
                     }
                     catch (Exception ex)
                     {
+                        Log.Error(ex, "Edit Event: File upload failed for event {EventId}, file {FileName}", events.Id, file.FileName);
                         await SetControls(events);
                         ModelState.AddModelError(string.Empty, ex.Message);
                         return View("EditEvent", events);
@@ -789,7 +815,8 @@ namespace EventPro.Web.Controllers
             evt.ThanksTempId = events.ThanksTempId;
             evt.DeclineTempId = events.DeclineTempId;
 
-            Log.Information("Event {eId} edited by {uId}", evt.Id, userId);
+            Log.Information("Event edited: ID={EventId}, Title={EventTitle}, Venue={Venue}, City={CityId}, Profile={Profile}, EditedBy={UserId}",
+                evt.Id, evt.EventTitle, evt.EventVenue, evt.CityId, evt.choosenSendingWhatsappProfile, userId);
 
             await _auditLogService.AddAsync(userId, events.Id, DAL.Enum.ActionEnum.UpdateEvent);
             await db.SaveChangesAsync();
@@ -802,6 +829,65 @@ namespace EventPro.Web.Controllers
             }
             db.EventOperator.UpdateRange(eventOperators);
             await db.SaveChangesAsync();
+            #region Firebase FCM - Send push notification on event creation
+            // Send FCM push notification to all devices subscribed to the event's city topic.
+            // Firebase Admin SDK is initialized in Startup.cs using the JSON key from appsettings ("FireBaseJSON").
+            // This block uses FirebaseMessaging.DefaultInstance which relies on that initialization.
+            try
+            {
+                if (events.ShowOnCalender == true)
+                {
+                    // Build the notification payload targeting the city topic
+                    var request = new MessageRequest()
+                    {
+                        Topic = $"{events.CityId}",
+                        Title = events.EventTitle,
+                        Body = $"New event is created! \nstarting in {events.EventVenue} at {events.AttendanceTime}"
+                    };
+
+                    var message = new Message()
+                    {
+                        Notification = new Notification
+                        {
+                            Title = request.Title,
+                            Body = request.Body
+                        },
+                    };
+
+                    // Route to topic (city) or direct device token
+                    if (string.IsNullOrEmpty(request.Tokens))
+                    {
+                        message.Topic = request.Topic;
+                    }
+                    else
+                    {
+                        message.Token = request.Tokens;
+                    }
+
+                    // Fallback: initialize Firebase if not already done in Startup.cs
+                    // Reads the JSON key filename from appsettings ("FireBaseJSON")
+                    if (FirebaseApp.DefaultInstance == null)
+                    {
+                        var firebaseJson = _configuration["FireBaseJSON"];
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile(
+                                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJson)),
+                        });
+                    }
+
+                    // Send the notification via FCM V1 API
+                    var messaging = FirebaseMessaging.DefaultInstance;
+                    var result = await messaging.SendAsync(message);
+                    Log.Information("Firebase FCM: Push notification sent for edited event {EventId} to topic {Topic}, result: {Result}", events.Id, request.Topic, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Firebase FCM: Failed to send push notification for event {EventId}", events.Id);
+            }
+            #endregion
+
             await CreateReminderIcsFileAsync(evt);
             return RedirectToAction("ViewEvent", AppController.Admin, new { id = events.Id });
         }
@@ -823,7 +909,10 @@ namespace EventPro.Web.Controllers
         {
             var eventItem = await db.Events.FindAsync(id);
             if (eventItem == null)
+            {
+                Log.Warning("DeleteEvent: Event {EventId} not found", id);
                 return NotFound(new { message = "Event not found." });
+            }
 
             var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
@@ -843,6 +932,9 @@ namespace EventPro.Web.Controllers
 
             await db.SaveChangesAsync();
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteEvent);
+
+            Log.Information("Event deleted: ID={EventId}, Title={EventTitle}, GatekeepersRemoved={GKCount}, DeletedBy={UserId}",
+                id, eventItem.EventTitle, listOfEventGatekeeper.Count, userId);
 
             return Ok(new { success = true, message = "Event deleted successfully" });
         }
@@ -946,7 +1038,10 @@ namespace EventPro.Web.Controllers
         {
             var eventItem = await db.Events.FindAsync(id);
             if (eventItem == null)
+            {
+                Log.Warning("RestoreEvent: Event {EventId} not found", id);
                 return NotFound(new { message = "Event not found or not deleted." });
+            }
 
             var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
@@ -956,6 +1051,9 @@ namespace EventPro.Web.Controllers
 
             await db.SaveChangesAsync();
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.RestoreEvent);
+
+            Log.Information("Event restored: ID={EventId}, Title={EventTitle}, RestoredBy={UserId}", id, eventItem.EventTitle, userId);
+
             return Ok();
         }
 
@@ -1586,6 +1684,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteAllGuests);
+
+            Log.Information("All guests deleted: EventId={EventId}, GuestsRemoved={Count}, DeletedBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
@@ -1606,6 +1707,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteAllGuestsCards);
+
+            Log.Information("All guest cards deleted: EventId={EventId}, DeletedBy={UserId}", id, userId);
+
             return Ok();
         }
 
@@ -1660,6 +1764,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.ResetAllGuestsStatus);
+
+            Log.Information("All guest statuses reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
@@ -1691,6 +1798,9 @@ namespace EventPro.Web.Controllers
             await db.SaveChangesAsync();
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendConfirmationAgain);
+
+            Log.Information("Confirmation messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
@@ -1722,6 +1832,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendCardsAgain);
+
+            Log.Information("Card messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
@@ -1752,6 +1865,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendEventLocationAgain);
+
+            Log.Information("Event location messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
@@ -1782,6 +1898,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendRemindersAgain);
+
+            Log.Information("Reminder messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
@@ -1812,6 +1931,9 @@ namespace EventPro.Web.Controllers
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendCongratulationsAgain);
+
+            Log.Information("Congratulation messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
             return Ok();
         }
 
