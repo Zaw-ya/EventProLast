@@ -21,6 +21,8 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             db = new EventProContext(configuration);
             _logger = logger;
         }
+
+        #region all of this template send notifiction for number of operater we get it from app setting
         public async Task SendCheckInMessage(GKEventHistory gkEventHistory)
         {
             var gkUser = await db.Users.Where(gk => gk.UserId == gkEventHistory.GK_Id)
@@ -89,6 +91,37 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return;
         }
 
+        public async Task SendGateKeeperassignEventMessage(GKEventHistory gkEventHistory)
+        {
+            var gkUser = await db.Users.Where(gk => gk.UserId == gkEventHistory.GK_Id)
+                                     .FirstOrDefaultAsync();
+            var _event = await db.Events.Where(e => e.Id == gkEventHistory.Event_Id)
+                         .FirstOrDefaultAsync();
+
+            string _phoneNumber_to = await db.AppSettings.Select(e => e.GateKeeperCheckNotificationsNumber)
+                .FirstOrDefaultAsync();
+
+            var profileSettings = await db.TwilioProfileSettings
+                                  .Where(e => e.Name == _event.choosenSendingWhatsappProfile)
+                                  .AsNoTracking()
+                                  .FirstOrDefaultAsync();
+
+            var templateId = "HX01bb1f4c8c4d051fe3c1d081cd239aea";
+
+            string fullPhoneNumber = _phoneNumber_to;
+            var parameters = new string[]
+            {
+                 _event.SystemEventTitle,
+                 _event.Id.ToString(),
+                 gkUser.FirstName + gkUser.LastName,
+                 gkUser.UserId.ToString(),
+                 DateTime.Now.ToString("'Date: 'dd - MM yyyy 'Time: 'hh - mm - ss tt")
+            };
+
+            await SendMessageAndUpdateGuest(_event, templateId, fullPhoneNumber, parameters, profileSettings);
+
+            return;
+        }
 
         public async Task SendGateKeeperUnassignEventMessage(GKEventHistory gkEventHistory)
         {
@@ -122,6 +155,82 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             return;
         }
 
+        #endregion
+
+        #region All of this template sent notification for gateKeeper on whatsapp private to notify him , system was assigned him to event
+        public async Task AssignGateKeeperEventMessage(GKWhatsRemiderMsgModel gkWhatsRemider)
+        {
+            var _event = await db.Events.Where(e => e.Id == gkWhatsRemider.EventID)
+                         .AsNoTracking()
+                         .FirstOrDefaultAsync();
+
+            var profileSettings = await db.TwilioProfileSettings
+                                  .Where(e => e.Name == _event!.choosenSendingWhatsappProfile)
+                                  .AsNoTracking()
+                                  .FirstOrDefaultAsync();
+
+            var templateId = "HX7a0bf1ebac1cd5a4dcf21f8ce4300453";
+
+
+            await Parallel.ForEachAsync(gkWhatsRemider.GkDetails, async (gk, ct) =>
+            {
+                if (string.IsNullOrEmpty(gk.GKPhoneNumber))
+                    return;
+
+                var parameters = new string[]
+                {
+                         _event.SystemEventTitle,
+                         _event.Id.ToString(),
+                         gk.GKFName,
+                         gkWhatsRemider.EventVenue,
+                         _event.GmapCode,
+                         DateTime.Now.ToString("'Date: 'dd - MM yyyy 'Time: 'hh - mm - ss tt")
+                };
+
+                await SendWhatsAppTemplateMessageAsync(gk.GKPhoneNumber, templateId, parameters, _event.CityId, _event.ChoosenNumberWithinCountry, profileSettings, _event.choosenSendingCountryNumber);
+                await Task.Delay(1000);
+            });
+
+        }
+
+        public async Task UnassignGateKeeperEventMessage(GKWhatsRemiderMsgModel gkWhatsRemider)
+        {
+            var _event = await db.Events.Where(e => e.Id == gkWhatsRemider.EventID)
+                         .AsNoTracking()
+                         .FirstOrDefaultAsync();
+
+            var profileSettings = await db.TwilioProfileSettings
+                                  .Where(e => e.Name == _event!.choosenSendingWhatsappProfile)
+                                  .AsNoTracking()
+                                  .FirstOrDefaultAsync();
+
+            var templateId = "HXdc26e50af1dbeeca61d4a5c74c9beb4d";
+
+
+            await Parallel.ForEachAsync(gkWhatsRemider.GkDetails, async (gk, ct) =>
+            {
+                if (string.IsNullOrEmpty(gk.GKPhoneNumber))
+                    return;
+
+                var parameters = new string[]
+                {
+                         _event.Id.ToString(),
+                         _event.SystemEventTitle,
+                         gk.GKFName,
+                         gk.GKPhoneNumber,
+                         _event.EventVenue ?? "",
+                         _event.GmapCode ?? "",
+                         _event.AttendanceTime?.ToString() ?? "",
+                         DateTime.Now.ToString("'Date: 'dd - MM yyyy 'Time: 'hh - mm - ss tt")
+                };
+
+                await SendWhatsAppTemplateMessageAsync(gk.GKPhoneNumber, templateId, parameters, _event.CityId, _event.ChoosenNumberWithinCountry, profileSettings, _event.choosenSendingCountryNumber);
+                await Task.Delay(1000);
+            });
+
+        }
+
+        #endregion
 
         #region Gatekeeper WhatsApp Reminders
 
