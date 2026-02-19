@@ -4,6 +4,7 @@ using EventPro.DAL.ViewModels;
 using EventPro.Web.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -193,6 +194,36 @@ namespace EventPro.Web.Controllers
             db.EventGatekeeperMapping.Remove(egm);
             await db.SaveChangesAsync();
 
+            try
+            {
+                var gkUser = await db.Users.Where(u => u.UserId == egm.GatekeeperId)
+                   .AsNoTracking()
+                   .FirstOrDefaultAsync();
+
+                var history = new GKWhatsRemiderMsgModel
+                {
+                    EventID = eventId,
+                    GkDetails = new List<GkDetailsWhatsRemiderMsg>
+                    {
+                        new GkDetailsWhatsRemiderMsg
+                        {
+                            GKPhoneNumber = gkUser.PrimaryContactNo,
+                            GKFName = gkUser.FirstName + " " + gkUser.LastName
+                        }
+                    }
+                };
+
+                await _WhatsappSendingProvider.SelectTwilioSendingProvider()
+                         .GetGateKeeperMessageTemplates()
+                         .UnassignGateKeeperEventMessage(history);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured while sending whatsapp message in UnassignFromEvent,: {ex.Message} ,GK_Id{egm.GatekeeperId}");
+            }
+
+
+
             return Json(new { success = true });
         }
 
@@ -217,6 +248,10 @@ namespace EventPro.Web.Controllers
                 return Json(new { success = false });
             }
 
+            var eventInfo = await db.Events.Where(p => p.Id == eventId)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
             // Create new gatekeeper assignment mapping
             EventGatekeeperMapping egm = new EventGatekeeperMapping
             {
@@ -229,6 +264,39 @@ namespace EventPro.Web.Controllers
 
             await db.EventGatekeeperMapping.AddAsync(egm);
             await db.SaveChangesAsync();
+
+            try
+            {
+                var gkUser = await db.Users.Where(u => u.UserId == userid)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+
+                var history = new GKWhatsRemiderMsgModel
+                {
+                    EventID = eventId,
+                    EventTitle = eventInfo.EventTitle,
+                    EventVenue = eventInfo.EventVenue,
+                    AttendanceTime = eventInfo.EventFrom,
+                    GkDetails = new List<GkDetailsWhatsRemiderMsg>
+                    {
+                        new GkDetailsWhatsRemiderMsg
+                        {
+                            GKPhoneNumber = gkUser.PrimaryContactNo,
+                            GKFName = gkUser.FirstName + " " + gkUser.LastName
+                        }
+                    }
+                };
+
+                await _WhatsappSendingProvider.SelectTwilioSendingProvider()
+                         .GetGateKeeperMessageTemplates()
+                         .AssignGateKeeperEventMessage(history);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured while sending whatsapp message in AssignGatekeeper,: {ex.Message} ,GK_Id{egm.GatekeeperId}");
+            }
+
+
 
             return Json(new { success = true });
         }

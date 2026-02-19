@@ -101,7 +101,11 @@
                     contentType: false, // important for FormData
                     success: function (response) {
                         if (response.success == true) {
-                            Swal.fire(response.message);
+                            Swal.fire({
+                                icon: "success",
+                                title: "تم بنجاح",
+                                text: response.message
+                            });
                             let fromSelect1 = document.getElementById("fromOperator");
                             let toSelect1 = document.getElementById("toOperator");
                             let assignBtn1 = document.getElementById("assignBtn");
@@ -112,7 +116,7 @@
                         }else{
                             Swal.fire({
                                 icon: "error",
-                                title: "...???",
+                                title: "خطأ",
                                 text: response.message,
                                 footer: ''
                             });
@@ -189,11 +193,15 @@
             var result = await data.json();
 
             if (result.success) {
-                Swal.fire(result.message);
+                Swal.fire({
+                    icon: "success",
+                    title: "تم بنجاح",
+                    text: result.message
+                });
             } else {
                 Swal.fire({
                     icon: "error",
-                    title: "...???",
+                    title: "خطأ",
                     text: result.message,
                     footer: ''
                 });
