@@ -54,14 +54,14 @@ namespace EventPro.Web.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "??? ??? ??." });
+                return Json(new { success = false, message = "بيانات غير صحيحة. يرجى المحاولة مرة أخرى." });
             }
             try
             {
                 if (db.BulkOperatorEvents.Where(e => e.OperatorAssignedFromId == model.OperatorAssignedFromId &&
             e.OperatorAssignedToId == model.OperatorAssignedToId).Count() > 0)
                 {
-                    return Json(new { success = false, message = "???? ?????? ????? ?????? ????? ??? ???? ????????? ????? ??? ???????? ??????? ????? ??? ????? ?? ?????? ???? ?????????." });
+                    return Json(new { success = false, message = "هذا التعيين موجود بالفعل. يرجى إلغاء السجل الحالي قبل إنشاء سجل جديد." });
                 }
 
                 model.AssignedById = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -76,30 +76,45 @@ namespace EventPro.Web.Controllers
                             .Select(e => e.EventId)
                             .ToListAsync();
 
-                List<EventOperator> EventsOperator = await db.EventOperator
-                    .Where(e => e.OperatorId == model.OperatorAssignedFromId 
-                    && e.BulkOperatroEventsId == null)
-                    .Select(X => new EventOperator
-                    {
-                        BulkOperatroEventsId = BulkID,
-                        EventId = X.EventId,
-                        EventStart = X.EventStart,
-                        EventEnd = X.EventEnd,
-                        OperatorId = model.OperatorAssignedToId ?? 0,
-                    })
-                    .Where(e => !existingEventIds.Contains(e.EventId))
+                // Get all distinct EventIds assigned to the source operator (any assignment type)
+                var sourceEventIds = await db.EventOperator
+                    .Where(e => e.OperatorId == model.OperatorAssignedFromId)
+                    .Select(e => e.EventId)
+                    .Distinct()
                     .ToListAsync();
+
+                // Exclude events already assigned to the target operator
+                var eventIdsToAssign = sourceEventIds
+                    .Where(id => !existingEventIds.Contains(id))
+                    .ToList();
+
+                // Fetch the latest event timing for each event to assign
+                var sourceEvents = await db.EventOperator
+                    .Where(e => e.OperatorId == model.OperatorAssignedFromId
+                             && eventIdsToAssign.Contains(e.EventId))
+                    .GroupBy(e => e.EventId)
+                    .Select(g => g.OrderByDescending(e => e.EventId).First())
+                    .ToListAsync();
+
+                List<EventOperator> EventsOperator = sourceEvents.Select(X => new EventOperator
+                {
+                    BulkOperatroEventsId = BulkID,
+                    EventId = X.EventId,
+                    EventStart = X.EventStart,
+                    EventEnd = X.EventEnd,
+                    OperatorId = model.OperatorAssignedToId ?? 0,
+                }).ToList();
 
                 db.EventOperator.AddRange(EventsOperator);
                 await db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??." });
+                return Json(new { success = false, message = "حدث خطأ. يرجى المحاولة مرة أخرى." });
             }
 
 
-            return Json(new { success = true, message = "??? ?????? ????????? ?????" });
+            return Json(new { success = true, message = "تم تعيين الفعاليات بنجاح." });
         }
 
         [HttpPost("~/api/GetBulkOperatorEvents")]
@@ -159,9 +174,9 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??." });
+                return Json(new { success = false, message = "حدث خطأ. يرجى المحاولة مرة أخرى." });
             }
-            return Json(new { success = true, message = "?? ????? ?????? ?????????" });
+            return Json(new { success = true, message = "تم إلغاء التعيين بنجاح." });
         }
 
         private void SetBreadcrum(string title, string link)
