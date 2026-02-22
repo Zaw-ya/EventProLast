@@ -1,10 +1,14 @@
 using EventPro.API.Configuration;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using System;
+using System.IO;
 
 namespace EventPro.API
 {
@@ -39,6 +43,27 @@ namespace EventPro.API
                 .AddNewtonsoftJson(options =>
                     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
                 );
+
+            #region Firebase Admin SDK Initialization
+            var firebaseJsonFileName = Configuration["FireBaseJSON"];
+            if (string.IsNullOrEmpty(firebaseJsonFileName))
+            {
+                Log.Warning("Firebase: 'FireBaseJSON' key is missing from appsettings. Firebase features disabled.");
+            }
+            else
+            {
+                var firebasePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJsonFileName);
+                if (File.Exists(firebasePath))
+                {
+                    FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile(firebasePath) });
+                    Log.Information("Firebase Admin SDK initialized with project: {ProjectId}", Configuration["FireBaseProjId"]);
+                }
+                else
+                {
+                    Log.Warning("Firebase admin SDK file not found at {Path}. Firebase features disabled.", firebasePath);
+                }
+            }
+            #endregion
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
