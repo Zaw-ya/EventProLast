@@ -120,6 +120,17 @@ namespace EventPro.Web.Controllers
                 events_ = events_.OrderBy(string.Concat(sortColumn, " ", sortColumnDirection)).Reverse();
             }
 
+            // Operators only see events they are assigned to (direct or bulk-shared)
+            if (HasOperatorRole())
+            {
+                var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var operatorEventIds = db.EventOperator
+                    .Where(e => e.OperatorId == userId)
+                    .Select(e => e.EventId)
+                    .ToList();
+                events_ = events_.Where(e => operatorEventIds.Contains(e.Id));
+            }
+
             try
             {
                 var result = await events_.Skip(skip).Take(pageSize).ToListAsync();
