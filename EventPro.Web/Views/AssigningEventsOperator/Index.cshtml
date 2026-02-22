@@ -69,12 +69,133 @@
 
 @section Scripts {
     <script src="~/assets/plugins/datatables/js/jquery.datatables.min.js"></script>
-    <script src="~/assets/plugins/datatables/js/jquery.datatables.js"></script>
     <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.min.js"></script>
-    <script src="~/assets/plugins/datatables/js/datatables.bootstrap4.js"></script>
 
     <script>
         $(document).ready(function () {
+            $("#assignForm").on("submit", function (e) {
+                e.preventDefault(); // prevent normal form submission
+
+                var form = $(this);
+                var url = form.attr("action"); // action from asp-action="Assign"
+                var formData = new FormData(this); // for handling file uploads
+
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    data: formData,
+                    processData: false, // important for FormData
+                    contentType: false, // important for FormData
+                    success: function (response) {
+                        if (response.success == true) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "تم بنجاح",
+                                text: response.message
+                            });
+                            let fromSelect1 = document.getElementById("fromOperator");
+                            let toSelect1 = document.getElementById("toOperator");
+                            let assignBtn1 = document.getElementById("assignBtn");
+
+                            fromSelect1.value = "";
+                            toSelect1.value = "";
+                            assignBtn1.disabled = true;
+                        }else{
+                            Swal.fire({
+                                icon: "error",
+                                title: "خطأ",
+                                text: response.message,
+                                footer: ''
+                            });
+                        }
+                        $('#assignOperatros').DataTable().ajax.reload(null, false);
+                    },
+                    error: function (xhr, status, error) {
+                        // handle error
+                        alert("Error: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+
+    <script>
+        $(document).ready(function () {
+            $('#assignOperatros').DataTable({
+                "fixedHeader": false,
+                "lengthChange": true,
+                "searching": false,
+                "ordering": false,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                dom: 'lfrBtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'print'
+                ],
+                "serverSide": true,
+                "processing": true,
+                "filter": true,
+                "ajax": {
+                    "url": "/api/GetBulkOperatorEvents ",
+                    "type": "POST",
+                    "dataType": "json"
+                },
+                "columnDefs": [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+                "columns": [
+                    { "data": "id", "name": "Id", "autowidth": true, "orderable": false },
+                    { "data": "viewNumber", "name": "ViewNumber", "autowidth": true, "orderable": false },
+                    { "data": "assignedFromFullName", "name": "AssignedFromFullName", "autowidth": true, "orderable": false },
+                    { "data": "assignedFromUserName", "name": "AssignedFromUserName", "autowidth": true, "orderable": false },
+                    { "data": "assignedToFullName", "name": "AssignedToFullName", "autowidth": true, "orderable": false },
+                    { "data": "assignedToUserName", "name": "AssignedToUserName", "autowidth": true, "orderable": false },
+                    { "data": "assignedOn", "name": "AssignedOn", "autowidth": true, "orderable": false },
+                    { "data": "assignedBy", "name": "AssignedBy", "autowidth": true, "orderable": false },
+                    {
+                        "render": function (data, type, row) {
+                            return ` <td><a onclick="AssigningEventsOperator(${row.id})" style="cursor: pointer;"  class="btn btn-primary">&nbsp; Release</a></td>`
+                        },
+                        "orderable": false,
+                        "data": null
+                    }
+                ]
+
+
+            });
+            $('#RefreshPage').click(function () {
+                window.location.reload();
+            });
+            $('#SearchBtn').click(function () {
+                dataTable.draw();
+            });
+        })
+
+        async function AssigningEventsOperator(Id) {
+            var data = await fetch(`/AssigningEventsOperator/UnAssign?Id=${Id}`)
+            var result = await data.json();
+
+            if (result.success) {
+                Swal.fire({
+                    icon: "success",
+                    title: "تم بنجاح",
+                    text: result.message
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "خطأ",
+                    text: result.message,
+                    footer: ''
+                });
+            }
+
+            $('#assignOperatros').DataTable().ajax.reload(null, false);
+        }
 
             // ── Elements ──────────────────────────────────────────────
             const fromSelect = document.getElementById("fromOperator");

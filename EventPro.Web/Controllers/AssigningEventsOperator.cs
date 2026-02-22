@@ -61,7 +61,7 @@ namespace EventPro.Web.Controllers
                 if (db.BulkOperatorEvents.Where(e => e.OperatorAssignedFromId == model.OperatorAssignedFromId &&
             e.OperatorAssignedToId == model.OperatorAssignedToId).Count() > 0)
                 {
-                    return Json(new { success = false, message = "هذا التعيين موجود بالفعل. يرجى إلغاء السجل الحالي قبل إنشاء سجل جديد." });
+                    return Json(new { success = false, message = "هذه العملية موجودة بالفعل، هذا المشغل معيّن بالفعل لهذا المشغل الآخر، يرجى إلغاء التعيين أولاً ثم إعادة التعيين." });
                 }
 
                 model.AssignedById = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -166,6 +166,10 @@ namespace EventPro.Web.Controllers
             try
             {
                 var bulkAssigningOperatorEvents = await db.BulkOperatorEvents.FirstOrDefaultAsync(e => e.Id == id);
+               if (bulkAssigningOperatorEvents == null)
+                {
+                    return Json(new { success = false, message = "لم يتم العثور على التعيين المطلوب." });
+                }
                 List<EventOperator> eventsOperators = await db.EventOperator.Where(e => e.BulkOperatroEventsId == id)
                                                      .ToListAsync();
                 db.BulkOperatorEvents.Remove(bulkAssigningOperatorEvents);
@@ -176,7 +180,8 @@ namespace EventPro.Web.Controllers
             {
                 return Json(new { success = false, message = "حدث خطأ. يرجى المحاولة مرة أخرى." });
             }
-            return Json(new { success = true, message = "تم إلغاء التعيين بنجاح." });
+            
+            return Json(new { success = true, message = "تم إلغاء تعيين المشغلين بنجاح" });
         }
 
         private void SetBreadcrum(string title, string link)
