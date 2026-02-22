@@ -54,14 +54,14 @@ namespace EventPro.Web.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "??? ??? ??." });
+                return Json(new { success = false, message = "البيانات غير صالحة." });
             }
             try
             {
                 if (db.BulkOperatorEvents.Where(e => e.OperatorAssignedFromId == model.OperatorAssignedFromId &&
             e.OperatorAssignedToId == model.OperatorAssignedToId).Count() > 0)
                 {
-                    return Json(new { success = false, message = "???? ?????? ????? ?????? ????? ??? ???? ????????? ????? ??? ???????? ??????? ????? ??? ????? ?? ?????? ???? ?????????." });
+                    return Json(new { success = false, message = "هذه العملية موجودة بالفعل، هذا المشغل معيّن بالفعل لهذا المشغل الآخر، يرجى إلغاء التعيين أولاً ثم إعادة التعيين." });
                 }
 
                 model.AssignedById = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -95,11 +95,11 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??." });
+                return Json(new { success = false, message = "حدث خطأ ما." });
             }
 
 
-            return Json(new { success = true, message = "??? ?????? ????????? ?????" });
+            return Json(new { success = true, message = "تمت عملية التعيين بنجاح" });
         }
 
         [HttpPost("~/api/GetBulkOperatorEvents")]
@@ -159,9 +159,9 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??." });
+                return Json(new { success = false, message = "حدث خطأ ما." });
             }
-            return Json(new { success = true, message = "?? ????? ?????? ?????????" });
+            return Json(new { success = true, message = "تم إلغاء تعيين المشغلين بنجاح" });
         }
 
         private void SetBreadcrum(string title, string link)
