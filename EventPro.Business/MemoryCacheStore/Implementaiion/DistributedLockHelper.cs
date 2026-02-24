@@ -14,7 +14,7 @@ namespace EventPro.Business.MemoryCacheStore.Implementaiion
             _logger = logger;
         }
 
-        public async Task RunWithLockAsync(
+        public async Task<bool> RunWithLockAsync(
             string resourceKey,
             Func<Task> action,
             TimeSpan? expiry = null,
@@ -25,17 +25,25 @@ namespace EventPro.Business.MemoryCacheStore.Implementaiion
             wait ??= TimeSpan.FromSeconds(300);
             retry ??= TimeSpan.FromMilliseconds(300);
 
+            if (_redlockFactory == null)
+            {
+                _logger.LogWarning("RedLockFactory is null (Redis offline). Executing {ResourceKey} without distributed lock.", resourceKey);
+                await action();
+                return true;
+            }
+
             using (var redLock = await _redlockFactory.CreateLockAsync(resourceKey, expiry.Value, wait.Value, retry.Value))
             {
                 if (!redLock.IsAcquired)
                 {
                     _logger.LogWarning("Could not acquire lock for {ResourceKey}", resourceKey);
-                    return;
+                    return false;
                 }
 
                 try
                 {
                     await action();
+                    return true;
                 }
                 catch (Exception ex)
                 {
