@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using EventPro.Business.Storage.Interface;
 using EventPro.DAL.Common;
 using EventPro.DAL.Extensions;
 using EventPro.DAL.Models;
@@ -27,11 +28,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 using Serilog;
-
-using EventPro.Business.Storage.Interface;
 
 namespace EventPro.Web.Controllers
 {
@@ -1671,21 +1671,33 @@ namespace EventPro.Web.Controllers
         /// <returns>OK response</returns>
         [HttpGet]
         [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> DeleteAllGuests(int id)
+        public async Task<IActionResult> DeleteAllGuests(int eventId)
         {
-            var guests = await db.Guest.Where(e => e.EventId == id)
+            var guests = await db.Guest.Where(e => e.EventId == eventId)
                 .AsNoTracking()
                 .ToListAsync();
             db.Guest.RemoveRange(guests);
             await db.SaveChangesAsync();
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
+            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
+
+            // Delete from Cloudinary
+            var prefix = $"upload/cards/{eventId}/";
+
+            var deletedCounter = await _cloudinaryService
+                .DeleteByPrefixAsync(prefix);
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteAllGuests);
+            await _auditLogService.AddAsync(userId, eventId, DAL.Enum.ActionEnum.DeleteAllGuests);
 
-            Log.Information("All guests deleted: EventId={EventId}, GuestsRemoved={Count}, DeletedBy={UserId}", id, guests.Count, userId);
+            Log.Information(
+               "Guest cards deletion executed. EventId={EventId}, DeletedCount={DeletedCount}, DeletedBy={UserId}",
+               eventId,
+               deletedCounter,
+               userId);
+
+            Log.Information("All guests deleted: EventId={EventId}, GuestsRemoved={Count}, DeletedBy={UserId}", eventId, guests.Count, userId);
 
             return Ok();
         }
@@ -1699,18 +1711,74 @@ namespace EventPro.Web.Controllers
         /// <returns>OK response</returns>
         [HttpGet]
         [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> DeleteAllGuestsCards(int id)
+        public async Task<IActionResult> DeleteAllGuestsCards(int eventId)
         {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
+            try
+            {
+                // Validate event exists
+                var eventExists = await db.Events
+                    .AsNoTracking()
+                    .AnyAsync(e => e.Id == eventId);
 
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteAllGuestsCards);
+                if (!eventExists)
+                {
+                    Log.Warning("DeleteAllGuestsCards failed - Event not found. EventId={EventId}", eventId);
+                    return NotFound("Event not found.");
+                }
 
-            Log.Information("All guest cards deleted: EventId={EventId}, DeletedBy={UserId}", id, userId);
+                var userIdClaim = _httpContextAccessor.HttpContext?
+                    .User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return Ok();
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    Log.Warning("DeleteAllGuestsCards failed - Unauthorized access. EventId={EventId}", eventId);
+                    return Unauthorized();
+                }
+
+                var userId = int.Parse(userIdClaim);
+
+                // Delete from Cloudinary
+                var prefix = $"upload/cards/{eventId}/";
+
+                var deletedCounter = await _cloudinaryService
+                    .DeleteByPrefixAsync(prefix);
+
+                Log.Information(
+                    "Guest cards deletion executed. EventId={EventId}, DeletedCount={DeletedCount}, DeletedBy={UserId}",
+                    eventId,
+                    deletedCounter,
+                    userId);
+
+                // Audit log
+                await _auditLogService.AddAsync(
+                    userId,
+                    eventId,
+                    DAL.Enum.ActionEnum.DeleteAllGuestsCards);
+
+                return Ok(new
+                {
+                    success = true,
+                    deletedCount = deletedCounter
+                });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                Log.Error(dbEx,
+                    "Database error while deleting guest cards. EventId={EventId}",
+                    eventId);
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Database error occurred while logging the operation.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex,
+                    "Unexpected error while deleting guest cards. EventId={EventId}",
+                    eventId);
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Unexpected error occurred.");
+            }
         }
 
         /// <summary>

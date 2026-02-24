@@ -75,6 +75,7 @@ namespace EventPro.Web.Controllers
 
         /// <summary>
         /// POST: Admin/getWaRespReport
+        /// Whats app confirmatio report
         /// Retrieves paginated WhatsApp confirmation report data for DataTables
         /// Filters by operator's assigned events if user has operator role
         /// Excludes deleted events from results

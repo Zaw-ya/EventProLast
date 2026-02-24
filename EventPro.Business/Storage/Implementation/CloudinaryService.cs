@@ -5,15 +5,18 @@ using CloudinaryDotNet.Actions;
 
 using EventPro.Business.Storage.Interface;
 
+using Google.Apis.Logging;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.Storage.Implementation
 {
     public class CloudinaryService : ICloudinaryService
     {
         private readonly Cloudinary _cloudinary;
-
-        public CloudinaryService(IConfiguration configuration)
+        private readonly ILogger<CloudinaryService> _logger;
+        public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger)
         {
             var settings = configuration.GetSection("CloudinarySettings");
             var cloudName = settings["CloudName"];
@@ -28,6 +31,7 @@ namespace EventPro.Business.Storage.Implementation
             var account = new Account(cloudName, apiKey, apiSecret);
             _cloudinary = new Cloudinary(account);
             _cloudinary.Api.Secure = true;
+            _logger = logger;
         }
 
         public async Task<string> UploadImageAsync(Stream stream, string fileName, string folder = null)
@@ -297,6 +301,34 @@ namespace EventPro.Business.Storage.Implementation
             var deleteParams = new DeletionParams(publicId);
             var result = await _cloudinary.DestroyAsync(deleteParams);
             return result.Result == "ok";
+        }
+
+        /// <summary>
+        /// Permanently deletes all guest invitation card files for the specified event
+        /// from Cloudinary storage using the event folder prefix.
+        /// 
+        /// This operation removes all versions and duplicates of the cards,
+        /// but does NOT delete or modify any guest or event records in the database.
+        /// 
+        /// Access restricted to Administrators only.
+        /// </summary>
+        /// <param name="id">The Event ID whose guest card files will be deleted.</param>
+        /// <returns>Returns HTTP 200 (OK) when deletion completes successfully.</returns>
+        public async Task<bool> DeleteByPrefixAsync(string prefix)
+        {
+            var deleteParams = new DelResParams
+            {
+                Prefix = prefix,
+                ResourceType = ResourceType.Image,
+                Type = "upload",
+                Invalidate = true
+            };
+
+            var result = await _cloudinary.DeleteResourcesAsync(deleteParams);
+
+            _logger.LogInformation("DeleteByPrefixAsync: Deleted resources with prefix '{Prefix}'. Result: {Result}", prefix, result);
+
+            return result.DeletedCounts != null;
         }
 
         /// <summary>

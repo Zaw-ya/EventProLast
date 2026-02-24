@@ -995,6 +995,9 @@ namespace EventPro.Web.Controllers
                 .Where(p => p.Id == id)
                 .FirstOrDefaultAsync();
 
+            if (_event.WhatsappPush == false || _event.WhatsappPush == null)
+                return Json(new { success = false, message = "خيار Send WhatsApp Push غير مُفعل لهذا الحدث" });
+
             // Validate sending operation is not already in progress
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
                 return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود بصورة صحيحة" });
@@ -1780,6 +1783,9 @@ namespace EventPro.Web.Controllers
 
             var _event = await db.Events.Where(p => p.Id == id)
                 .FirstOrDefaultAsync();
+
+            if (_event.WhatsappConfirmation == false || _event.WhatsappConfirmation == null)
+                return Json(new { success = false, message = "خيار Send Whatsapp Confirmation غير مُفعل لهذا الحدث" });
 
             // Validate operation not already in progress
             if (_MemoryCacheStoreService.IsExist(id.ToString()))
