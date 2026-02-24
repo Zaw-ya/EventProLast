@@ -181,9 +181,9 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("BarcodeColorCode")
-                        .HasMaxLength(10)
+                        .HasMaxLength(150)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("varchar(150)");
 
                     b.Property<int?>("BarcodeHeight")
                         .HasColumnType("int");
@@ -715,11 +715,17 @@ namespace EventPro.DAL.Migrations
                     b.Property<string>("FailedSendingConfiramtionMessagesLinksLanguage")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Glocation")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("GmapCode")
                         .HasMaxLength(500)
                         .IsUnicode(false)
                         .HasColumnType("varchar(500)")
                         .HasColumnName("GMapCode");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("IsArchived")
                         .HasColumnType("bit");
@@ -890,6 +896,9 @@ namespace EventPro.DAL.Migrations
 
                     b.Property<int?>("Scanned")
                         .HasColumnType("int");
+
+                    b.Property<string>("SystemEventTitle")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("TotalAllocated")
                         .HasColumnType("int");
@@ -1478,8 +1487,8 @@ namespace EventPro.DAL.Migrations
                     b.Property<string>("SystemEventTitle")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TotalGuests")
-                        .HasColumnType("int");
+                    b.Property<long?>("TotalGuests")
+                        .HasColumnType("bigint");
 
                     b.ToTable("ScanSummary");
                 });
@@ -1879,6 +1888,12 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("WhatsAppNumberBahrain2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WhatsAppNumberEgypt1")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WhatsAppNumberEgypt2")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("WhatsAppNumberKuwait1")
@@ -2305,11 +2320,6 @@ namespace EventPro.DAL.Migrations
                         .HasMaxLength(40)
                         .IsUnicode(false)
                         .HasColumnType("varchar(40)");
-
-                    b.Property<string>("IconUrl")
-                        .HasMaxLength(76)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(76)");
 
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -3213,10 +3223,12 @@ namespace EventPro.DAL.Migrations
             modelBuilder.Entity("EventPro.DAL.Models.vwGuestInfo", b =>
                 {
                     b.Property<string>("AdditionalText")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool?>("ConguratulationMsgDelivered")
                         .HasColumnType("bit");
@@ -3225,7 +3237,9 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ConguratulationMsgId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<bool?>("ConguratulationMsgRead")
                         .HasColumnType("bit");
@@ -3237,13 +3251,17 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("CreatedOn")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("Cypertext")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("EmailAddress")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(80)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(80)");
 
                     b.Property<int?>("EventId")
                         .HasColumnType("int");
@@ -3261,7 +3279,8 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("GateKeeper")
                         .HasColumnType("int");
@@ -3285,25 +3304,33 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ImgSentMsgId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<bool?>("IsPhoneNumberValid")
                         .HasColumnType("bit");
 
                     b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("MessageId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("ModeOfCommunication")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<int?>("NoOfMembers")
                         .HasColumnType("int");
 
                     b.Property<string>("PrimaryContactNo")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<bool?>("ReminderMessageDelivered")
                         .HasColumnType("bit");
@@ -3312,7 +3339,9 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ReminderMessageId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<bool?>("ReminderMessageRead")
                         .HasColumnType("bit");
@@ -3321,19 +3350,26 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ReminderMessageWatiId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("Response")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
 
                     b.Property<int?>("Scanned")
                         .HasColumnType("int");
 
                     b.Property<string>("SecondaryContactNo")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("Source")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<bool?>("TextDelivered")
                         .HasColumnType("bit");
@@ -3348,27 +3384,41 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("WaresponseTime")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime");
 
                     b.Property<string>("WatiConguratulationMsgId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("WhatsappStatus")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("waMessageEventLocationForSendingToAll")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("whatsappMessageId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("whatsappMessageImgId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
                     b.Property<string>("whatsappWatiEventLocationId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
 
-                    b.ToTable("vwGuestInfo");
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_GuestInfo", (string)null);
                 });
 
             modelBuilder.Entity("EventPro.DAL.Models.vw_ConfirmationReport", b =>
@@ -3404,6 +3454,25 @@ namespace EventPro.DAL.Migrations
                         .HasColumnType("int");
 
                     b.ToTable("vw_ConfirmationReport");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataProtectionKeys");
                 });
 
             modelBuilder.Entity("EventPro.DAL.Models.AuditLog", b =>

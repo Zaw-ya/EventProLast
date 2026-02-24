@@ -1,5 +1,4 @@
 using Hangfire.Dashboard;
-
 using EventPro.Web.Common;
 using System.Security.Claims;
 

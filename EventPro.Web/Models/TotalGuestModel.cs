@@ -14,6 +14,6 @@ namespace EventPro.Web.Models
         public string EventVenue { get; set; }
         public string Location { get; set; }
         public DateTime? LocationFrom { get; set; }
-        public int? TotalGuests { get; set; }
+        public long? TotalGuests { get; set; }
     }
 }

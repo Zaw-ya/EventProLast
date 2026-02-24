@@ -3,8 +3,17 @@ using System;
 
 namespace EventPro.DAL.Common
 {
+    /// <summary>
+    /// Converts between EF Core domain models (Events) and Firestore documents (EventDocument).
+    /// Used by <see cref="FirebaseIntegration"/> when syncing events to Cloud Firestore.
+    /// </summary>
     public static class ConvertModelDocument
     {
+        #region Firestore Document -> Domain Model
+
+        /// <summary>
+        /// Converts a Firestore <see cref="EventDocument"/> to an EF Core <see cref="Events"/> entity.
+        /// </summary>
         public static Events ConvertEventDocumentToModel(EventDocument document)
         {
             return new Events
@@ -20,6 +29,14 @@ namespace EventPro.DAL.Common
             };
         }
 
+        #endregion
+
+        #region Domain Model -> Firestore Document
+
+        /// <summary>
+        /// Converts an EF Core <see cref="Events"/> entity to a Firestore <see cref="EventDocument"/>.
+        /// Stored in the Firestore "Events" collection.
+        /// </summary>
         public static EventDocument ConvertEventModelToDocument(Events _event)
         {
             return new EventDocument
@@ -34,5 +51,7 @@ namespace EventPro.DAL.Common
                 EventTo = _event.EventTo.ToString()
             };
         }
+
+        #endregion
     }
 }

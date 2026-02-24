@@ -1,6 +1,7 @@
 @{
     Layout = "~/Views/Shared/_Admin.cshtml";
 }
+
 <!-- Content Wrapper. Contains page content -->
 <!-- /.content-header -->
 <!-- Main content -->
@@ -89,9 +90,12 @@
                             {
                                 <li class="item">
                                     <div class="product-img">
-                                        @if (evt.Icon != null)
+                                        @{
+                                            var card = evt.CardInfo != null ? ((IEnumerable<EventPro.DAL.Models.CardInfo>)evt.CardInfo).FirstOrDefault() : null;
+                                        }
+                                        @if (card != null && card.BackgroundImage != null)
                                         {
-                                            <img src="~/upload/card/@evt.Icon" class="grid-icon" />
+                                            <img src="@card.BackgroundImage" class="grid-icon" />
                                         }
                                         else
                                         {
@@ -112,12 +116,12 @@
                                                 <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
                                             }
                                         </a>
-                                        @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                     @*    @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
                                         {
                                             <span class="product-description">
                                                 @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
                                             </span>
-                                        }
+                                        } *@
                                     </div>
                                 </li>
                             }
@@ -132,7 +136,7 @@
                 </div>
                 <!-- /.card-body -->
                 <div class="card-footer text-center">
-                    <a href="~/admin/events" class="uppercase">View All Events</a>
+                    <a href="~/admin/ArchiveEvents" class="uppercase">View All Past Events</a>
                 </div>
                 <!-- /.card-footer -->
             </div>
@@ -155,9 +159,12 @@
                             {
                                 <li class="item">
                                     <div class="product-img">
-                                        @if (evt.Icon != null)
+                                        @{
+                                            var card = evt.CardInfo != null ? ((IEnumerable<EventPro.DAL.Models.CardInfo>)evt.CardInfo).FirstOrDefault() : null;
+                                        }
+                                        @if (card != null && card.BackgroundImage != null)
                                         {
-                                            <img src="~/upload/card/@evt.Icon" class="grid-icon" />
+                                            <img src="@card.BackgroundImage" class="grid-icon" />
                                         }
                                         else
                                         {
@@ -178,12 +185,12 @@
                                                 <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
                                             }
                                         </a>
-                                        @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                     @*    @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
                                         {
                                             <span class="product-description">
                                                 @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
                                             </span>
-                                        }
+                                        } *@
                                     </div>
                                 </li>
                             }
@@ -221,9 +228,12 @@
                             {
                                 <li class="item">
                                     <div class="product-img">
-                                        @if (evt.Icon != null)
+                                        @{
+                                            var card = evt.CardInfo != null ? ((IEnumerable<EventPro.DAL.Models.CardInfo>)evt.CardInfo).FirstOrDefault() : null;
+                                        }
+                                        @if (card != null && card.BackgroundImage != null)
                                         {
-                                            <img src="~/upload/card/@evt.Icon" class="grid-icon" />
+                                            <img src="@card.BackgroundImage" class="grid-icon" />
                                         }
                                         else
                                         {
@@ -244,12 +254,12 @@
                                                 <span class="badge badge-warning float-right">@Convert.ToDateTime(evt.EventTo).ToString("dd-MMM-yyyy")</span>
                                             }
                                         </a>
-                                        @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
+                                     @*    @if (evt.EventVenue != null || evt.FirstName != null || evt.LastName != null)
                                         {
                                             <span class="product-description">
                                                 @(evt.EventVenue != null ? evt.EventVenue + ", " : "")@(evt.FirstName != null ? evt.FirstName : "") @(evt.LastName != null ? evt.LastName : "")
                                             </span>
-                                        }
+                                        } *@
                                     </div>
                                 </li>
                             }

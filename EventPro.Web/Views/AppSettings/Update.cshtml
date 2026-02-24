@@ -24,8 +24,8 @@
     }
 </style>
 
-<div class="sendingMessage" hidden id="sendingMessage" syle="background-color: lightgreen">
-    <span>...???? ????? ???????</span>
+<div class="sendingMessage" hidden id="sendingMessage" style="background-color: lightgreen">
+    <span>...جاري معالجة طلبك</span>
 </div>
 
 <section>
@@ -34,6 +34,7 @@
             <form method="post" id="SaveChanges">
                 @Html.ValidationSummary(false, "", new { @class = "text-danger" })
                 <input asp-for="@Model.Id" hidden />
+                <input asp-for="@Model.NumberOfWebHookRequestsDbCanHandleOnSameTime" hidden />
                 <div >
                     <div class="pb-2">
                         <h2 class="text-primary">App settings</h2>
@@ -206,10 +207,10 @@
             var data = await result.json();
             sendingMessage.hidden = true;
             if (data.success) {
-                Swal.fire("??? ????? ????? ");
+                Swal.fire("تم حذف البيانات بنجاح");
             }
             else {
-                Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+                Swal.fire(data.message || "حدث خطأ ما، يرجى المحاولة لاحقاً");
             }
         }
 
@@ -219,23 +220,23 @@
             var data = await result.json();
             sendingMessage.hidden = true;
             if (data.success) {
-                Swal.fire("??? ????? ????? ");
+                Swal.fire("تم حذف البيانات بنجاح");
             }
             else {
-                Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+                Swal.fire(data.message || "حدث خطأ ما، يرجى المحاولة لاحقاً");
             }
         }
 
         async function ForceStartConsumer() {
             Swal.fire({
-                title: "?? ???? ??? ?????? ???????? ???? ?????? ?????????",
-                text: "!?????: ??? ???? ????? ??? ??????? ??? ?? ????? ????? ???????? ??????? ?????? ????????",
+                title: "هل أنت متأكد من بدء تشغيل المعالجة؟",
+                text: "تحذير: هذا قد يؤدي إلى استهلاك كبير للموارد في حال وجود كمية كبيرة من الرسائل!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     sendingMessage.hidden = false;
@@ -243,10 +244,10 @@
                     var data = await result.json();
                     sendingMessage.hidden = true;
                     if (data.success) {
-                        Swal.fire("?? ??? ?????? ???????? ??????? ");
+                        Swal.fire("تم بدء تشغيل المعالجة بنجاح");
                     }
                     else {
-                        Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+                        Swal.fire(data.message || "حدث خطأ ما، يرجى المحاولة لاحقاً");
                     }
                 }
             });
@@ -256,14 +257,14 @@
         async function ForceStopConsumer() {
 
             Swal.fire({
-                title: "?? ???? ????? ?????? ???????? ???? ?????? ?????????",
-                text: "!?????: ?? ??? ?????? ???????? ??????? ? ?? ?????? ??? ???????? ??????? ??? ?? ????? ??????? ???? ???? ",
+                title: "هل أنت متأكد من إيقاف المعالجة؟",
+                text: "تحذير: هذا سيوقف جميع عمليات الإرسال والاستقبال الجارية فوراً!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     sendingMessage.hidden = false;
@@ -271,10 +272,10 @@
                     var data = await result.json();
                     sendingMessage.hidden = true;
                     if (data.success) {
-                        Swal.fire("?? ????? ?????? ???????? ??????? ");
+                        Swal.fire("تم إيقاف المعالجة بنجاح");
                     }
                     else {
-                        Swal.fire("?? ????? ??????? , ??? ??? ?? ");
+                        Swal.fire(data.message || "حدث خطأ ما، يرجى المحاولة لاحقاً");
                     }
                 }
             });
@@ -286,10 +287,10 @@
             var posting = $.post("/AppSettings/Update", $("#SaveChanges").serialize());
             posting.done(function (data) {
                 if (data.success) {
-                        Swal.fire(` ?? ????? ????????? `);
+                        Swal.fire(` تم تحديث الإعدادات بنجاح `);
 
                 } else {
-                    Swal.fire(` !??? ??? ?? `);
+                    Swal.fire(data.message || ` حدث خطأ ما! `);
                 }
 
             });

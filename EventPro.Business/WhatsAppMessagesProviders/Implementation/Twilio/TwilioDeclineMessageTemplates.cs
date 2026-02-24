@@ -1,17 +1,21 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Models;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 {
     public class TwilioDeclineMessageTemplates : TwilioMessagingConfiguration, IDeclineMessageTemplates
     {
         private readonly EventProContext db;
-        public TwilioDeclineMessageTemplates(IConfiguration configuration,
-            IMemoryCacheStoreService memoryCacheStoreService) : base(configuration,
-                memoryCacheStoreService)
+        public TwilioDeclineMessageTemplates(
+            IConfiguration configuration,
+            IMemoryCacheStoreService memoryCacheStoreService,
+            ILogger<TwilioMessagingConfiguration> logger) 
+            : base(configuration, memoryCacheStoreService, logger)
         {
             db = new EventProContext(configuration);
         }

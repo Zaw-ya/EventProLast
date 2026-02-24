@@ -14,7 +14,7 @@
         "serverSide": true,
         "processing": true,
         "filter": true,
-        "ajax": {
+        "ajax": { // Request to the server for data
             "url": "/api/GetEvents",
             "type": "POST",
             "dataType" : "json"
@@ -27,14 +27,14 @@
         "columns": [
             { "data": "id", "name": "Id", "autowidth": true },
             { "data": "id", "name": "Id", "autowidth": true },
-            { "data": "linked_To", "name": "LinkedEvent", "autowidth": true },
-            { "data": "title", "name": "SystemEventTitle", "autowidth": true },
-            { "data": "start_Date", "name": "EventFrom", "autowidth": true },
-            { "data": "end_Date", "name": "EventTo", "autowidth": true },
-            { "data": "venue", "name": "EventVenue", "autowidth": true },
-            { "data": "created_On", "name": "CreatedOn", "autowidth": true },
+            { "data": "linked_To", "name": "Linked_To", "autowidth": true },
+            { "data": "title", "name": "Title", "autowidth": true },
+            { "data": "start_Date", "name": "Start_Date", "autowidth": true },
+            { "data": "end_Date", "name": "End_Date", "autowidth": true },
+            { "data": "venue", "name": "Venue", "autowidth": true },
+            { "data": "created_On", "name": "Created_On", "autowidth": true },
             { "data": "created_By", "name": "Created_By", "autowidth": true, orderable: false },
-            { "data": "status", "name": "Status", "autowidth": true, "orderable": false },
+            { "data": "status", "name": "Status", "autowidth": true, orderable: false },
             {
                 "render": function (data, type, row) {
 

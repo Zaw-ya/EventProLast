@@ -113,10 +113,10 @@
 </div>
 
 <div class="sendingMessage" hidden  id="sendingMessage" syle="background-color: lightgreen">
-    <span>...???? ???????</span>
+    <span>جاري الإرسال...</span>
 </div>
 <div class="sendingMessage" hidden id="processingMessage" syle="background-color: lightgreen">
-    <span>...???? ????? ???????</span>
+    <span>جاري معالجة البيانات...</span>
 </div>
 
 <section class="content">
@@ -177,12 +177,13 @@
                                             <div class="dropdown-divider"></div>
                                             <a href="#" onclick="RefreshALl(@ViewBag.EventId,1);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh New</a>
 @*                                             <a href="#" onclick="RefreshALl(@ViewBag.EventId,0);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh All</a> *@
-
                                             <a href="~/admin/DownloadAll/@ViewBag.EventId" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download All</a>
+                                            
                                             @if (ViewBag.IsAdmin == 1)
                                             {
-                                                <a href="#" onclick="RefreshAllGuestsStatus(@ViewBag.EventId)" class="dropdown-item"><i class="fas fa-sync-alt" title="?????? ???? ?????? ??????" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
+                                                <a href="#" onclick="RefreshAllGuestsStatus(@ViewBag.EventId)" class="dropdown-item"><i class="fas fa-sync-alt" title="تحديث حالة الرسائل الأخيرة" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
                                                 @*                                             <a href="~/admin/ValidateAllGuestPhoneNumbers/@ViewBag.EventId" class="dropdown-item">
+                                                Gharabawy : This code when download the guest list it will validate all phone numbers (but it commented for now)
                                                 <i class="fas fa-check-circle" style="color:blue"></i>&nbsp;Validate All Numbers Format
                                             </a> *@
                                             }
@@ -246,20 +247,20 @@
                                 <table id="GuestsTable" class="table table-bordered table-hover text-center" style="padding:5px; width:100%;">
                                         <thead>
                                             <tr>
-                                            <th>????? ???? ???????</th>
-                                                <th>????? ???? ???????</th>
-                                                <th>??? ?????</th>
-                                                <th>??? ???????</th>
-                                                <th>??? ?????</th>
-                                                <th>??? ??????</th>
-                                                <th>??? ???? ?????</th>
-                                                <th>???? ????? ???????</th>
-                                                <th>???? ??????</th>
-                                                <th>???? ???? ????????</th>
-                                                <th>???? ??????? ?????????</th>
-                                                <th>???? ????? ???????</th>
-                                                <th>?? ?????</th>
-                                                <th>??? ?? ?????</th>
+                                                <th>رسالة نصية البطاقة</th>
+                                                <th>تحديث حالة الرسائل</th>
+                                                <th>رقم الضيف</th>
+                                                <th>رقم الايفنت</th>
+                                                <th>اسم الضيف</th>
+                                                <th>رقم الهاتف</th>
+                                                <th>عدد مرات المسح</th>
+                                                <th>حالة رسالة التاكيد</th>
+                                                <th>حالة الدعوة</th>
+                                                <th>حالة موقع المناسبة</th>
+                                                <th>حالة الرسالة التذكيرية</th>
+                                                <th>حالة رسالة التهنئة</th>
+                                                <th>رد الضيف</th>
+                                                <th>وقت رد الضيف</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -424,7 +425,7 @@
                 FormNoOfMembers == " " || FormNoOfMembers == null || FormNoOfMembers == ""||
                 FormSecondaryContactNo == " " || FormSecondaryContactNo == null || FormSecondaryContactNo == ""||
                 FormPrimaryContactNo == " " || FormPrimaryContactNo == null || FormPrimaryContactNo == "") {
-                Swal.fire(`!????? ????? ???? ???????? `);
+                Swal.fire(`الرجاء ملء جميع البيانات!`);
             } else {
 
                 var posting = $.post("/admin/guest", $("#updateGuestForm").serialize());
@@ -434,15 +435,15 @@
                     console.log(data);
                     if (data.success) {
                         if (data.addedOrModified == 0) {
-                            Swal.fire(` ??? ????? ??????? `);
+                            Swal.fire(`تم التحديث بنجاح`);
                             $('#GuestsTable').DataTable().ajax.reload();
                         } else {
-                            Swal.fire(` ?? ????? ???????? `);
+                            Swal.fire(`تم الإضافة بنجاح`);
                             $('#GuestsTable').DataTable().ajax.reload(null, false);
                         }
 
                     } else {
-                        Swal.fire(` !??? ??? ?? `);
+                        Swal.fire(`حدث خطأ ما!`);
                     }
 
                 });
@@ -465,7 +466,7 @@
             var file = files[0];
             formData.append("file", file);
             closeUploadButton.click();
-            loaderText2.textContent = "... ???? ????? ?????? ";
+            loaderText2.textContent = "جاري تحميل الملف...";
             darkoverlay2.hidden = false;
             loader2.hidden = false;
             $.ajax({
@@ -480,21 +481,21 @@
                     console.log(data);
                     guestsUploaded(data);
                     if (data.success) {
-                        Swal.fire(`?? ????? ${data.totalGuests} ??? ?????? ${data.totalMembers} ?????`);
+                        Swal.fire(`تم تحميل ${data.totalGuests} ضيف بإجمالي ${data.totalMembers} عضو`);
                     } else {
-                        Swal.fire(` !??? ??? ?? `);
+                        Swal.fire(`حدث خطأ ما!`);
                     }
                     $('#GuestsTable').DataTable().ajax.reload();
                 },
-                error: function (data) {                  
+                error: function (data) {
                     darkoverlay2.hidden = true;
                     loader2.hidden = true;
                     console.log(data);
                     guestsUploaded(data);
                     if (data.success) {
-                        Swal.fire(` ?? ????? ?????? ?????`);
+                        Swal.fire(`تم تحميل الضيوف بنجاح`);
                     } else {
-                        Swal.fire(` !??? ??? ?? `);
+                        Swal.fire(`حدث خطأ ما!`);
                     }
                     $('#GuestsTable').DataTable().ajax.reload();
                 }              
@@ -579,13 +580,13 @@
                     {
                         "render": function (data, type, row) {
                             return `<a href="/admin/StatusRefreshIndividually/${row.id}?eventid=${@ViewBag.EventId}" class="rotate-icon">
-                                                                        <i class="fas fa-sync-alt" title="????? ??????" style="color: darkgreen;"></i>
+                                                                        <i class="fas fa-sync-alt" title="تحديث الحالة" style="color: darkgreen;"></i>
                                                                     </a>`}, "autowidth": true, "orderable": false, "data": null
                     },
                     {
                         "render": function (data, type, row) {
                             return `<a onclick="GuestStatusRefresh(${row.id},${@ViewBag.EventId})" class="rotate-icon" style="cursor: pointer;">
-                                                                                <i class="fas fa-sync-alt" title="????? ??????" style="color: darkgreen;"></i>
+                                                                                <i class="fas fa-sync-alt" title="تحديث الحالة" style="color: darkgreen;"></i>
                                                                             </a>`}, "autowidth": true, "orderable": false, "data": null
                     },
                     { "data": "id", "name": "Id", "autowidth": true, "orderable": false },
@@ -629,10 +630,24 @@
                                                             <a onclick="SendFailedCongratularionMsg(${row.id})" class=" dropdown-item" style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Congratulation Msg</a>
                         </div>
                     </div>
-                                                                                                           <a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card</a>
-                                                                                                                                           <a onclick="SetAccept(${row.id})" a href="/Upload/preview/${@ViewBag.EventId}/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" target="_blank" download="/E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg" style="cursor: pointer;"  class=" dropdown-item"><i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept</a>
-                                                                                       <a href="/Upload/guestcode/${row.id}.png" target="_blank" download="barcode.png" class=" dropdown-item"><i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode</a>
-
+                    <!-- Download Card -->
+                    <a
+                       onclick="downloadLatestCard(${@ViewBag.EventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg')"
+                       class="dropdown-item latest-card-link"
+                       style="cursor: pointer;">
+                        <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card
+                    </a>      
+                    <a onclick="downloadCardAndSetAccept(${@ViewBag.EventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg')"
+                       class="dropdown-item"
+                       style="cursor: pointer;">
+                        <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept
+                    </a>
+                    <a
+                               onclick="downloadLatestQr(${@ViewBag.EventId}, ${row.id}, 'barcode_${row.id}.png')"
+                               class="dropdown-item latest-qr-link"
+                               style="cursor: pointer;">
+                                <i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode
+                    </a>
                                                                                                                                                                                                         <a href="#" onclick="EditGuest('${row.id}','${row.name}','${row.noOfMembers}','${row.primaryContact}','${row.additionalText}','${row.secondaryContact}')" class="dropdown-item"><i class="nav-icon fas fa-pen-nib" style="color:cornflowerblue"></i>&nbsp; Edit</a>
                                                                                         <a href="#" onclick="SetGuestIdForDelete(${row.id})" class="dropdown-item" data-toggle="modal" data-target="#deleteConfirmation" ><i class="nav-icon fas fa-recycle" style="color:cornflowerblue"></i>&nbsp; Delete</a>
                                                                                                               ${@ViewBag.IsAdmin == 1 ? `
@@ -674,13 +689,15 @@
         const loaderText2 = document.getElementById('loaderText');
         const darkoverlay2 = document.getElementById('dark-overlay');
 
+
+
         function reloading() {
             console.log("working");
             $('#GuestsTable').DataTable().ajax.reload(null, false);
         }
 
         async function RefreshAllGuestsStatus(EventId) {
-            loaderText2.textContent = "... ???? ????? ????? ??????? ";
+            loaderText2.textContent = "جاري تحديث حالة كل الضيوف";
             darkoverlay2.hidden = false;
             loader2.hidden = false;
             var remainingStatus = 0;
@@ -691,15 +708,15 @@
                 var data = await fetch(`/admin/StatusRefreshForAllGuests/${EventId}`);
                 var result = await data.json();
                 if (!result.success) {
-                    Swal.fire("! ??? ??? ?? ");
+                    Swal.fire("! فشل في تحديث الحالة");
                 }
                 else {
-                    Swal.fire("?? ????? ????? ???????");
+                    Swal.fire("تم تحديث حالة كل الضيوف بنجاح");
                 }
             }
             catch
             {
-                Swal.fire("! ??? ??? ?? ");
+                Swal.fire("! فشل في تحديث الحالة");
             }
             loader2.hidden = true;
             darkoverlay2.hidden = true;
@@ -716,19 +733,20 @@
             return data.allStatus;
         }
 
+
         async function SendFailedMsgsToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
+                title: "هل تريد إرسال الرسائل الفاشلة لجميع الضيوف؟",
                 text: "",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ????? ?????? ";
+                    loaderText2.textContent = "جاري إرسال الرسائل الفاشلة...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -739,15 +757,15 @@
                         var data = await fetch(`/DefaultWhatsapp/sendMessagesToAll/${eventId}`);
                         var result = await data.json();
                         if (!result.success) {
-                            Swal.fire("! ??? ??? ?? ");
+                            Swal.fire("حدث خطأ ما!");
                         }
                         else {
-                            Swal.fire("??? ????? ???????");
+                            Swal.fire("تم الإرسال بنجاح");
                         }
                     }
                     catch
                     {
-                        Swal.fire("! ??? ??? ?? ");
+                        Swal.fire("حدث خطأ ما!");
                     }
                     loader2.hidden = true;
                     darkoverlay2.hidden = true;
@@ -760,17 +778,17 @@
 
         async function SendConfirmationToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ?????? ? ???????? ?",
-                text: "??? ??? ????? ??????? ?????? ????? ?? ???? ??? ????? ????? ?????? ? ???????? ?? ??? ",
+                title: "هل تريد إرسال رسائل التأكيد والدعوات؟",
+                text: "سيتم إرسال رسائل التأكيد لجميع الضيوف الذين لم يتم إرسال رسالة تأكيد لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ????? ?????? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التأكيد...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -780,7 +798,7 @@
                     var data = await fetch(`/admin/SendToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -805,7 +823,7 @@
         }
 
         async function SendFailedImgsToAll(eventId) {
-            loaderText2.textContent = "... ???? ????? ???????  ";
+            loaderText2.textContent = "جاري إرسال البطاقات...";
             darkoverlay2.hidden = false;
             loader2.hidden = false;
             var remainingMessages = 0;
@@ -819,16 +837,16 @@
                 var data = await fetch(`/DefaultWhatsapp/sendImagesToAll/${eventId}`);
                 var result = await data.json();
                 if (!result.success) {
-                    Swal.fire("! ??? ??? ?? ");
+                    Swal.fire("حدث خطأ ما!");
                 }
                 else {
-                    Swal.fire("??? ????? ???????");
+                    Swal.fire("تم الإرسال بنجاح");
                 }
                 console.log(data);
             }
             catch
             {
-                Swal.fire("! ??? ??? ?? ");
+                Swal.fire("حدث خطأ ما!");
             }
             loader2.hidden = true;
             darkoverlay2.hidden = true;
@@ -838,17 +856,17 @@
 
         async function SendPushToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ?????? ?",
-                text: "??? ??? ????? ??????? ?????? ????? ?? ????? ????? ?????? ?? ???",
+                title: "هل تريد إرسال البطاقات؟",
+                text: "سيتم إرسال البطاقات لجميع الضيوف الذين لم يتم إرسال بطاقة لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ???????  ";
+                    loaderText2.textContent = "جاري إرسال البطاقات...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -858,7 +876,7 @@
                     var data = await fetch(`/admin/SendCardToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -883,17 +901,17 @@
 
         async function SendEventLocationToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ???? ???????? ?",
-                text: "??? ??? ????? ????? ???? ???????? ?????? ????? ?? ????? ????? ???? ???????? ?? ???",
+                title: "هل تريد إرسال موقع الفعالية؟",
+                text: "سيتم إرسال موقع الفعالية لجميع الضيوف الذين لم يتم إرسال الموقع لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ???? ???????? ";
+                    loaderText2.textContent = "جاري إرسال موقع الفعالية...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -903,7 +921,7 @@
                     var data = await fetch(`/admin/SendEventLocationToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -927,17 +945,17 @@
 
         async function SendReminderMessagesToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ??? ?????? ?",
-                text: "??? ??? ????? ????? ??????? ?????? ????? ?? ????? ????? ??????? ?? ??? ",
+                title: "هل تريد إرسال رسائل التذكير لجميع الضيوف؟",
+                text: "سيتم إرسال رسائل التذكير لجميع الضيوف الذين لم يتم إرسال تذكير لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ???? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التذكير...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -947,7 +965,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -971,17 +989,17 @@
 
         async function SendReminderMessagesToOnlyAccepted(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ?????? ???????? ??? ?",
-                text: "??? ??? ????? ????? ??????? ?????? ???????? ????? ?? ????? ????? ????? ?? ???",
+                title: "هل تريد إرسال رسائل التذكير للضيوف الموافقين فقط؟",
+                text: "سيتم إرسال رسائل التذكير للضيوف الموافقين فقط",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ???????? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التذكير للموافقين...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -991,7 +1009,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToOnlyAccepted/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1015,17 +1033,17 @@
 
         async function SendReminderMessagesToOnlyReceived(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ?????? ????? ?????? ????? ????? ?????? ?? ?????? ?",
-                text: " ??? ??? ????? ????? ??????? ?????? ????? ? ????? ????? ????? ?????? ?? ?????? ? ?? ????? ????? ??????? ?? ???",
+                title: "هل تريد إرسال رسائل التذكير للضيوف الذين استلموا الرسالة فقط؟",
+                text: "سيتم إرسال رسائل التذكير للضيوف الذين استلموا الرسالة",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ??????? ?????? ?????? ??? ?? ??? ";
+                    loaderText2.textContent = "جاري إرسال التذكير للمستلمين...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1035,7 +1053,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToOnlyReceived/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1050,17 +1068,17 @@
 
         async function SendReminderMessagesToOnlyNoAnswer(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ????? ?????? ?? ?",
-                text: "??? ??? ????? ????? ??????? ????? ?????? ?? ? ?? ????? ????? ????? ?? ???",
+                title: "هل تريد إرسال رسائل التذكير للضيوف بدون رد؟",
+                text: "سيتم إرسال رسائل التذكير للضيوف الذين لم يردوا بعد",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ?? ?????? ?? ";
+                    loaderText2.textContent = "جاري إرسال التذكير لمن لم يردوا...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1070,7 +1088,7 @@
                     var data = await fetch(`/admin/SendReminderMessageToOnlyNoAnswer/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1094,17 +1112,17 @@
 
         async function SendCongratulationMessageToAll(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ??????? ?",
-                text: "??? ??? ????? ????? ??????? ?????? ????? ????? ???????? ? ?? ????? ????? ????? ?? ???",
+                title: "هل تريد إرسال رسائل التهنئة؟",
+                text: "سيتم إرسال رسائل التهنئة لجميع الضيوف الموافقين الذين لم يتم إرسال تهنئة لهم من قبل",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أرسل الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    loaderText2.textContent = "... ???? ????? ????? ??????? ";
+                    loaderText2.textContent = "جاري إرسال رسائل التهنئة...";
                     darkoverlay2.hidden = false;
                     loader2.hidden = false;
                     var remainingMessages = 0;
@@ -1114,7 +1132,7 @@
                     var data = await fetch(`/admin/SendCongratulationMessageToAll/${eventId}`);
                     var result = await data.json();
                     if (result.success) {
-                        Swal.fire("??? ????? ???????");
+                        Swal.fire("تم الإرسال بنجاح");
                     } else {
                         Swal.fire(result.message);
                     }
@@ -1174,14 +1192,14 @@
         async function DeleteAllGuests(eventId) {
             console.log("working SendConfirmation");
             Swal.fire({
-                title: "?? ???? ??? ???? ???? ???????? ?",
-                text: "!?? ?????? ??????? ?????? ??? ?????",
+                title: "هل تريد حذف جميع الضيوف؟",
+                text: "لن تستطيع استرجاع البيانات بعد الحذف!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، احذف الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     processingMessage.hidden = false;
@@ -1194,14 +1212,14 @@
 
         async function DeleteAllGuestsCards(eventId) {
             Swal.fire({
-                title: "?? ???? ??? ???? ?????? ???? ???????? ?",
-                text: "!??? ??? ??? ???? ?????? ???????? , ?? ???? ????? ????? ?? ??? ????? ??????? ?? ???? ???????",
+                title: "هل تريد حذف جميع بطاقات الضيوف؟",
+                text: "سيتم حذف جميع البطاقات، يمكنك إعادة إنشائها لاحقاً",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، احذف الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     processingMessage.hidden = false;
@@ -1214,14 +1232,14 @@
 
         async function ResetAllGuestsStatus(eventId) {
             Swal.fire({
-                title: "?? ???? ??? ???? ?????? ?? ??????? ???????? ?",
-                text: "!?? ?????? ??????? ?????? ??????? ??????? ??? ?????",
+                title: "هل تريد إعادة تعيين حالة جميع الضيوف؟",
+                text: "سيتم إعادة تعيين جميع الحالات!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، أعد التعيين"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1236,14 +1254,14 @@
 
         async function AllowSendConfirmationMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ????? ?????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ?????? ?? ??????? ???????",
+                title: "هل تريد السماح بإرسال رسالة التأكيد مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال رسائل التأكيد لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1257,14 +1275,14 @@
 
         async function AllowSendCardMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ??????? ???????",
+                title: "هل تريد السماح بإرسال البطاقة مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال البطاقات لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1278,14 +1296,14 @@
 
         async function AllowSendEventLocationMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ???? ???????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ???? ???????? ???????",
+                title: "هل تريد السماح بإرسال موقع الفعالية مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال موقع الفعالية لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1300,14 +1318,14 @@
 
         async function AllowSendReminderMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ??????? ???????",
+                title: "هل تريد السماح بإرسال رسالة التذكير مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال رسائل التذكير لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1322,14 +1340,14 @@
 
         async function AllowSendCongratulationMessageAgain(eventId) {
             Swal.fire({
-                title: "?? ???? ????? ????? ????? ??????? ??? ????? ?",
-                text: "!??? ????? ?? ??????? ????? ????? ????? ??????? ???????",
+                title: "هل تريد السماح بإرسال رسالة التهنئة مرة أخرى؟",
+                text: "سيتم السماح بإعادة إرسال رسائل التهنئة لجميع الضيوف",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                cancelButtonText: "????? ?????",
-                confirmButtonText: "???, ???? ???"
+                cancelButtonText: "إلغاء العملية",
+                confirmButtonText: "نعم، اسمح الآن"
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     console.log("working SendConfirmation");
@@ -1340,13 +1358,15 @@
                 }
             });
         }
-        async function SendReminderMsg(guestId) {
+
+        async function SendReminderMsg(guestId) { 
             sendingMessage.hidden = false;
            var data = await fetch(`/admin/SendReminderMessage/${guestId}`);
             var result = await data.json();
-            if (!result.success) { 
+            if (!result.success) 
+            { 
                 Swal.fire(result.message);
-        }
+             }
             sendingMessage.hidden = true;
             reloading();
         }
@@ -1390,7 +1410,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "????? ????? ?? ????? ?????? ??? ??????? (??????? ? ?????? ? ???? ????????) ? ?????? ?? ???? ????????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات الرسائل (التأكيد، البطاقة، موقع الفعالية) والتأكد من رقم الهاتف"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1405,7 +1425,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "????? ????? ?? ????? ?????? ?????? ?? (?? ??????) ? ?????? ?? ???? ????????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات البطاقة (صورة البطاقة) والتأكد من رقم الهاتف"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1420,7 +1440,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "(????? ????? ?? ????? ?????? ?????? ?? (????? ???????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات رسالة التذكير"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1435,7 +1455,7 @@
             console.log(data);
             if (!data.success) {
                 alertMessage.hidden = false;
-                alertMessage.textContent = "(????? ????? ?? ????? ?????? ?????? ?? (????? ???????"
+                alertMessage.textContent = "يرجى التأكد من إعدادات رسالة التذكير"
             } else {
                 alertMessage.hidden = true;
             }
@@ -1447,6 +1467,99 @@
             await fetch(`/admin/StatusRefreshIndividually/${guestId}?eventid=${@ViewBag.eventId}`);
             reloading();
         }
+
+        // Gharabawy added it :
+        // to get that latest url for the current guest while downloading the card or qr code
+        // cause we when refresh the cards we add a new file with the same name
+        // so cloundiary make a versinoing for that file, so we need to get the latest url from the server
+        async function downloadLatestCard(eventId, guestId, noOfMembers, defaultFileName) {
+            try {
+                const response = await fetch(`/admin/GetLatestCardUrl?eventId=${eventId}&guestId=${guestId}&noOfMembers=${noOfMembers}`);
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    // فتح في تبويب جديد أو داونلود مباشر
+                    const a = document.createElement('a');
+                    a.href = data.url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ',
+                        text: data.message || 'تعذر جلب رابط الدعوة'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في الاتصال',
+                    text: 'حدث خطأ أثناء جلب رابط الدعوة'
+                });
+            }
+        }
+
+        async function downloadCardAndSetAccept(eventId, guestId, noOfMembers, defaultFileName) {
+            try {
+                const response = await fetch(`/admin/GetLatestCardUrl?eventId=${eventId}&guestId=${guestId}&noOfMembers=${noOfMembers}`);
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    const a = document.createElement('a');
+                    a.href = data.url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    await fetch(`/admin/SetAcceptResponse/${guestId}`);
+                    reloading();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Could not fetch card URL'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'An error occurred while fetching the card URL'
+                });
+            }
+        }
+
+        async function downloadLatestQr(eventId, guestId, defaultFileName) {
+            try {
+                const response = await fetch(`/admin/GetLatestQrUrl?eventId=${eventId}&guestId=${guestId}`);
+                const data = await response.json();
+
+                if (data.success && data.url) {
+                    const a = document.createElement('a');
+                    a.href = data.url;
+                    a.download = defaultFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطأ',
+                        text: data.message || 'تعذر جلب رابط الـ QR'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في الاتصال',
+                    text: 'حدث خطأ أثناء جلب رابط الـ QR'
+                });
+            }
+        }
+        
     </script>
 
     <script>
@@ -1467,7 +1580,7 @@
 
 
         async function GetCardsData() {
-            loaderText.textContent = "... ???? ????? ??????? ";
+            loaderText.textContent = "جاري تحديث البطاقات...";
             console.log("working SendConfirmation");
             var loading = await fetch(`/admin/GetCurrentRefreshUpdates/${@ViewBag.EventId}`);
             console.log(loading);
@@ -1502,7 +1615,7 @@
                 url: '/admin/refreshall?id=' + eventID + '&&type=' + type,
                 cache: false,
                 beforeSend: function (xhr) {
-                    loaderText.textContent = "... ???? ????? ??????? ";
+                     loaderText.textContent = "... جاري تحديث كل الحالات ";
                     loader.hidden = false;
                     startIntervel();
                     loader.hidden = false;
@@ -1514,7 +1627,7 @@
                         Swal.fire({
                             position: "center",
                             icon: "success",
-                            title: "?? ????? ???????"
+                             title: "تم تحديث كل الحالات بنجاح"
                         });
                         loader.hidden = true;
                         stopIntervel();
@@ -1526,7 +1639,7 @@
                         Swal.fire({
                             position: "center",
                             icon: "error",
-                            title: "?? ????? ??????? , ??? ??? ?? ",
+                             title: "فشل في تحديث كل الحالات، حاول مرة أخرى",
                             text: "Error:" + response.result,
                            
                         });

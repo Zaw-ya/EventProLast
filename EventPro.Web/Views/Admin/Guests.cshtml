@@ -73,7 +73,7 @@
                                     <div class="form-check">
                                         <input class="form-check-input" onchange="changeLanguage()" type="radio" name="languageRadioButton" id="arabicButton" value="arabic" checked>
                                         <label class="form-check-label" for="flexRadioDefault1">
-                                            ????
+                                            عربي
                                         </label>
                                     </div>
                                     <div class="form-check">
@@ -98,7 +98,7 @@
                                             <a href="#" onclick="RefreshALl(@ViewBag.EventId);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh All</a>
 
                                             <a href="~/admin/DownloadAll/@ViewBag.EventId" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download All</a>
-                                            <a href="~/admin/StatusRefreshForAllGuests/@ViewBag.EventId" class="dropdown-item"><i class="fas fa-sync-alt" title="?????? ???? ?????? ??????" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
+                                            <a href="~/admin/StatusRefreshForAllGuests/@ViewBag.EventId" class="dropdown-item"><i class="fas fa-sync-alt" title="تحديث حالة جميع الرسائل" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
                                             <a href="~/admin/ValidateAllGuestPhoneNumbers/@ViewBag.EventId" class="dropdown-item">
                                                 <i class="fas fa-check-circle" style="color:blue"></i>&nbsp;Validate All Numbers Format
                                             </a>
@@ -131,19 +131,19 @@
                                 <table id="searchableTable" class="table table-bordered table-hover text-center" style="padding:5px; width:100%;">
                                         <thead>
                                             <tr>
-                                            <th><i class="fas fa-sync-alt"></i></th>
-                                                <th>#</th>
-                                                <th>??? ???????</th>
-                                                <th>??? ?????</th>
-                                                <th>??? ??????</th>
-                                                <th>??? ???? ?????</th>
-                                                <th>???? ????? ???????</th>
-                                                <th>???? ??????</th>
-                                                <th>???? ???? ????????</th>
-                                                <th>???? ??????? ?????????</th>
-                                                <th>???? ????? ???????</th>
-                                                <th>?? ?????</th>
-                                                <th>??? ?? ?????</th>
+                                                <th>تحديث حاله الضيف</th>
+                                                <th>رقم الضيف</th>
+                                                <th>رقم الحدث</th>
+                                                <th>اسم الضيف</th>
+                                                <th>رقم الهاتف</th>
+                                                <th>معلومات عن عدد الحضور</th>
+                                                <th>حالة رسالة التأكيد</th>
+                                                <th>حالة رسالة البطاقة</th>
+                                                <th>حالة موقع الحدث</th>
+                                                <th>حالة رسالة التذكير</th>
+                                                <th>حالة رسالة التهنئة</th>
+                                                <th>الرد من الضيف</th>
+                                                <th>وقت الرد</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -157,7 +157,7 @@
                                                 <tr>
                                                 <td style="text-align: center;">
                                                     <a href="~/admin/StatusRefreshIndividually/@guest.GuestId?eventid=@guest.EventId" class="rotate-icon">
-                                                        <i class="fas fa-sync-alt" title="????? ??????" style="color: darkgreen;"></i>
+                                                        <i class="fas fa-sync-alt" title="تحديث الحالة" style="color: darkgreen;"></i>
                                                     </a>
                                                 </td>
 
@@ -183,27 +183,27 @@
                                                     <td>
                                                         @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
                                                         {
-                                                            <span>?? ???? ???????</span>
+                                                            <span>لم يتم الإرسال</span>
                                                         }
                                                         else if (Convert.ToBoolean(guest.TextRead))
                                                         {
-                                                            <span>???? ???????</span>
+                                                            <span>تمت القراءة</span>
                                                         }
                                                         else if (Convert.ToBoolean(guest.TextDelivered))
                                                         {
-                                                        <span>???? ???????</span>
+                                                        <span>تم التوصيل</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.TextSent))
                                                     {
                                                         if (guest.whatsappMessageId != null)
                                                         {
-                                                            <span>?? ??? ??????? </span>
+                                                            <span>في طور الإرسال </span>
                                                         }
                                                         else
                                                         {
-                                                            <span>????? ???????</span>
+                                                            <span>جاري الإرسال</span>
                                                         }
-                                                        
+
                                                         }
                                                         else if (guest.MessageId != null)
                                                         {
@@ -212,8 +212,8 @@
                                                                 <span>Whatsapp Not exists</span>
                                                             }
                                                             else
-                                                            {                                                          
-                                                                <span>??? ???????</span>
+                                                            {
+                                                                <span>فشل الإرسال</span>
                                                             }
                                                         }
                                                         else
@@ -224,7 +224,7 @@
                                                             }
                                                             else
                                                             {
-                                                                <span>?????? ???????</span>
+                                                                <span>بانتظار الإرسال</span>
                                                             }
                                                         }
                                                     </td>
@@ -232,15 +232,15 @@
                                                     <td>
                                                         @if (guest.ImgFailed != null && Convert.ToBoolean(guest.ImgFailed))
                                                         {
-                                                            <span>?? ???? ???????</span>
+                                                            <span>لم يتم الإرسال</span>
                                                         }
                                                         else if (Convert.ToBoolean(guest.ImgRead))
                                                         {
-                                                            <span>???? ??????</span>
+                                                            <span>تمت القراءة</span>
                                                         }
                                                         else if (Convert.ToBoolean(guest.ImgDelivered))
                                                         {
-                                                        <span>???? ??????</span>
+                                                        <span>تم التوصيل</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ImgSent))
                                                     {
@@ -248,19 +248,19 @@
                                                         {
                                                             if (Convert.ToBoolean(guest.TextDelivered )|| Convert.ToBoolean(guest.TextRead))
                                                             {
-                                                                <span>????? ??????</span>
+                                                                <span>جاري الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?? ??? ?????? </span>
+                                                                <span>في طور الإرسال </span>
                                                             }
-                                                           
+
                                                         }
                                                         else
                                                         {
-                                                            <span>????? ??????</span>
+                                                            <span>جاري الإرسال</span>
                                                         }
-                                                           
+
                                                         }
                                                         else if (guest.ImgSentMsgId != null)
                                                         {
@@ -270,30 +270,30 @@
                                                             }
                                                             else
                                                             {
-                                                                <span>??? ???????</span>
+                                                                <span>فشل الإرسال</span>
                                                             }
                                                         }
                                                         else
                                                         {
                                                             if (guest.Response == "Whatsapp Not exists")
                                                             {
-                                                                <span>?? ???? ???????</span>
+                                                                <span>لم يتم الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
-                                                                    <span>?? ??? ??????? ??????? ?????</span>
+                                                                    <span>لم يتم الإرسال لرفض الدعوة</span>
                                                                 }
                                                                 else
                                                                 {
                                                                     @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
                                                                     {
-                                                                        <span>?? ???? ???????</span>
+                                                                        <span>لم يتم الإرسال</span>
                                                                     }
                                                                     else
                                                                     {
-                                                                        <span>?????? ???????</span>
+                                                                        <span>بانتظار الإرسال</span>
                                                                     }
 
                                                                 }
@@ -305,15 +305,15 @@
                                                 <td>
                                                     @if (guest.EventLocationFailed != null && Convert.ToBoolean(guest.EventLocationFailed))
                                                     {
-                                                        <span>?? ???? ???????</span>
+                                                        <span>لم يتم الإرسال</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.EventLocationRead))
                                                     {
-                                                        <span>??? ???? ????????</span>
+                                                        <span>تمت القراءة</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.EventLocationDelivered))
                                                     {
-                                                        <span>??? ???? ????????</span>
+                                                        <span>تم التوصيل</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.EventLocationSent))
                                                     {
@@ -321,17 +321,17 @@
                                                         {
                                                             if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
                                                             {
-                                                                <span>???? ???? ????????</span>
+                                                                <span>جاري الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?? ??? ???? ???????? </span>
+                                                                <span>في طور الإرسال </span>
                                                             }
 
                                                         }
                                                         else
                                                         {
-                                                            <span>???? ???? ????????</span>
+                                                            <span>جاري الإرسال</span>
                                                         }
 
                                                     }
@@ -343,24 +343,24 @@
                                                         }
                                                         else
                                                         {
-                                                            <span>??? ???????</span>
+                                                            <span>فشل الإرسال</span>
                                                         }
                                                     }
                                                     else
                                                     {
                                                         if (guest.Response == "Whatsapp Not exists")
                                                         {
-                                                            <span>?? ???? ???????</span>
+                                                            <span>لم يتم الإرسال</span>
                                                         }
                                                         else
                                                         {
                                                             @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
                                                             {
-                                                                <span>?? ???? ???????</span>
+                                                                <span>لم يتم الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?????? ???????</span>
+                                                                <span>بانتظار الإرسال</span>
                                                             }
 
                                                         }
@@ -369,15 +369,15 @@
                                                 <td>
                                                     @if (guest.ReminderMessageFailed != null && Convert.ToBoolean(guest.ReminderMessageFailed))
                                                     {
-                                                        <span>?? ???? ???????</span>
+                                                        <span>لم يتم الإرسال</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ReminderMessageRead))
                                                     {
-                                                        <span>???? ??????? ?????????</span>
+                                                        <span>تمت القراءة</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ReminderMessageDelivered))
                                                     {
-                                                        <span>???? ??????? ????????? </span>
+                                                        <span>تم التوصيل</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ReminderMessageSent))
                                                     {
@@ -385,21 +385,21 @@
                                                         {
                                                             if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
                                                             {
-                                                                <span>????? ??????? ?????????</span>
+                                                                <span>جاري الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?? ??? ??????? ????????? </span>
+                                                                <span>في طور الإرسال </span>
                                                             }
 
                                                         }
                                                         else
                                                         {
-                                                            <span>????? ??????? ????????? </span>
+                                                            <span>جاري الإرسال</span>
                                                         }
-     
-                                                       
-                                                        
+
+
+
                                                     }
                                                     else if (guest.ReminderMessageId != null)
                                                     {
@@ -409,24 +409,24 @@
                                                         }
                                                         else
                                                         {
-                                                            <span>??? ???????</span>
+                                                            <span>فشل الإرسال</span>
                                                         }
                                                     }
                                                     else
                                                     {
                                                         if (guest.Response == "Whatsapp Not exists")
                                                         {
-                                                            <span>?? ???? ???????</span>
+                                                            <span>لم يتم الإرسال</span>
                                                         }
                                                         else
                                                         {
                                                             @if (guest.ReminderMessageFailed != null && Convert.ToBoolean(guest.ReminderMessageFailed))
                                                             {
-                                                                <span>?? ???? ???????</span>
+                                                                <span>لم يتم الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?????? ???????</span>
+                                                                <span>بانتظار الإرسال</span>
                                                             }
 
                                                         }
@@ -435,15 +435,15 @@
                                                 <td>
                                                     @if (guest.ConguratulationMsgFailed != null && Convert.ToBoolean(guest.ConguratulationMsgFailed))
                                                     {
-                                                        <span>?? ???? ???????</span>
+                                                        <span>لم يتم الإرسال</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ConguratulationMsgRead))
                                                     {
-                                                        <span>???? ????? ???????</span>
+                                                        <span>تمت القراءة</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ConguratulationMsgDelivered))
                                                     {
-                                                        <span>???? ????? ???????</span>
+                                                        <span>تم التوصيل</span>
                                                     }
                                                     else if (Convert.ToBoolean(guest.ConguratulationMsgSent))
                                                     {
@@ -451,17 +451,17 @@
                                                         {
                                                             if (Convert.ToBoolean(guest.TextDelivered) || Convert.ToBoolean(guest.TextRead))
                                                             {
-                                                                <span>????? ????? ???????</span>
+                                                                <span>جاري الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?? ??? ????? ??????? </span>
+                                                                <span>في طور الإرسال </span>
                                                             }
 
                                                         }
                                                         else
                                                         {
-                                                            <span>????? ????? ???????</span>
+                                                            <span>جاري الإرسال</span>
                                                         }
 
                                                     }
@@ -473,24 +473,24 @@
                                                         }
                                                         else
                                                         {
-                                                            <span>??? ???????</span>
+                                                            <span>فشل الإرسال</span>
                                                         }
                                                     }
                                                     else
                                                     {
                                                         if (guest.Response == "Whatsapp Not exists")
                                                         {
-                                                            <span>?? ???? ???????</span>
+                                                            <span>لم يتم الإرسال</span>
                                                         }
                                                         else
                                                         {
                                                             @if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
                                                             {
-                                                                <span>?? ???? ???????</span>
+                                                                <span>لم يتم الإرسال</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?????? ???????</span>
+                                                                <span>بانتظار الإرسال</span>
                                                             }
 
                                                         }
@@ -505,17 +505,17 @@
                                                             {
                                                                 if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
                                                                 {
-                                                                <span> ???? ???? ???? ????? ?? ??????? ??????? ???? ????? ????????</span>
+                                                                <span> حدث خطأ أثناء الإرسال الرجاء المحاولة مرة أخرى</span>
                                                             }
                                                             else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
                                                             {
-                                                                if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
-                                                                    <span>??????</span>
+                                                                    <span>مرفوض</span>
                                                                 }
-                                                                else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                                else if (@guest.Response == "موافق" || @guest.Response == "Confirm" || @guest.Response == "تأكيد الحضور")
                                                                 {
-                                                                    <span>?????</span>
+                                                                    <span>موافق</span>
                                                                 }
 
                                                             }
@@ -527,49 +527,49 @@
                                                                 {
                                                                     @if (!Convert.ToBoolean(guest.TextDelivered) && !Convert.ToBoolean(guest.TextRead))
                                                                     {
-                                                                        <span>?? ????? ??????? ?? ??????</span>
+                                                                        <span>لم تصله الرسالة أو محظور</span>
                                                                     }
                                                                     else
                                                                     {
-                                                                        <span> ?????? ?? ???</span>
+                                                                        <span> بانتظار الرد</span>
                                                                     }
-                                                                    
+
                                                                 }
                                                                 else
                                                                 {
-                                                                    <span> ?????? ?? ???</span>
+                                                                    <span> بانتظار الرد</span>
                                                                 }
-                                                                
+
                                                                 }
 
                                                             }
                                                             else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                             {
-                                                                <span>??????</span>
+                                                                <span>مرفوض</span>
                                                             }
                                                             else
                                                             {
-                                                                <span>?????</span>
+                                                                <span>موافق</span>
                                                             }
                                                             }
                                                             else
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
-                                                                <span>??????</span>
+                                                                <span>مرفوض</span>
                                                                 }
-                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            else if (@guest.Response == "موافق" || @guest.Response == "Confirm" || @guest.Response == "تأكيد الحضور")
                                                             {
-                                                                <span>?????</span>
+                                                                <span>موافق</span>
                                                             }
                                                                 else
                                                                 {
                                                                     <span> @guest.Response</span>
                                                                 }
-                                                                
-                                                            
+
+
                                                             }
                                                         }
                                                         else
@@ -578,23 +578,23 @@
                                                             {
                                                                 if (guest.TextFailed != null && Convert.ToBoolean(guest.TextFailed))
                                                                 {
-                                                                    <span> ???? ???? ???? ????? ?? ??????? ??????? ???? ????? ????????</span>
+                                                                    <span> حدث خطأ أثناء الإرسال الرجاء المحاولة مرة أخرى</span>
                                                                 }
                                                                 else
                                                                 {
-                                                                    <span> ??? ????? ???????</span>
+                                                                    <span> جاري إرسال الرسالة</span>
                                                                 }
 
                                                             }
                                                             else
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                             {
-                                                                <span>??????</span>
+                                                                <span>مرفوض</span>
                                                             }
-                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            else if (@guest.Response == "موافق" || @guest.Response == "Confirm" || @guest.Response == "تأكيد الحضور")
                                                             {
-                                                                <span>?????</span>
+                                                                <span>موافق</span>
                                                             }
                                                             else
                                                             {
@@ -808,7 +808,7 @@
                                                             }
                                                             else
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
                                                                     <span>Not sent because The guest decliened the invitaion</span>
                                                                 }
@@ -1034,15 +1034,15 @@
                                                             }
                                                             else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
                                                             {
-                                                                if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                                if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
                                                                     <span>Decline</span>
                                                                 }
-                                                                else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                                else if (@guest.Response == "موافق" || @guest.Response == "Confirm" || @guest.Response == "تأكيد الحضور")
                                                                 {
                                                                     <span>Accept</span>
                                                                 }
-                                                                
+
                                                             }
                                                                 else
                                                                 {
@@ -1056,20 +1056,20 @@
                                                                     {
                                                                         <span>No answer yet</span>
                                                                     }
-                                                                    
+
                                                                 }
                                                                 else
                                                                 {
                                                                     <span>No answer yet</span>
                                                                 }
-                                                                   
+
                                                                 }
 
                                                             }
                                                             else if (guest.ImgRead == true || guest.ImgDelivered == true || guest.ImgSent == true)
                                                             {
 
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                             {
                                                                 <span>Decline</span>
                                                             }
@@ -1080,11 +1080,11 @@
                                                             }
                                                             else
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
                                                                 <span>Decline</span>
                                                                 }
-                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            else if (@guest.Response == "موافق" || @guest.Response == "Confirm" || @guest.Response == "تأكيد الحضور")
                                                             {
                                                                 <span>Accept</span>
                                                             }
@@ -1092,7 +1092,7 @@
                                                                 {
                                                                     <span> @guest.Response</span>
                                                                 }
-                                                                
+
                                                             }
                                                         }
                                                         else
@@ -1111,11 +1111,11 @@
                                                             }
                                                             else
                                                             {
-                                                            if (@guest.Response == "??????" || @guest.Response == "Decline" || @guest.Response == "???????? ?? ??????")
+                                                            if (@guest.Response == "مرفوض" || @guest.Response == "Decline" || @guest.Response == "الاعتذار عن الحضور")
                                                                 {
                                                                 <span>Decline</span>
                                                                 }
-                                                            else if (@guest.Response == "?????" || @guest.Response == "Confirm" || @guest.Response == "???? ??????")
+                                                            else if (@guest.Response == "موافق" || @guest.Response == "Confirm" || @guest.Response == "تأكيد الحضور")
                                                             {
                                                                 <span>Accept</span>
                                                             }

@@ -19,6 +19,9 @@ namespace EventPro.DAL.ViewModels
             Status = GetEventStatus(events.EventTo, events.EventFrom);
             Deleted_On = events.DeletedOn?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "";
             Deleted_By = events.DeletedBy_FirstName + " " + events.DeletedBy_LastName;
+            Icon = events.Icon;
+            Glocation = events.Glocation;
+            GmapCode = events.GmapCode;
         }
 
         public string Id { get; set; }
@@ -32,6 +35,9 @@ namespace EventPro.DAL.ViewModels
         public string Deleted_On { get; set; }
         public string Deleted_By { get; set; }
         public string Status { get; set; }
+        public string GmapCode { get; set; }
+        public string Glocation { get; set; }
+        public string Icon { get; set; }
 
         public string getLinkedEvent(long? linkedEvent)
         {

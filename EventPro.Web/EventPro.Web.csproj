@@ -1,13 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
-    <RazorCompileOnBuild>false</RazorCompileOnBuild>
+    <TargetFramework>net7.0-windows</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.10.4" />
+    <None Remove="nul" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.2" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
@@ -20,6 +22,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="7.0.14" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.11">
       <PrivateAssets>all</PrivateAssets>
@@ -33,12 +36,13 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.11" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.11" />
+    <PackageReference Include="MimeKit" Version="4.7.1" />
     <PackageReference Include="PinnacleApiWrapper" Version="2.21.308.2" />
     <PackageReference Include="Polly" Version="8.4.0" />
     <PackageReference Include="pythonnet" Version="3.0.3" />
     <PackageReference Include="QRCoder" Version="1.4.1" />
     <PackageReference Include="RabbitMQ.Client" Version="6.0.0" />
-    <PackageReference Include="RestSharp" Version="111.3.0" />
+    <PackageReference Include="RestSharp" Version="112.0.0" />
     <PackageReference Include="Selenium.WebDriver" Version="4.13.1" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="7.0.0" />
@@ -50,7 +54,7 @@
     <PackageReference Include="System.Data.OleDb" Version="7.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.3" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.0" />
     <PackageReference Include="System.Threading.RateLimiting" Version="7.0.0" />
     <PackageReference Include="Twilio" Version="6.14.0" />
   </ItemGroup>
@@ -58,6 +62,7 @@
   <PropertyGroup>
     <NoWarn>NU1605</NoWarn>
     <UserSecretsId>147f0584-c061-41b1-a511-1d9e3d5ab092</UserSecretsId>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -117,6 +122,13 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+
+  <!-- Firebase Admin SDK key files: copy to output so Startup.cs can find them -->
+  <ItemGroup>
+    <None Update="*-firebase-adminsdk*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

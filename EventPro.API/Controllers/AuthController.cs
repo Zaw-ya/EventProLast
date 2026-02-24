@@ -11,6 +11,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using EventPro.DAL.Common;
 
 namespace EventPro.API.Controllers
 {
@@ -31,61 +32,91 @@ namespace EventPro.API.Controllers
         {
             try
             {
-                var gateRoleId = (await db.Roles.Where(p => p.RoleName == "Gatekeeper").FirstOrDefaultAsync())?.Id;
-                var clintRoleId = (await db.Roles.Where(p => p.RoleName == "Client").FirstOrDefaultAsync())?.Id;
+                var user = await AuthenticateUser(loginModel.Username, loginModel.Password);
 
-                var user = await db.Users.Where(p => p.UserName == loginModel.Username
-                && p.Password == loginModel.Password && (p.Role == gateRoleId || p.Role == clintRoleId)).FirstOrDefaultAsync();
+                if (user == null)
+                    return Unauthorized("Invalid username or password");
 
-                if (user != null)
+                var validationError = ValidateUserAccount(user);
+                if (validationError != null)
+                    return BadRequest(validationError);
+
+                var role = await db.Roles.FirstOrDefaultAsync(r => r.Id == user.Role);
+                if (role == null)
+                    return BadRequest("User role not found");
+
+                var token = GenerateJwtToken(user, role);
+
+                await UpdateDeviceIdIfChanged(user, loginModel.DeviceId);
+
+                return Ok(new
                 {
-                    if (!Convert.ToBoolean(user.IsActive))
-                        return BadRequest("Account locked, please contact system administrator");
-
-                    if (!Convert.ToBoolean(user.Approved))
-                        return BadRequest("Account Not Approved, please contact system administrator");
-
-                    var role = await db.Roles.Where(p => p.Id == user.Role).FirstOrDefaultAsync();
-
-                    var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.Sid, Convert.ToString(user.UserId)),
-                    new Claim(ClaimTypes.Role, role.RoleName),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                };
-                    var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-                    var token = new JwtSecurityToken(
-                        issuer: _configuration["JWT:ValidIssuer"],
-                        audience: _configuration["JWT:ValidAudience"],
-                        expires: DateTime.Now.AddDays(2),
-                        claims: authClaims,
-                        signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                        );
-
-                    if (user.DeviceId != loginModel.DeviceId)
-                    {
-                        user.DeviceId = loginModel.DeviceId;
-                        await db.SaveChangesAsync();
-                    }
-                    return Ok(new
-                    {
-                        user.FirstName,
-                        user.LastName,
-                        role.RoleName,
-                        token = new JwtSecurityTokenHandler().WriteToken(token),
-                        expiration = token.ValidTo
-                    });
-                }
-
-                else
-                    return Unauthorized();
+                    user.FirstName,
+                    user.LastName,
+                    role.RoleName,
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    expiration = token.ValidTo
+                });
             }
-            catch (Exception EX)
+            catch (Exception ex)
             {
+                // Log exception here if logging is configured
+                return StatusCode(500, $"An error occurred during login {ex}");
+            }
+        }
 
-                return Unauthorized();
+        private async Task<Users> AuthenticateUser(string username, string password)
+        {
+            var allowedRoles = await db.Roles
+                .Where(r => r.Id == RoleIds.GateKeeper || r.Id == RoleIds.Client )
+                .Select(r => r.Id)
+                .ToListAsync();
+
+            return await db.Users
+                .FirstOrDefaultAsync(u =>
+                    u.UserName == username &&
+                    u.Password == password &&
+                    allowedRoles.Contains(u.RoleNavigation.Id));
+        }
+
+        private string ValidateUserAccount(Users user)
+        {
+            if (user.IsActive == false)
+                return "Account locked, please contact system administrator";
+
+            if (user.Approved == false)
+                return "Account Not Approved, please contact system administrator";
+
+            return null;
+        }
+
+        private JwtSecurityToken GenerateJwtToken(Users user, Roles role)
+        {
+            var authClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Sid, user.UserId.ToString()),
+                new Claim(ClaimTypes.Role, role.RoleName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+            return new JwtSecurityToken(
+                issuer: _configuration["JWT:ValidIssuer"],
+                audience: _configuration["JWT:ValidAudience"],
+                expires: DateTime.Now.AddDays(2),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            );
+        }
+
+        private async Task UpdateDeviceIdIfChanged(Users user, string newDeviceId)
+        {
+            if (user.DeviceId != newDeviceId)
+            {
+                user.DeviceId = newDeviceId;
+                await db.SaveChangesAsync();
             }
         }
 

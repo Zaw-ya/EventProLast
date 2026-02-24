@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 // Code scaffolded by EF Core assumes nullable reference types (NRTs) are not used or disabled.
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventPro.DAL.Models
 {
-    public partial class EventProContext : DbContext
+    public partial class EventProContext : DbContext,IDataProtectionKeyContext
     {
 
         //public EventProContext(DbContextOptions<EventProContext> options)
@@ -27,6 +28,8 @@ namespace EventPro.DAL.Models
         }
         public DbSet<ReportDeletedEventsByGk> ReportDeletedEventsByGk { get; set; }
         public DbSet<ConfirmationMessageResponsesKeyword> ConfirmationMessageResponsesKeyword { get; set; }
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+
 
         public DbSet<GKEventHistory> GKEventHistory { get; set; }
         public DbSet<EventLocation> EventLocations { get; set; }
@@ -50,7 +53,7 @@ namespace EventPro.DAL.Models
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<VwEventCategory> VwEventCategory { get; set; }
         public virtual DbSet<VwEventGatekeeper> VwEventGatekeeper { get; set; }
-        public virtual DbSet<VwEvents> VwEvents { get; set; }
+        public DbSet<VwEvents> VwEvents { get; set; }
         public virtual DbSet<VMDashboardCount> VMDashboardCount { get; set; }
         public virtual DbSet<VwGateKeeperData> VwGateKeeperData { get; set; }
         public virtual DbSet<VwGateKeeperScheduled> VwGateKeeperScheduled { get; set; }
@@ -74,15 +77,6 @@ namespace EventPro.DAL.Models
         public virtual DbSet<ScanSummary> ScanSummary { get; set; }
         public virtual DbSet<MobileLog> MobileLog { get; set; }
         public virtual DbSet<AuditLog> AuditLog { get; set; }
-
-        //        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //        {
-        //            if (!optionsBuilder.IsConfigured)
-        //            {
-        //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-        //                optionsBuilder.UseSqlServer("Server=GALAXY\\GALAXYDB;database=EventProUAT;integrated security=SSPI");
-        //            }
-        //        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -120,7 +114,7 @@ namespace EventPro.DAL.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.BarcodeColorCode)
-                    .HasMaxLength(10)
+                    .HasMaxLength(150)
                     .IsUnicode(false);
 
                 entity.Property(e => e.BarcodeXaxis).HasColumnName("BarcodeXAxis");
@@ -744,9 +738,11 @@ namespace EventPro.DAL.Models
                     .HasMaxLength(40)
                     .IsUnicode(false);
 
-                entity.Property(e => e.IconUrl)
-                    .HasMaxLength(76)
-                    .IsUnicode(false);
+                // Ghrabawy : Deleted IconUrl property from Events table, as it is not used anywhere.
+                // We used the Icon property to store the Event Icon URL.
+                //entity.Property(e => e.IconUrl)
+                //    .HasMaxLength(76)
+                //    .IsUnicode(false);
 
                 entity.Property(e => e.LastName).HasMaxLength(30);
 
@@ -798,6 +794,68 @@ namespace EventPro.DAL.Models
                 entity.Property(e => e.IsActive).HasColumnName("isActive");
             });
 
+            modelBuilder.Entity<vwGuestInfo>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("vw_GuestInfo");
+
+                entity.Property(e => e.Address).HasMaxLength(1000);
+                entity.Property(e => e.AdditionalText).HasMaxLength(500);
+                entity.Property(e => e.CreatedOn).HasColumnType("datetime");
+                entity.Property(e => e.Cypertext)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+                entity.Property(e => e.EmailAddress)
+                    .HasMaxLength(80)
+                    .IsUnicode(false);
+                entity.Property(e => e.FirstName).HasMaxLength(100);
+                entity.Property(e => e.LastName).HasMaxLength(100);
+                entity.Property(e => e.MessageId)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+                entity.Property(e => e.ModeOfCommunication)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+                entity.Property(e => e.PrimaryContactNo).HasMaxLength(40);
+                entity.Property(e => e.SecondaryContactNo)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+                entity.Property(e => e.Source)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.WaresponseTime).HasColumnType("datetime");
+                entity.Property(e => e.WhatsappStatus)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+                entity.Property(e => e.whatsappMessageId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.whatsappMessageImgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.whatsappWatiEventLocationId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.ConguratulationMsgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.WatiConguratulationMsgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.ReminderMessageId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.ReminderMessageWatiId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.Response).HasMaxLength(400);
+                entity.Property(e => e.ImgSentMsgId)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+                entity.Property(e => e.waMessageEventLocationForSendingToAll)
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+            });
             modelBuilder.Entity<VwGuestList>(entity =>
             {
                 entity.HasNoKey();
@@ -1140,7 +1198,7 @@ namespace EventPro.DAL.Models
 
             OnModelCreatingPartial(modelBuilder);
         }
-
+            
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }

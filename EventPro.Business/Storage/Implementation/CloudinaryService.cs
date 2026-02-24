@@ -1,18 +1,22 @@
+﻿using System.IO.Compression;
+
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+
 using EventPro.Business.Storage.Interface;
+
+using Google.Apis.Logging;
+
 using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Business.Storage.Implementation
 {
     public class CloudinaryService : ICloudinaryService
     {
         private readonly Cloudinary _cloudinary;
-
-        public CloudinaryService(IConfiguration configuration)
+        private readonly ILogger<CloudinaryService> _logger;
+        public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger)
         {
             var settings = configuration.GetSection("CloudinarySettings");
             var cloudName = settings["CloudName"];
@@ -27,6 +31,7 @@ namespace EventPro.Business.Storage.Implementation
             var account = new Account(cloudName, apiKey, apiSecret);
             _cloudinary = new Cloudinary(account);
             _cloudinary.Api.Secure = true;
+            _logger = logger;
         }
 
         public async Task<string> UploadImageAsync(Stream stream, string fileName, string folder = null)
@@ -199,6 +204,72 @@ namespace EventPro.Business.Storage.Implementation
             }
         }
 
+        /// <summary>
+        /// Uploads any file type to Cloudinary as raw resource.
+        /// Useful for ICS calendar files, text files, and other non-image/video files.
+        /// </summary>
+        /// <param name="stream">File stream</param>
+        /// <param name="fileName">Full file name with extension</param>
+        /// <param name="folder">Optional folder path</param>
+        /// <returns>Secure URL of uploaded file</returns>
+        public async Task<string> UploadRawFileAsync(Stream stream, string fileName, string folder = null)
+        {
+            if (stream == null || stream.Length == 0)
+            {
+                throw new ArgumentException("Stream cannot be null or empty", nameof(stream));
+            }
+
+            try
+            {
+                if (stream.CanSeek)
+                {
+                    stream.Position = 0;
+                }
+
+                // Allow ICS files and other common file types
+                var allowedExtensions = new[] { ".ics", ".txt", ".csv", ".json", ".xml", ".pdf" };
+                var fileExtension = Path.GetExtension(fileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    throw new ArgumentException($"Invalid file type. Only {string.Join(", ", allowedExtensions)} files are allowed.");
+                }
+
+                if (stream.Length > 5 * 1024 * 1024) // 5MB limit for raw files
+                {
+                    throw new ArgumentException("File size must be less than 5MB.");
+                }
+
+                var uploadParams = new RawUploadParams()
+                {
+                    File = new FileDescription(fileName, stream),
+                    PublicId = Path.GetFileNameWithoutExtension(fileName),
+                    Overwrite = true,
+                    UseFilename = true,
+                    UniqueFilename = false
+                };
+
+                if (!string.IsNullOrEmpty(folder))
+                {
+                    uploadParams.Folder = folder;
+                }
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Cloudinary upload error: {uploadResult.Error.Message}");
+                }
+
+                // Return the raw URL from Cloudinary for consistency
+                return uploadResult.SecureUrl?.ToString() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to upload raw file to Cloudinary: {ex.Message}", ex);
+            }
+        }
+
         public async Task<string> UpdateImageAsync(string publicId, Stream stream, string fileName)
         {
             var uploadParams = new ImageUploadParams()
@@ -231,5 +302,133 @@ namespace EventPro.Business.Storage.Implementation
             var result = await _cloudinary.DestroyAsync(deleteParams);
             return result.Result == "ok";
         }
+
+        /// <summary>
+        /// Permanently deletes all guest invitation card files for the specified event
+        /// from Cloudinary storage using the event folder prefix.
+        /// 
+        /// This operation removes all versions and duplicates of the cards,
+        /// but does NOT delete or modify any guest or event records in the database.
+        /// 
+        /// Access restricted to Administrators only.
+        /// </summary>
+        /// <param name="id">The Event ID whose guest card files will be deleted.</param>
+        /// <returns>Returns HTTP 200 (OK) when deletion completes successfully.</returns>
+        public async Task<bool> DeleteByPrefixAsync(string prefix)
+        {
+            var deleteParams = new DelResParams
+            {
+                Prefix = prefix,
+                ResourceType = ResourceType.Image,
+                Type = "upload",
+                Invalidate = true
+            };
+
+            var result = await _cloudinary.DeleteResourcesAsync(deleteParams);
+
+            _logger.LogInformation("DeleteByPrefixAsync: Deleted resources with prefix '{Prefix}'. Result: {Result}", prefix, result);
+
+            return result.DeletedCounts != null;
+        }
+
+        /// <summary>
+        /// Downloads all images from a specific Cloudinary folder and returns them as a ZIP stream.
+        /// Using cursor logic to handle if the results goes over 500
+        /// </summary>
+        /// <param name="folderName">Folder path, e.g., "cards/25/"</param>
+        /// <param name="maxResults">Default number of resources per request (default 500)</param>
+        /// <returns>MemoryStream containing the ZIP file</returns>
+        public async Task<MemoryStream> DownloadFilesAsZipStreamAsync(string folderName, int maxResults = 500)
+        {
+            if (!folderName.EndsWith("/"))
+                folderName += "/";
+            if (folderName.StartsWith("/"))
+                folderName = folderName.Substring(1);
+
+            var zipStream = new MemoryStream();
+
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+            {
+                string nextCursor = null;
+                bool hasMore = true;
+
+                while (hasMore)
+                {
+                    var searchResult = await _cloudinary.Search()
+                        .Expression($"folder:{folderName}*")   // أو prefix:cards/25/
+                        .MaxResults(maxResults)
+                        .NextCursor(nextCursor)
+                        .ExecuteAsync();
+
+                    if (searchResult?.Resources == null || !searchResult.Resources.Any())
+                    {
+                        hasMore = false;
+                        continue;
+                    }
+
+                    foreach (var resource in searchResult.Resources)
+                    {
+                        string fileName = Path.GetFileName(resource.PublicId) + ".jpg";
+
+                        try
+                        {
+                            using var client = new HttpClient();
+                            var imageBytes = await client.GetByteArrayAsync(resource.SecureUrl);
+
+                            var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+                            using var entryStream = entry.Open();
+                            await entryStream.WriteAsync(imageBytes);
+                        }
+                        catch (Exception ex)
+                        {
+                            // سجّل الخطأ بدون توقف العملية كلها
+                            Console.WriteLine($"Failed to download {fileName}: {ex.Message}");
+                        }
+                    }
+
+                    nextCursor = searchResult.NextCursor;
+                    hasMore = !string.IsNullOrEmpty(nextCursor);
+                }
+            }
+
+            zipStream.Position = 0;
+            return zipStream;
+        }
+
+        // https://res.cloudinary.com/{cloud}/image/upload/v{version}/{publicId}.{format}
+        // In our case we has : 
+        // QR/{event_id}/{guestId}
+        // card/{event_id}/E00000_{guestId}_{noOfMembers}.jpg
+        public async Task<string> GetLatestVersionUrlAsync(
+            string publicId, // e.g., "QR/123/456"
+            string resourceType = "image")
+        {
+            if (string.IsNullOrWhiteSpace(publicId))
+                throw new ArgumentException("publicId is required");
+
+            var getParams = new GetResourceParams(publicId)
+            {
+                ResourceType = resourceType switch
+                {
+                    "video" => ResourceType.Video,
+                    "raw" => ResourceType.Raw,
+                    _ => ResourceType.Image
+                }
+            };
+
+            var resource = await _cloudinary.GetResourceAsync(getParams);
+
+            if (resource == null)
+                return null;
+
+            // https://res.cloudinary.com/{cloud}/image/upload/v{version}/{publicId}.{format}
+            var url = _cloudinary.Api.UrlImgUp
+                .Version(resource.Version)
+                .BuildUrl($"{resource.PublicId}.{resource.Format}");
+
+            return url;
+        }
+
+
     }
 }

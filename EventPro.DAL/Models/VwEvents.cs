@@ -18,6 +18,7 @@ namespace EventPro.DAL.Models
         public string EventVenue { get; set; }
         public string GmapCode { get; set; }
         public string Glocation { get; set; }
+        public string Icon { get; set; }
         public string EventDescription { get; set; }
         public int? CreatedBy { get; set; }
         public int? CreatedFor { get; set; }
@@ -26,8 +27,6 @@ namespace EventPro.DAL.Models
         public DateTime? ModifiedOn { get; set; }
         public bool? IsArchived { get; set; }
         public string Status { get; set; }
-        public string IconUrl { get; set; }
-        public string Icon { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Category { get; set; }

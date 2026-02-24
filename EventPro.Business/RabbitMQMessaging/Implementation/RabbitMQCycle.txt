@@ -1,0 +1,46 @@
+﻿
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Twilio Webhook Callbacks                        │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Webhook Controllers                              │
+└────────────┬─────────────────────────────────┬──────────────────────┘
+             │                                 │
+             ▼                                 ▼
+┌────────────────────────┐         ┌────────────────────────┐
+│ Single Producer        │         │ Bulk Producer          │
+│ (publishes to queue)   │         │ (publishes to queue)   │
+└────────────┬───────────┘         └────────────┬───────────┘
+             │                                  │
+             ▼                                  ▼
+┌────────────────────────┐         ┌────────────────────────┐
+│ RabbitMQ Queue         │         │ RabbitMQ Queue         │
+│ (Single Messaging)     │         │ (Bulk Messaging)       │
+└────────────┬───────────┘         └────────────┬───────────┘
+             │                                  │
+             ▼                                  ▼
+┌────────────────────────┐         ┌────────────────────────┐
+│ Single Consumer        │         │ Bulk Consumer          │
+│ (prefetch: 7)          │         │ (prefetch: 5)          │
+│                        │         │ + Flow Control         │
+└────────────┬───────────┘         └────────────┬───────────┘
+             │                                  │
+             ▼                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    TwilioWebhookService                             │
+│   - ProcessStatusAsync (delivery status updates)                    │
+│   - ProcessIncomingMessageAsync (customer messages)                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+
+Key Features Documented:
+
+- Producer-Consumer Pattern: Decouples webhook reception from processing .
+- Thread-Safe Publishing: Uses lock mechanism for concurrent access .
+- Flow Control (Bulk): Pause/Resume/ForceStart/ForceStop capabilities .
+- Distributed State: Uses Redis-backed cache for pause counter .
+- Background Services: Hosted services that run for application lifetime .
+- Message Types: Status updates vs incoming customer messages .

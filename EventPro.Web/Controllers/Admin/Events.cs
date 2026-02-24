@@ -1,20 +1,3 @@
-using FirebaseAdmin;
-using FirebaseAdmin.Messaging;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using EventPro.DAL.Extensions;
-using EventPro.DAL.Models;
-using EventPro.DAL.Common;
-using EventPro.DAL.ViewModels;
-using EventPro.Web.Common;
-using EventPro.Web.Extensions;
-using EventPro.Web.Filters;
-using EventPro.Web.Models;
-using EventPro.Web.Services;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,19 +8,71 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using EventPro.Business.Storage.Interface;
+using EventPro.DAL.Common;
+using EventPro.DAL.Extensions;
+using EventPro.DAL.Models;
+using EventPro.DAL.ViewModels;
+using EventPro.Web.Common;
+using EventPro.Web.Extensions;
+using EventPro.Web.Filters;
+using EventPro.Web.Models;
+using EventPro.Web.Services;
+
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+
+using Google.Apis.Auth.OAuth2;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+
+using Serilog;
+
 namespace EventPro.Web.Controllers
 {
+    /// <summary>
+    /// Partial controller for managing Events in the Admin panel.
+    /// Contains all event-related CRUD operations, filtering, and management actions.
+    /// </summary>
     public partial class AdminController : Controller
     {
+        #region Event List & Display Actions
+
+        /// <summary>
+        /// Displays the main events list page with active (non-deleted) events.
+        /// Accessible by: Administrator, Operator, Agent, Supervisor, Accounting
+        /// </summary>
+        /// <returns>Events list view</returns>
+        /// important note:
+        // We didnt use getguest here because we need to show all events not specific to an operator
         [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
-        public IActionResult Events()
+        public async Task<IActionResult> Events()
         {
             ViewBag.Icon = "nav-icon fas fa-calendar";
             SetBreadcrum("Events", "/admin");
+            // Used for checking if invoice file exists in the view
+            ViewBag.FilePath = _configuration.GetSection("Uploads").GetSection("Invoice").Value;
+
+            //var model = await db.VwEvents
+            //    .Where(e => e.EventTo >= DateTime.Now && e.IsDeleted != true)
+            //    .OrderByDescending(e => e.Id)
+            //    .AsNoTracking()
+            //    .ToListAsync();
 
             return View("Events - Copy");
         }
 
+        /// <summary>
+        /// API endpoint to fetch active events for DataTables with server-side pagination.
+        /// Supports search filtering by ID, linked event, dates, title, venue, creator name, and status.
+        /// Special search values: "upcoming" (future events), "in-progress" (current events).
+        /// </summary>
+        /// <returns>JSON with paginated event data for DataTables</returns>
         [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
         [HttpPost("~/api/GetEvents")]
         public async Task<IActionResult> GetEvents()
@@ -51,6 +86,9 @@ namespace EventPro.Web.Controllers
             var sortColumn = Request.Form[string.Concat("columns[", Request.Form["order[0][column]"], "][name]")];
             var sortColumnDirection = Request.Form["order[0][dir]"];
 
+            // Read the VwEvents view for events that are not deleted and with filtering
+            // From the database view called Vw_Events (see DAL.Models.VwEvents)
+            // The filtering is done based on the search value provided in the request
             IQueryable<VwEvents> events_ = db.VwEvents.Where(e => (e.EventTo >= DateTime.Now && e.IsDeleted != true) && (
             string.IsNullOrEmpty(searchValue) ? true
             : (e.Id.ToString().Contains(searchValue))
@@ -82,6 +120,101 @@ namespace EventPro.Web.Controllers
                 events_ = events_.OrderBy(string.Concat(sortColumn, " ", sortColumnDirection)).Reverse();
             }
 
+            // Operators only see events they are assigned to (direct or bulk-shared)
+            if (HasOperatorRole())
+            {
+                var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var operatorEventIds = db.EventOperator
+                    .Where(e => e.OperatorId == userId)
+                    .Select(e => e.EventId)
+                    .ToList();
+                events_ = events_.Where(e => operatorEventIds.Contains(e.Id));
+            }
+
+            try
+            {
+                var result = await events_.Skip(skip).Take(pageSize).ToListAsync();
+                // Prepare the view models to be sent to the client
+                // result is the list of database models (VwEvents)
+                List<EventVM> eventsVM = new(); // view models
+                foreach (var evnt in result)
+                {
+                    EventVM eventVM = new(evnt); // from the database model to the view model
+                    eventsVM.Add(eventVM);
+                }
+
+                var recordsTotal = await events_.CountAsync();
+                // draw is a parameter sent by DataTables to ensure each response corresponds to the correct request
+                var draw = Request.Form["draw"].FirstOrDefault();
+                var jsonData = new
+                {
+                    draw = draw,
+                    recordsFiltered = recordsTotal,
+                    recordsTotal,
+                    data = eventsVM
+                };
+                return Ok(jsonData);
+            }
+            catch (Exception ex)
+            {
+                // Ghrabawy : TODO : Log the exception
+                // Return a 500 Internal Server Error response with the exception details
+                return StatusCode(500, new { message = ex.Message, stack = ex.StackTrace });
+            }
+        }
+
+        /// <summary>
+        /// Displays the archived (past) events list page.
+        /// Shows events where EventTo date is in the past.
+        /// Accessible by: Administrator, Operator, Agent, Supervisor, Accounting
+        /// </summary>
+        /// <returns>Archive events view</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
+        public IActionResult ArchiveEvents()
+        {
+            ViewBag.Icon = "nav-icon fas fa-calendar";
+            SetBreadcrum("Events", "/admin");
+
+            return View("ArchiveEvents - Copy");
+        }
+
+        /// <summary>
+        /// API endpoint to fetch archived (past) events for DataTables.
+        /// Returns events where EventTo is less than current date and not deleted.
+        /// </summary>
+        /// <returns>JSON with paginated archived event data</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
+        [HttpPost("~/api/GetArchiveEvents")]
+        public async Task<IActionResult> GetArchiveEvents()
+        {
+            var pageSize = int.Parse(Request.Form["length"]);
+            var skip = int.Parse(Request.Form["start"]);
+
+            var searchValue = Request.Form["search[value]"];
+            searchValue = searchValue.ToString();
+
+            var sortColumn = Request.Form[string.Concat("columns[", Request.Form["order[0][column]"], "][name]")];
+            var sortColumnDirection = Request.Form["order[0][dir]"];
+
+            IQueryable<VwEvents> events_ = db.VwEvents.Where(e => (e.EventTo < DateTime.Now && e.IsDeleted != true) && (
+            string.IsNullOrEmpty(searchValue) ? true
+            : (e.Id.ToString().Contains(searchValue))
+            || (e.LinkedEvent.ToString().Contains(searchValue))
+            || (e.EventTo.ToString().Contains(searchValue))
+            || (e.EventFrom.ToString().Contains(searchValue))
+            || (e.EventTitle.Contains(searchValue))
+            || (e.EventVenue.Contains(searchValue))
+            || (e.CreatedOn.ToString().Contains(searchValue))
+            || (string.Concat(e.FirstName, " ", e.LastName).Contains(searchValue))
+            || (e.Status.Contains(searchValue))
+            )).AsNoTracking();
+
+
+            if (!(string.IsNullOrEmpty(sortColumn)) && !string.IsNullOrEmpty(sortColumnDirection))
+            {
+                events_ = events_.OrderBy(string.Concat(sortColumn, " ", sortColumnDirection)).Reverse();
+            }
+
             var result = await events_.Skip(skip).Take(pageSize).ToListAsync();
             List<EventVM> eventsVM = new();
 
@@ -102,14 +235,695 @@ namespace EventPro.Web.Controllers
             return Ok(jsonData);
         }
 
-        // /Admin/DeleteEvent/
+        /// <summary>
+        /// Displays detailed view of a specific event.
+        /// Validates operator access if the user has Operator role.
+        /// Redirects to QRSettings if card info doesn't exist for the event.
+        /// </summary>
+        /// <param name="id">Event ID to view</param>
+        /// <returns>Event details view or redirect</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
+        public async Task<IActionResult> ViewEvent(int id)
+        {
+            if (HasOperatorRole())
+            {
+                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var isOperatorHasAccess = db.EventOperator
+                     .Any(e => e.OperatorId == userId && e.EventId == id);
+
+                if (!isOperatorHasAccess)
+                    return new RedirectToActionResult(AppAction.AccessDenied, AppController.Login, new { });
+            }
+
+            ViewBag.Icon = "nav-icon fas fa-pencil-square-o";
+            ViewBag.CardImage = id + ".png";
+            var cardInfo = await db.CardInfo.Where(p => p.EventId == id)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            if (cardInfo == null)
+            {
+                return RedirectToAction("QRSettings", "admin", new { id = id });
+            }
+
+            ViewBag.CardInfo = cardInfo;
+            ViewBag.EventWhatsappProvider = await db.Events.Where(e => e.Id == id)
+                .Select(e => e.WhatsappProviderName)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            ViewBag.CurrentUsedWhatsappProvider = await db.AppSettings
+                .Select(e => e.WhatsappServiceProvider)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            var model = await db.VwEvents.Where(p => p.Id == id)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            if (model == null)
+            {
+                Log.Warning("ViewEvent: Event {EventId} not found", id);
+                return NotFound("Event not found.");
+            }
+
+            ViewBag.Icon = await db.CardInfo.Where(p => p.EventId == id).Select(p => p.BackgroundImage)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            Log.Information("ViewEvent: ID={EventId}, Title={EventTitle}", id, model.SystemEventTitle);
+
+            SetBreadcrum("Events", "/admin");
+            return View("ViewEvent - Copy", model);
+        }
+
+        /// <summary>
+        /// POST action for filtering events list with additional parameters.
+        /// Supports filtering by client name, event status, and date range.
+        /// </summary>
+        /// <param name="collection">Form collection with filter parameters</param>
+        /// <returns>Filtered events view</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
+        [HttpPost]
+        public async Task<IActionResult> Events(IFormCollection collection)
+        {
+            string clientName = collection["clientName"];
+            string eventStatues = collection["eventStatus"];
+            string dateFrom = collection["dateFrom"];
+            string dateTo = collection["dateTo"];
+
+            ViewBag.Icon = "nav-icon fas fa-calendar";
+            SetBreadcrum("Events", "/admin");
+            Dictionary<int, string> userInfo = new Dictionary<int, string>();
+            var users = db.VwUsers.ToList();
+            foreach (var user in users)
+            {
+                userInfo.Add(user.UserId, user.FirstName + " " + user.LastName);
+            }
+            var events_ = await db.VwEvents.OrderByDescending(p => p.Id).ToListAsync();
+
+            if (clientName != null && clientName.Length > 0)
+            {
+                events_ = events_.Where(p => p.CreatedFor <= Convert.ToInt32(clientName)).ToList();
+
+            }
+
+            if (dateFrom != null && dateFrom.Length > 0)
+            {
+                events_ = events_.Where(p => p.EventFrom >= Convert.ToDateTime(dateFrom)).ToList();
+            }
+
+            if (dateTo != null && dateTo.Length > 0)
+            {
+                events_ = events_.Where(p => p.EventTo <= Convert.ToDateTime(dateTo)).ToList();
+            }
+
+            if (eventStatues != null && eventStatues.Length > 0)
+            {
+                if (eventStatues.Contains("In Progress") && eventStatues.Contains("Upcoming") && eventStatues.Contains("Past"))
+                    events_ = events_.ToList();
+                else if (eventStatues.Contains("In Progress") && eventStatues.Contains("Upcoming"))
+                    events_ = events_.Where(p => p.EventTo >= DateTime.Today).ToList();
+                else if (eventStatues.Contains("Past") && eventStatues.Contains("Upcoming"))
+                    events_ = events_.Where(p => p.EventFrom < DateTime.Today || p.EventFrom > DateTime.Today).ToList();
+                else if (eventStatues.Contains("Past"))
+                    events_ = events_.Where(p => p.EventTo < DateTime.Today).ToList();
+                else if (eventStatues.Contains("Upcoming"))
+                    events_ = events_.Where(p => p.EventFrom > DateTime.Today).ToList();
+                else if (eventStatues.Contains("In Progress"))
+                    events_ = events_.Where(p => p.EventFrom <= DateTime.Today && p.EventTo >= DateTime.Today).ToList();
+
+            }
+            ViewBag.Users = userInfo;
+            ViewBag.Client = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "FullName");
+            ViewBag.FilePath = _configuration.GetSection("Uploads").GetSection("Invoice").Value;
+            ViewBag.Gatekeeper = db.VwUsers.Where(p => p.RoleName == "Gatekeeper").ToList();
+            ViewBag.Events = events_;
+            return View("Events", events_);
+        }
+
+        #endregion
+
+        #region Event CRUD Operations
+
+        /// <summary>
+        /// Displays the create new event form.
+        /// Populates dropdown lists for event type, clients, linked events, and locations.
+        /// For Operators, only shows clients they have access to.
+        /// </summary>
+        /// <returns>Create event form view</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> _Events()
+        {
+            var clients = new List<DAL.Models.Users>();
+            if (HasOperatorRole())
+            {
+                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var createdForIds = await db.Events
+                    .Where(e => e.EventOperators.Any(p => p.OperatorId == userId))
+                    .Select(e => e.CreatedFor)
+                    .Distinct()
+                .ToListAsync();
+                clients = await db.Users.Where(p => (createdForIds.Contains(p.UserId) || p.CreatedBy == userId) &&
+                p.Role == RoleIds.Client)
+                    .OrderByDescending(e => e.UserId)
+                    .ToListAsync();
+            }
+            else
+            {
+                clients = await db.Users.Where(p => p.Role == RoleIds.Client)
+                    .OrderByDescending(e => e.UserId)
+                    .ToListAsync();
+            }
+
+            ViewBag.Type = new SelectList(await db.EventCategory.AsNoTracking().ToListAsync(), "EventId", "Category");
+            ViewBag.Users = new SelectList(clients,
+                "UserId", "UserName");
+
+            ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today)
+                .Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.SystemEventTitle })
+                .AsNoTracking()
+                .ToListAsync(), "Id", "Value");
+
+            ViewBag.Icon = "nav-icon fas fa-calendar";
+            ViewBag.EventLocations =
+                new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync())
+                .Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName })
+                , "Id", "Location");
+
+            SetBreadcrum("Events", "/admin");
+            return View("EditEvent - Copy", new Events());
+        }
+
+        /// <summary>
+        /// Creates a new event in the database.
+        /// Validates date range and description, uploads media files to Cloudinary,
+        /// sets default values, creates event-operator mapping, sends Firebase notification
+        /// if ShowOnCalender is enabled, and generates reminder ICS file.
+        /// </summary>
+        /// <param name="events">Event model from form submission</param>
+        /// <returns>Redirect to events list on success, or form with errors</returns>
+        [HttpPost]
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> _Events(Events events)
+        {
+            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            if (events.EventFrom > events.EventTo)
+            {
+                ViewBag.ErrorDate = "(End date should be greater then from date)";
+                ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
+                ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
+                ViewBag.Icon = "nav-icon fas fa-calendar";
+                ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
+                ViewBag.EventLocations =
+               new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync())
+               .Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName }), "Id", "Location");
+                SetBreadcrum("Events", "/admin");
+                return View("EditEvent - Copy", events);
+            }
+            if (string.IsNullOrEmpty(events.EventDescription) || string.IsNullOrWhiteSpace(events.EventDescription))
+            {
+                ViewBag.ErrorDesc = "(Event Description Can not be empty)";
+                ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
+                ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
+                ViewBag.Icon = "nav-icon fas fa-calendar";
+                ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
+                SetBreadcrum("Events", "/admin");
+                ViewBag.EventLocations =
+               new SelectList((await db.City.Include(c => c.Country).ToListAsync())
+               .Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName })
+                , "Id", "Location");
+                return View("EditEvent - Copy", events);
+            }
+
+            if (events.GmapCode.Length > 0)
+            {
+                string[] gmaps = events.GmapCode.Split('/');
+                if (gmaps.Length > 0)
+                {
+                    events.GmapCode = gmaps[gmaps.Length - 1];
+                }
+            }
+
+            var files = Request.Form.Files;
+            string filename = string.Empty;
+            bool hasFile = false;
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    using (var stream = file.OpenReadStream())
+                    {
+                        if (file.ContentType.Contains("image"))
+                        {
+                            filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
+                        }
+                        else if (file.ContentType.Contains("video"))
+                        {
+                            filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
+                        }
+                        else if (file.ContentType.Contains("application/pdf"))
+                        {
+                            filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
+                        }
+
+                        if (!string.IsNullOrEmpty(filename))
+                        {
+                            hasFile = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Create Event: File upload failed for file {FileName}", file.FileName);
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                    // Re-populate ViewBag data
+                    ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
+                    // Gharabawy : Here we use the "VwUsers" to get only the clients
+                    ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
+                    ViewBag.Icon = "nav-icon fas fa-calendar";
+                    ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
+                    ViewBag.EventLocations = new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync()).Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName }), "Id", "Location");
+                    SetBreadcrum("Events", "/admin");
+                    return View("EditEvent - Copy", events);
+                }
+            }
+            events.SendingConfiramtionMessagesLinksLanguage = "Arabic";
+            events.LinkGuestsCardText = "بطاقة الضيوف للحفلة هنا";
+            events.ConfirmationButtonsType = "QuickReplies";
+            events.IsDeleted = false;
+            events.MessageHeaderImage = filename;
+            events.CreatedBy = userId;
+            events.CreatedOn = DateTime.UtcNow;
+            events.Status = "Active";
+            events.CityId = events.CityId;
+            events.WhatsappProviderName = "Default";
+            events.AttendanceTime = events.EventFrom.Value + events.AttendanceTime.Value.TimeOfDay;
+            events.LeaveTime = events.LeaveTime.Value;
+            events.ContactName = events.ContactName;
+            events.ContactPhone = events.ContactPhone;
+            events.ShowFailedSendingEventLocationLink = true;
+            events.ShowFailedSendingCongratulationLink = true;
+            events.ChoosenNumberWithinCountry = 1;
+            var settings = await db.AppSettings.FirstOrDefaultAsync();
+            // events.choosenSendingWhatsappProfile = settings.WhatsappDefaultTwilioProfile;
+            City city = await db.City.Where(e => e.Id == events.CityId)
+                .Include(e => e.Country)
+                .FirstOrDefaultAsync();
+            if (city.Country.CountryName.Contains("مصر") || city.Country.CountryName.Contains("Egypt"))
+            {
+                events.choosenSendingCountryNumber = "EGYPT";
+            }
+            else if (city.Country.CountryName.Contains("الكويت"))
+            {
+                events.choosenSendingCountryNumber = "KUWAIT";
+            }
+            else if (city.Country.CountryName.Contains("البحرين"))
+            {
+                events.choosenSendingCountryNumber = "BAHRAIN";
+            }
+            else
+            {
+                events.choosenSendingCountryNumber = "SAUDI";
+            }
+
+            Log.Information("Creating new event: Title={EventTitle}, Venue={Venue}, City={CityId}, Country={Country}, From={From}, To={To}, CreatedBy={UserId}",
+                events.EventTitle, events.EventVenue, events.CityId, events.choosenSendingCountryNumber, events.EventFrom, events.EventTo, userId);
+
+            await db.Events.AddAsync(events);
+            await db.SaveChangesAsync();
+
+            var eventOperator = new EventOperator()
+            {
+                OperatorId = userId,
+                EventId = events.Id,
+                EventStart = events.EventFrom,
+                EventEnd = events.EventTo
+            };
+
+            await db.EventOperator.AddAsync(eventOperator);
+            await db.SaveChangesAsync();
+
+            // Audit Log
+            await _auditLogService.AddAsync(userId, events.Id);
+
+            #region Firebase FCM - Send push notification on event creation
+            // Send FCM push notification to all devices subscribed to the event's city topic.
+            // Firebase Admin SDK is initialized in Startup.cs using the JSON key from appsettings ("FireBaseJSON").
+            // This block uses FirebaseMessaging.DefaultInstance which relies on that initialization.
+            try
+            {
+                if (events.ShowOnCalender == true)
+                {
+                    // Build the notification payload targeting the city topic
+                    var request = new MessageRequest()
+                    {
+                        Topic = $"{events.CityId}",
+                        Title = events.EventTitle,
+                        Body = $"New event is created! \nstarting in {events.EventVenue} at {events.AttendanceTime}"
+                    };
+
+                    var message = new Message()
+                    {
+                        Notification = new Notification
+                        {
+                            Title = request.Title,
+                            Body = request.Body
+                        },
+                    };
+
+                    // Route to topic (city) or direct device token
+                    if (string.IsNullOrEmpty(request.Tokens))
+                    {
+                        message.Topic = request.Topic;
+                    }
+                    else
+                    {
+                        message.Token = request.Tokens;
+                    }
+
+                    // Fallback: initialize Firebase if not already done in Startup.cs
+                    // Reads the JSON key filename from appsettings ("FireBaseJSON")
+                    if (FirebaseApp.DefaultInstance == null)
+                    {
+                        var firebaseJson = _configuration["FireBaseJSON"];
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile(
+                                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJson)),
+                        });
+                    }
+
+                    // Send the notification via FCM V1 API
+                    var messaging = FirebaseMessaging.DefaultInstance;
+                    var result = await messaging.SendAsync(message);
+                    Log.Information("Firebase FCM: Push notification sent for event {EventId} to topic {Topic}, result: {Result}", events.Id, request.Topic, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Firebase FCM: Failed to send push notification for event {EventId}", events.Id);
+            }
+            #endregion
+
+            await CreateReminderIcsFileAsync(events);
+            Log.Information("Event created successfully: ID={EventId}, Title={EventTitle}, CreatedBy={UserId}", events.Id, events.EventTitle, userId);
+
+            // Redirect to Events Page
+            return RedirectToAction(AppAction.Events, AppController.Admin);
+        }
+
+        /// <summary>
+        /// Displays the edit event form for an existing event.
+        /// Validates operator access if the user has Operator role.
+        /// Converts stored newline characters for display in textarea fields.
+        /// </summary>
+        /// <param name="id">Event ID to edit</param>
+        /// <returns>Edit event form view</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> EditEvent(int id)
+        {
+            if (HasOperatorRole())
+            {
+                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var isOperatorHasAccess = db.EventOperator
+                     .Any(e => e.OperatorId == userId && e.EventId == id);
+
+                if (!isOperatorHasAccess)
+                    return new RedirectToActionResult(AppAction.AccessDenied, AppController.Login, new { });
+            }
+
+            var events = await db.Events.Where(p => p.Id == id)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            events.ReminderMessage = events.ReminderMessage?.Replace("\\n", "\r\n").TrimEnd();
+            events.ThanksMessage = events.ThanksMessage?.Replace("\\n", "\r\n").TrimEnd();
+
+            await SetControls(events);
+            return View(events);
+        }
+
+        /// <summary>
+        /// Updates an existing event in the database.
+        /// Validates date range and description, handles file uploads to Cloudinary,
+        /// updates all event properties, syncs event operator dates,
+        /// and regenerates the reminder ICS file.
+        /// </summary>
+        /// <param name="events">Event model from form submission</param>
+        /// <returns>Redirect to view event on success, or form with errors</returns>
+        [HttpPost]
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> EditEvent([FromForm] Events events)
+        {
+            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+            if (events.EventFrom > events.EventTo)
+            {
+                await SetControls(events);
+                ViewBag.ErrorDate = "(Date should be greater then event from date)";
+                return View("EditEvent", events);
+            }
+            if (string.IsNullOrEmpty(events.EventDescription) || string.IsNullOrWhiteSpace(events.EventDescription))
+            {
+                await SetControls(events);
+                ViewBag.ErrorDesc = "(Event Description Can not be empty)";
+                return View("EditEvent", events);
+            }
+
+            Events evt = await db.Events.Where(p => p.Id == events.Id)
+                .FirstOrDefaultAsync();
+
+            if (events.GmapCode.Length > 0)
+            {
+                string[] gmaps = events.GmapCode.Split('/');
+                if (gmaps.Length > 0)
+                {
+                    events.GmapCode = gmaps[gmaps.Length - 1];
+                }
+            }
+            var files = Request.Form.Files;
+            if (files.Count != 0)
+            {
+                string filename = string.Empty;
+                bool hasFile = false;
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        using (var stream = file.OpenReadStream())
+                        {
+                            if (file.ContentType.Contains("image"))
+                            {
+                                filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
+                            }
+                            else if (file.ContentType.Contains("video"))
+                            {
+                                filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
+                            }
+                            else if (file.ContentType.Contains("application/pdf"))
+                            {
+                                filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
+                            }
+
+                            if (!string.IsNullOrEmpty(filename))
+                            {
+                                hasFile = true;
+
+                                if (file.Name.Equals("MessageHeaderImage"))
+                                {
+                                    evt.MessageHeaderImage = filename;
+                                }
+                                else if (file.Name.Equals("ReminderMsgHeaderImg"))
+                                {
+                                    evt.ReminderMsgHeaderImg = filename;
+                                }
+                                else if (file.Name.Equals("CongratulationMsgHeaderImg"))
+                                {
+                                    evt.CongratulationMsgHeaderImg = filename;
+                                }
+                                else if (file.Name.Equals("ResponseInterestedOfMarketingMsgHeaderImage"))
+                                {
+                                    evt.ResponseInterestedOfMarketingMsgHeaderImage = filename;
+                                }
+                                else if (file.Name.Equals("ResponseNotInterestedOfMarketingMsgHeaderImage"))
+                                {
+                                    evt.ResponseNotInterestedOfMarketingMsgHeaderImage = filename;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Edit Event: File upload failed for event {EventId}, file {FileName}", events.Id, file.FileName);
+                        await SetControls(events);
+                        ModelState.AddModelError(string.Empty, ex.Message);
+                        return View("EditEvent", events);
+                    }
+                }
+            }
+            evt.CustomConfirmationTemplateWithVariables = events.CustomConfirmationTemplateWithVariables;
+            evt.CustomCardTemplateWithVariables = events.CustomCardTemplateWithVariables;
+            evt.CustomReminderTemplateWithVariables = events.CustomReminderTemplateWithVariables;
+            evt.CustomCongratulationTemplateWithVariables = events.CustomCongratulationTemplateWithVariables;
+            evt.SendingConfiramtionMessagesLinksLanguage = events.SendingConfiramtionMessagesLinksLanguage;
+            evt.LinkGuestsCardText = events.LinkGuestsCardText;
+            evt.LinkGuestsLocationEmbedSrc = events.LinkGuestsLocationEmbedSrc;
+            evt.ConfirmationButtonsType = events.ConfirmationButtonsType;
+            evt.ResponseInterestedOfMarketingMsg = events.ResponseInterestedOfMarketingMsg;
+            evt.ResponseNotInterestedOfMarketingMsg = events.ResponseNotInterestedOfMarketingMsg;
+            evt.SystemEventTitle = events.SystemEventTitle;
+            evt.WhatsappProviderName = events.WhatsappProviderName ?? evt.WhatsappProviderName;
+            evt.choosenSendingCountryNumber = events.choosenSendingCountryNumber ?? evt.choosenSendingCountryNumber;
+            evt.choosenSendingWhatsappProfile = events.choosenSendingWhatsappProfile ?? evt.choosenSendingWhatsappProfile;
+            evt.ChoosenNumberWithinCountry = events.ChoosenNumberWithinCountry == 0 ? evt.ChoosenNumberWithinCountry : events.ChoosenNumberWithinCountry;
+            evt.ShowFailedSendingCongratulationLink = events.ShowFailedSendingCongratulationLink;
+            evt.ShowFailedSendingEventLocationLink = events.ShowFailedSendingEventLocationLink;
+            evt.FailedSendingConfiramtionMessagesLinksLanguage = events.FailedSendingConfiramtionMessagesLinksLanguage;
+            evt.WhatsappConfirmation = events.WhatsappConfirmation;
+            evt.WhatsappPush = events.WhatsappPush;
+            evt.CreatedFor = events.CreatedFor;
+            evt.FailedGuestsReminderMessage = events.FailedGuestsReminderMessage;
+            evt.FailedGuestsCongratulationMsg = events.FailedGuestsCongratulationMsg;
+            evt.FailedGuestsCardText = events.FailedGuestsCardText;
+            evt.FailedGuestsLocationEmbedSrc = events.FailedGuestsLocationEmbedSrc;
+            evt.FailedGuestsMessag = events.FailedGuestsMessag;
+            evt.ConguratulationsMsgType = events.ConguratulationsMsgType;
+            evt.ConguratulationsMsgTemplateName = events.ConguratulationsMsgTemplateName;
+            evt.MessageHeaderText = events.MessageHeaderText;
+            evt.CardInvitationTemplateType = events.CardInvitationTemplateType;
+            evt.CustomCardInvitationTemplateName = events.CustomCardInvitationTemplateName;
+            evt.CustomInvitationMessageTemplateName = events.CustomInvitationMessageTemplateName;
+            evt.EventTitle = events.EventTitle;
+            evt.ParentTitleGender = events.ParentTitleGender;
+            evt.MessageLanguage = events.MessageLanguage;
+            evt.EventDescription = events.EventDescription;
+            evt.ParentTitle = events.ParentTitle;
+            evt.Type = events.Type;
+            evt.GmapCode = events.GmapCode;
+            evt.EventVenue = events.EventVenue;
+            evt.ModifiedBy = userId;
+            evt.ModifiedOn = DateTime.UtcNow;
+            evt.SendInvitation = events.SendInvitation;
+            evt.CityId = events.CityId;
+            evt.CityId = events.CityId;
+            evt.AttendanceTime = events.EventFrom.Value + events.AttendanceTime.Value.TimeOfDay;
+            evt.ShowOnCalender = events.ShowOnCalender;
+            evt.LinkedEvent = events.LinkedEvent;
+            evt.LeaveTime = events.LeaveTime.Value;
+            evt.ContactName = events.ContactName;
+            evt.ContactPhone = events.ContactPhone;
+            evt.SendingType = events.SendingType;
+            evt.ConguratulationsMsgSentOnNumber = events.ConguratulationsMsgSentOnNumber;
+            evt.ReminderMessageTempName = events.ReminderMessageTempName;
+            evt.ReminderMessage = events.ReminderMessage?.Replace("\r\n", "\\n").TrimEnd();
+            evt.ThanksMessage = events.ThanksMessage?.Replace("\r\n", "\\n").TrimEnd();
+            evt.EventFrom = events.EventFrom;
+            evt.EventTo = events.EventTo;
+            evt.ReminderTempId = events.ReminderTempId;
+            evt.ThanksTempId = events.ThanksTempId;
+            evt.DeclineTempId = events.DeclineTempId;
+
+            Log.Information("Event edited: ID={EventId}, Title={EventTitle}, Venue={Venue}, City={CityId}, Profile={Profile}, EditedBy={UserId}",
+                evt.Id, evt.EventTitle, evt.EventVenue, evt.CityId, evt.choosenSendingWhatsappProfile, userId);
+
+            await _auditLogService.AddAsync(userId, events.Id, DAL.Enum.ActionEnum.UpdateEvent);
+            await db.SaveChangesAsync();
+
+            var eventOperators = await db.EventOperator.Where(e => e.EventId == evt.Id).ToListAsync();
+            foreach (var eventOperator in eventOperators)
+            {
+                eventOperator.EventStart = evt.EventFrom;
+                eventOperator.EventEnd = evt.EventTo;
+            }
+            db.EventOperator.UpdateRange(eventOperators);
+            await db.SaveChangesAsync();
+            #region Firebase FCM - Send push notification on event creation
+            // Send FCM push notification to all devices subscribed to the event's city topic.
+            // Firebase Admin SDK is initialized in Startup.cs using the JSON key from appsettings ("FireBaseJSON").
+            // This block uses FirebaseMessaging.DefaultInstance which relies on that initialization.
+            try
+            {
+                if (events.ShowOnCalender == true)
+                {
+                    // Build the notification payload targeting the city topic
+                    var request = new MessageRequest()
+                    {
+                        Topic = $"{events.CityId}",
+                        Title = events.EventTitle,
+                        Body = $"New event is created! \nstarting in {events.EventVenue} at {events.AttendanceTime}"
+                    };
+
+                    var message = new Message()
+                    {
+                        Notification = new Notification
+                        {
+                            Title = request.Title,
+                            Body = request.Body
+                        },
+                    };
+
+                    // Route to topic (city) or direct device token
+                    if (string.IsNullOrEmpty(request.Tokens))
+                    {
+                        message.Topic = request.Topic;
+                    }
+                    else
+                    {
+                        message.Token = request.Tokens;
+                    }
+
+                    // Fallback: initialize Firebase if not already done in Startup.cs
+                    // Reads the JSON key filename from appsettings ("FireBaseJSON")
+                    if (FirebaseApp.DefaultInstance == null)
+                    {
+                        var firebaseJson = _configuration["FireBaseJSON"];
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile(
+                                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJson)),
+                        });
+                    }
+
+                    // Send the notification via FCM V1 API
+                    var messaging = FirebaseMessaging.DefaultInstance;
+                    var result = await messaging.SendAsync(message);
+                    Log.Information("Firebase FCM: Push notification sent for edited event {EventId} to topic {Topic}, result: {Result}", events.Id, request.Topic, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Firebase FCM: Failed to send push notification for event {EventId}", events.Id);
+            }
+            #endregion
+
+            await CreateReminderIcsFileAsync(evt);
+            return RedirectToAction("ViewEvent", AppController.Admin, new { id = events.Id });
+        }
+
+        #endregion
+
+        #region Event Delete & Restore Actions
+
+        /// <summary>
+        /// Soft deletes an event by setting IsDeleted flag to true.
+        /// Also removes all gatekeeper mappings for the event and hides from calendar.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID to delete</param>
+        /// <returns>Success JSON response or NotFound</returns>
         [AuthorizeRoles("Administrator")]
         [HttpGet()]
         public async Task<IActionResult> DeleteEvent(int id)
         {
             var eventItem = await db.Events.FindAsync(id);
             if (eventItem == null)
+            {
+                Log.Warning("DeleteEvent: Event {EventId} not found", id);
                 return NotFound(new { message = "Event not found." });
+            }
 
             var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
@@ -130,9 +944,18 @@ namespace EventPro.Web.Controllers
             await db.SaveChangesAsync();
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteEvent);
 
+            Log.Information("Event deleted: ID={EventId}, Title={EventTitle}, GatekeepersRemoved={GKCount}, DeletedBy={UserId}",
+                id, eventItem.EventTitle, listOfEventGatekeeper.Count, userId);
+
             return Ok(new { success = true, message = "Event deleted successfully" });
         }
 
+        /// <summary>
+        /// Displays the deleted events list page.
+        /// Shows events that have been soft-deleted (IsDeleted = true).
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <returns>Deleted events view</returns>
         [AuthorizeRoles("Administrator")]
         public IActionResult ShowDeletedEvents()
         {
@@ -142,7 +965,12 @@ namespace EventPro.Web.Controllers
             return View("DeletedEvent");
         }
 
-        // /Admin/GetDeletedEvents
+        /// <summary>
+        /// API endpoint to fetch deleted events for DataTables.
+        /// Returns events where IsDeleted is true with support for pagination and filtering.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <returns>JSON with paginated deleted event data</returns>
         [AuthorizeRoles("Administrator")]
         [HttpPost()]
         public async Task<IActionResult> GetDeletedEvents()
@@ -208,14 +1036,23 @@ namespace EventPro.Web.Controllers
             return Ok(jsonData);
         }
 
-        // /Admin/RestoreEvent/id
+        /// <summary>
+        /// Restores a soft-deleted event by setting IsDeleted flag to false.
+        /// Clears the DeletedOn and DeletedBy fields.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID to restore</param>
+        /// <returns>OK response or NotFound</returns>
         [AuthorizeRoles("Administrator")]
         [HttpGet()]
         public async Task<IActionResult> RestoreEvent(int id)
         {
             var eventItem = await db.Events.FindAsync(id);
             if (eventItem == null)
+            {
+                Log.Warning("RestoreEvent: Event {EventId} not found", id);
                 return NotFound(new { message = "Event not found or not deleted." });
+            }
 
             var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
@@ -225,9 +1062,22 @@ namespace EventPro.Web.Controllers
 
             await db.SaveChangesAsync();
             await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.RestoreEvent);
+
+            Log.Information("Event restored: ID={EventId}, Title={EventTitle}, RestoredBy={UserId}", id, eventItem.EventTitle, userId);
+
             return Ok();
         }
 
+        #endregion
+
+        #region Events By Operator Actions
+
+        /// <summary>
+        /// Displays events filtered by operator page.
+        /// Shows a list of events with filter options by operator, date range.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <returns>Events by operator view</returns>
         [AuthorizeRoles("Administrator")]
         public IActionResult EventByOperator()
         {
@@ -248,6 +1098,13 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
+        /// <summary>
+        /// POST action for filtering events by operator.
+        /// Filters events based on operator (createdBy), date range, and event status.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="collection">Form collection with filter parameters</param>
+        /// <returns>Filtered events by operator view</returns>
         [HttpPost]
         [AuthorizeRoles("Administrator")]
         public async Task<IActionResult> EventByOperator(IFormCollection collection)
@@ -304,6 +1161,16 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
+        #endregion
+
+        #region Events By Gatekeeper Actions
+
+        /// <summary>
+        /// Displays events filtered by gatekeeper page (legacy version).
+        /// Shows events with their assigned gatekeepers and filter options.
+        /// Accessible by Administrator and Agent.
+        /// </summary>
+        /// <returns>Events by gatekeeper view</returns>
         [AuthorizeRoles("Administrator", "Agent")]
         public async Task<IActionResult> EventByGatekeeper()
         {
@@ -343,7 +1210,13 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
-
+        /// <summary>
+        /// POST action for filtering events by gatekeeper (legacy version).
+        /// Filters by gatekeeper, city, event type (active/archived), date range, and assignment status.
+        /// Accessible by Administrator and Agent.
+        /// </summary>
+        /// <param name="collection">Form collection with filter parameters</param>
+        /// <returns>Filtered events by gatekeeper view</returns>
         [HttpPost]
         [AuthorizeRoles("Administrator", "Agent")]
         public async Task<IActionResult> EventByGatekeeper(IFormCollection collection)
@@ -413,202 +1286,12 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> DeleteAllGuests(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .AsNoTracking()
-                .ToListAsync();
-            db.Guest.RemoveRange(guests);
-            await db.SaveChangesAsync();
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteAllGuests);
-            return Ok();
-        }
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> DeleteAllGuestsCards(int id)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.DeleteAllGuestsCards);
-            return Ok();
-        }
-
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> ResetAllGuestsStatus(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-            foreach (var guest in guests)
-            {
-                guest.Response = null;
-                guest.TextDelivered = null;
-                guest.TextRead = null;
-                guest.TextSent = null;
-                guest.TextFailed = null;
-                guest.MessageId = null;
-                guest.ConguratulationMsgId = null;
-                guest.ConguratulationMsgFailed = null;
-                guest.ConguratulationMsgDelivered = null;
-                guest.ConguratulationMsgSent = null;
-                guest.ConguratulationMsgRead = null;
-                guest.ImgDelivered = null;
-                guest.ImgFailed = null;
-                guest.ImgRead = null;
-                guest.ImgSent = null;
-                guest.TextFailed = null;
-                guest.ImgSentMsgId = null;
-                guest.WaresponseTime = null;
-                guest.whatsappMessageEventLocationId = null;
-                guest.EventLocationSent = null;
-                guest.EventLocationRead = null;
-                guest.EventLocationDelivered = null;
-                guest.EventLocationFailed = null;
-                guest.waMessageEventLocationForSendingToAll = null;
-                guest.ReminderMessageId = null;
-                guest.ReminderMessageSent = null;
-                guest.ReminderMessageRead = null;
-                guest.ReminderMessageDelivered = null;
-                guest.ReminderMessageFailed = null;
-            }
-
-            await db.SaveChangesAsync();
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.ResetAllGuestsStatus);
-            return Ok();
-        }
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> AllowSendConfirmationMessageAgain(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-
-            foreach (var guest in guests)
-            {
-                guest.Response = null;
-                guest.TextDelivered = null;
-                guest.TextRead = null;
-                guest.TextSent = null;
-                guest.TextFailed = null;
-                guest.MessageId = null;
-                guest.WaresponseTime = null;
-            }
-
-            await db.SaveChangesAsync();
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendConfirmationAgain);
-            return Ok();
-        }
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> AllowSendCardMessageAgain(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-
-            foreach (var guest in guests)
-            {
-                guest.ImgDelivered = null;
-                guest.ImgFailed = null;
-                guest.ImgRead = null;
-                guest.ImgSent = null;
-                guest.TextFailed = null;
-                guest.ImgSentMsgId = null;
-            }
-
-            await db.SaveChangesAsync();
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendCardsAgain);
-            return Ok();
-        }
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> AllowSendEventLocationMessageAgain(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-
-            foreach (var guest in guests)
-            {
-                guest.EventLocationSent = null;
-                guest.EventLocationRead = null;
-                guest.EventLocationDelivered = null;
-                guest.EventLocationFailed = null;
-                guest.waMessageEventLocationForSendingToAll = null;
-            }
-
-            await db.SaveChangesAsync();
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendEventLocationAgain);
-            return Ok();
-        }
-
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> AllowSendReminderMessageAgain(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-
-            foreach (var guest in guests)
-            {
-                guest.ReminderMessageId = null;
-                guest.ReminderMessageSent = null;
-                guest.ReminderMessageRead = null;
-                guest.ReminderMessageDelivered = null;
-                guest.ReminderMessageFailed = null;
-            }
-
-            await db.SaveChangesAsync();
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendRemindersAgain);
-            return Ok();
-        }
-
-        [HttpGet]
-        [AuthorizeRoles("Administrator")]
-        public async Task<IActionResult> AllowSendCongratulationMessageAgain(int id)
-        {
-            var guests = await db.Guest.Where(e => e.EventId == id)
-                .ToListAsync();
-
-            foreach (var guest in guests)
-            {
-                guest.ConguratulationMsgId = null;
-                guest.ConguratulationMsgFailed = null;
-                guest.ConguratulationMsgDelivered = null;
-                guest.ConguratulationMsgSent = null;
-                guest.ConguratulationMsgRead = null;
-            }
-
-            await db.SaveChangesAsync();
-
-            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendCongratulationsAgain);
-            return Ok();
-        }
-
+        /// <summary>
+        /// Displays events by gatekeeper page with DataTables support.
+        /// Provides filter dropdowns for gatekeeper, address, event type, and dates.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <returns>Events by gatekeeper view with DataTables</returns>
         [HttpGet]
         [AuthorizeRoles("Administrator")]
         public async Task<IActionResult> EventsByGatekeeper()
@@ -631,6 +1314,12 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
+        /// <summary>
+        /// API endpoint for filtering events by gatekeeper with server-side pagination.
+        /// Supports filtering by event title, ID, city, type, date range, assignment status, and gatekeeper.
+        /// Returns JSON data for DataTables.
+        /// </summary>
+        /// <returns>JSON with filtered event data for DataTables</returns>
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> FilterEventsByGK()
         {
@@ -698,6 +1387,16 @@ namespace EventPro.Web.Controllers
             return Ok(jsonData);
         }
 
+        #endregion
+
+        #region Gatekeeper Check-in/Check-out Actions
+
+        /// <summary>
+        /// Displays gatekeeper check-in/check-out history page (legacy version).
+        /// Shows check-in and check-out logs for gatekeepers at events.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <returns>Gatekeeper checks view</returns>
         [AuthorizeRoles("Administrator")]
         public async Task<IActionResult> GatekeeperChecks()
         {
@@ -739,6 +1438,13 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
+        /// <summary>
+        /// POST action for filtering gatekeeper check-in/check-out history (legacy version).
+        /// Filters by gatekeeper, city, check type, and date range.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="collection">Form collection with filter parameters</param>
+        /// <returns>Filtered gatekeeper checks view</returns>
         [HttpPost]
         [AuthorizeRoles("Administrator")]
         public async Task<IActionResult> GatekeeperChecks(IFormCollection collection)
@@ -800,10 +1506,13 @@ namespace EventPro.Web.Controllers
                  .OrderByDescending(p => p.Id).Take(200).ToList();
             return View();
         }
+
         /// <summary>
-        /// 
+        /// Displays gatekeeper check-in/check-out history page with DataTables support.
+        /// Provides filter dropdowns for gatekeeper, address, and check type.
+        /// Accessible by Administrator and Agent.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Gatekeeper checks view with DataTables</returns>
         [AuthorizeRoles("Administrator", "Agent")]
         public async Task<IActionResult> GatekeepersCheck()
         {
@@ -825,6 +1534,12 @@ namespace EventPro.Web.Controllers
             return View();
         }
 
+        /// <summary>
+        /// API endpoint for filtering gatekeeper check-in/check-out logs with server-side pagination.
+        /// Supports filtering by event title, ID, gatekeeper, city, type, check type, and date range.
+        /// Returns JSON data for DataTables with support for multiple sort columns.
+        /// </summary>
+        /// <returns>JSON with filtered gatekeeper check data for DataTables</returns>
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> FilterGKsCheck()
         {
@@ -936,7 +1651,7 @@ namespace EventPro.Web.Controllers
                 {
                     Id = gkh.Event_Id,
                     EventTitle = gkh.Event.SystemEventTitle,
-                    Icon = gkh.Event.TypeNavigation.Icon,
+                    Icon = gkh.Event.CardInfo.Select(c => c.BackgroundImage).FirstOrDefault(),
                     EventFrom = gkh.Event.EventFrom,
                     EventTo = gkh.Event.EventTo,
                     EventVenue = gkh.Event.EventVenue,
@@ -954,589 +1669,738 @@ namespace EventPro.Web.Controllers
             return Ok(new { recordsFiltered = total, recordsTotal = total, data });
         }
 
-        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
-        public IActionResult ArchiveEvents()
+        #endregion
+
+        #region Guest Management Actions
+
+        /// <summary>
+        /// Deletes all guests for a specific event.
+        /// Removes guest records from database and deletes associated card preview files from blob storage.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID to delete guests from</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> DeleteAllGuests(int eventId)
         {
-            ViewBag.Icon = "nav-icon fas fa-calendar";
-            SetBreadcrum("Events", "/admin");
-
-            return View("ArchiveEvents - Copy");
-        }
-
-
-        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
-        [HttpPost("~/api/GetArchiveEvents")]
-        public async Task<IActionResult> GetArchiveEvents()
-        {
-            var pageSize = int.Parse(Request.Form["length"]);
-            var skip = int.Parse(Request.Form["start"]);
-
-            var searchValue = Request.Form["search[value]"];
-            searchValue = searchValue.ToString();
-
-            var sortColumn = Request.Form[string.Concat("columns[", Request.Form["order[0][column]"], "][name]")];
-            var sortColumnDirection = Request.Form["order[0][dir]"];
-
-            IQueryable<VwEvents> events_ = db.VwEvents.Where(e => (e.EventTo < DateTime.Now && e.IsDeleted != true) && (
-            string.IsNullOrEmpty(searchValue) ? true
-            : (e.Id.ToString().Contains(searchValue))
-            || (e.LinkedEvent.ToString().Contains(searchValue))
-            || (e.EventTo.ToString().Contains(searchValue))
-            || (e.EventFrom.ToString().Contains(searchValue))
-            || (e.EventTitle.Contains(searchValue))
-            || (e.EventVenue.Contains(searchValue))
-            || (e.CreatedOn.ToString().Contains(searchValue))
-            || (string.Concat(e.FirstName, " ", e.LastName).Contains(searchValue))
-            || (e.Status.Contains(searchValue))
-            )).AsNoTracking();
-
-
-            if (!(string.IsNullOrEmpty(sortColumn)) && !string.IsNullOrEmpty(sortColumnDirection))
-            {
-                events_ = events_.OrderBy(string.Concat(sortColumn, " ", sortColumnDirection)).Reverse();
-            }
-
-            var result = await events_.Skip(skip).Take(pageSize).ToListAsync();
-            List<EventVM> eventsVM = new();
-
-            foreach (var evnt in result)
-            {
-                EventVM eventVM = new(evnt);
-                eventsVM.Add(eventVM);
-            }
-
-            var recordsTotal = await events_.CountAsync();
-            var jsonData = new
-            {
-                recordsFiltered = recordsTotal,
-                recordsTotal,
-                data = eventsVM
-            };
-
-            return Ok(jsonData);
-        }
-
-        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
-        [HttpPost]
-        public async Task<IActionResult> Events(IFormCollection collection)
-        {
-            string clientName = collection["clientName"];
-            string eventStatues = collection["eventStatus"];
-            string dateFrom = collection["dateFrom"];
-            string dateTo = collection["dateTo"];
-
-            ViewBag.Icon = "nav-icon fas fa-calendar";
-            SetBreadcrum("Events", "/admin");
-            Dictionary<int, string> userInfo = new Dictionary<int, string>();
-            var users = db.VwUsers.ToList();
-            foreach (var user in users)
-            {
-                userInfo.Add(user.UserId, user.FirstName + " " + user.LastName);
-            }
-            var events_ = await db.VwEvents.OrderByDescending(p => p.Id).ToListAsync();
-
-            if (clientName != null && clientName.Length > 0)
-            {
-                events_ = events_.Where(p => p.CreatedFor <= Convert.ToInt32(clientName)).ToList();
-
-            }
-
-            if (dateFrom != null && dateFrom.Length > 0)
-            {
-                events_ = events_.Where(p => p.EventFrom >= Convert.ToDateTime(dateFrom)).ToList();
-            }
-
-            if (dateTo != null && dateTo.Length > 0)
-            {
-                events_ = events_.Where(p => p.EventTo <= Convert.ToDateTime(dateTo)).ToList();
-            }
-
-            if (eventStatues != null && eventStatues.Length > 0)
-            {
-                if (eventStatues.Contains("In Progress") && eventStatues.Contains("Upcoming") && eventStatues.Contains("Past"))
-                    events_ = events_.ToList();
-                else if (eventStatues.Contains("In Progress") && eventStatues.Contains("Upcoming"))
-                    events_ = events_.Where(p => p.EventTo >= DateTime.Today).ToList();
-                else if (eventStatues.Contains("Past") && eventStatues.Contains("Upcoming"))
-                    events_ = events_.Where(p => p.EventFrom < DateTime.Today || p.EventFrom > DateTime.Today).ToList();
-                else if (eventStatues.Contains("Past"))
-                    events_ = events_.Where(p => p.EventTo < DateTime.Today).ToList();
-                else if (eventStatues.Contains("Upcoming"))
-                    events_ = events_.Where(p => p.EventFrom > DateTime.Today).ToList();
-                else if (eventStatues.Contains("In Progress"))
-                    events_ = events_.Where(p => p.EventFrom <= DateTime.Today && p.EventTo >= DateTime.Today).ToList();
-
-            }
-            ViewBag.Users = userInfo;
-            ViewBag.Client = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "FullName");
-            ViewBag.FilePath = _configuration.GetSection("Uploads").GetSection("Invoice").Value;
-            ViewBag.Gatekeeper = db.VwUsers.Where(p => p.RoleName == "Gatekeeper").ToList();
-            ViewBag.Events = events_;
-            return View();
-        }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> _Events()
-        {
-            var clients = new List<DAL.Models.Users>();
-            if (HasOperatorRole())
-            {
-                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                var createdForIds = await db.Events
-                    .Where(e => e.EventOperators.Any(p => p.OperatorId == userId))
-                    .Select(e => e.CreatedFor)
-                    .Distinct()
-                .ToListAsync();
-                clients = await db.Users.Where(p => (createdForIds.Contains(p.UserId) || p.CreatedBy == userId) &&
-                p.Role == RoleIds.Client)
-                    .OrderByDescending(e => e.UserId)
-                    .ToListAsync();
-            }
-            else
-            {
-                clients = await db.Users.Where(p => p.Role == RoleIds.Client)
-                    .OrderByDescending(e => e.UserId)
-                    .ToListAsync();
-            }
-
-            ViewBag.Type = new SelectList(await db.EventCategory.AsNoTracking().ToListAsync(), "EventId", "Category");
-            ViewBag.Users = new SelectList(clients,
-                "UserId", "UserName");
-
-            ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today)
-                .Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.SystemEventTitle })
+            var guests = await db.Guest.Where(e => e.EventId == eventId)
                 .AsNoTracking()
-                .ToListAsync(), "Id", "Value");
+                .ToListAsync();
+            db.Guest.RemoveRange(guests);
+            await db.SaveChangesAsync();
+            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
 
-            ViewBag.Icon = "nav-icon fas fa-calendar";
-            ViewBag.EventLocations =
-                new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync())
-                .Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName })
-                , "Id", "Location");
+            // Delete from Cloudinary
+            var prefix = $"upload/cards/{eventId}/";
 
-            SetBreadcrum("Events", "/admin");
-            return View("EditEvent - Copy", new Events());
+            var deletedCounter = await _cloudinaryService
+                .DeleteByPrefixAsync(prefix);
+
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, eventId, DAL.Enum.ActionEnum.DeleteAllGuests);
+
+            Log.Information(
+               "Guest cards deletion executed. EventId={EventId}, DeletedCount={DeletedCount}, DeletedBy={UserId}",
+               eventId,
+               deletedCounter,
+               userId);
+
+            Log.Information("All guests deleted: EventId={EventId}, GuestsRemoved={Count}, DeletedBy={UserId}", eventId, guests.Count, userId);
+
+            return Ok();
         }
 
-        [HttpPost]
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> _Events(Events events)
+        /// <summary>
+        /// Deletes all guest invitation card files for a specific event from blob storage.
+        /// Does not affect guest records in database.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID to delete cards from</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> DeleteAllGuestsCards(int eventId)
         {
-            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-
-            if (events.EventFrom > events.EventTo)
-            {
-                ViewBag.ErrorDate = "(End date should be greater then from date)";
-                ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
-                ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
-                ViewBag.Icon = "nav-icon fas fa-calendar";
-                ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
-                ViewBag.EventLocations =
-               new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync())
-               .Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName }), "Id", "Location");
-                SetBreadcrum("Events", "/admin");
-                return View("EditEvent - Copy", events);
-            }
-            if (string.IsNullOrEmpty(events.EventDescription) || string.IsNullOrWhiteSpace(events.EventDescription))
-            {
-                ViewBag.ErrorDesc = "(Event Description Can not be empty)";
-                ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
-                ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
-                ViewBag.Icon = "nav-icon fas fa-calendar";
-                ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
-                SetBreadcrum("Events", "/admin");
-                ViewBag.EventLocations =
-               new SelectList((await db.City.Include(c => c.Country).ToListAsync())
-               .Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName })
-                , "Id", "Location");
-                return View("EditEvent - Copy", events);
-            }
-
-            if (events.GmapCode.Length > 0)
-            {
-                string[] gmaps = events.GmapCode.Split('/');
-                if (gmaps.Length > 0)
-                {
-                    events.GmapCode = gmaps[gmaps.Length - 1];
-                }
-            }
-
-            var files = Request.Form.Files;
-            string filename = string.Empty;
-            bool hasFile = false;
-
-            foreach (var file in files)
-            {
-                try
-                {
-                    using (var stream = file.OpenReadStream())
-                    {
-                        if (file.ContentType.Contains("image"))
-                        {
-                            filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
-                        }
-                        else if (file.ContentType.Contains("video"))
-                        {
-                            filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
-                        }
-                        else if (file.ContentType.Contains("application/pdf"))
-                        {
-                            filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
-                        }
-                        
-                        if (!string.IsNullOrEmpty(filename))
-                        {
-                            hasFile = true;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ModelState.AddModelError(string.Empty, ex.Message);
-                    // Re-populate ViewBag data
-                    ViewBag.Type = new SelectList(db.EventCategory.ToList(), "EventId", "Category");
-                    ViewBag.Users = new SelectList(db.VwUsers.Where(p => p.RoleName == "Client").ToList(), "UserId", "UserName");
-                    ViewBag.Icon = "nav-icon fas fa-calendar";
-                    ViewBag.LinkedEvents = new SelectList(await db.Events.Where(p => p.EventTo >= DateTime.Today).Select(x => new BasicData { Id = x.Id, Value = x.Id + "-" + x.EventTitle }).AsNoTracking().ToListAsync(), "Id", "Value");
-                    ViewBag.EventLocations = new SelectList((await db.City.Include(c => c.Country).AsNoTracking().ToListAsync()).Select(e => new { e.Id, Location = e.CityName + "|" + e.Country.CountryName }), "Id", "Location");
-                    SetBreadcrum("Events", "/admin");
-                    return View("EditEvent - Copy", events);
-                }
-            }
-            events.SendingConfiramtionMessagesLinksLanguage = "Arabic";
-            events.LinkGuestsCardText = "????? ?????? ?????? ???";
-            events.ConfirmationButtonsType = "QuickReplies";
-            events.IsDeleted = false;
-            events.MessageHeaderImage = filename;
-            events.CreatedBy = userId;
-            events.CreatedOn = DateTime.UtcNow;
-            events.Status = "Active";
-            events.CityId = events.CityId;
-            events.WhatsappProviderName = "Default";
-            events.AttendanceTime = events.EventFrom.Value + events.AttendanceTime.Value.TimeOfDay;
-            events.LeaveTime = events.LeaveTime.Value;
-            events.ContactName = events.ContactName;
-            events.ContactPhone = events.ContactPhone;
-            events.ShowFailedSendingEventLocationLink = true;
-            events.ShowFailedSendingCongratulationLink = true;
-            events.ChoosenNumberWithinCountry = 1;
-            var settings = await db.AppSettings.FirstOrDefaultAsync();
-           // events.choosenSendingWhatsappProfile = settings.WhatsappDefaultTwilioProfile;
-            City city = await db.City.Where(e => e.Id == events.CityId)
-                .Include(e => e.Country)
-                .FirstOrDefaultAsync();
-            if (city.Country.CountryName.Contains("??????"))
-            {
-                events.choosenSendingCountryNumber = "KUWAIT";
-            }
-            else if (city.Country.CountryName.Contains("???????"))
-            {
-                events.choosenSendingCountryNumber = "BAHRAIN";
-            }
-            else
-            {
-                events.choosenSendingCountryNumber = "SAUDI";
-            }
-
-            await db.Events.AddAsync(events);
-            await db.SaveChangesAsync();
-
-            var eventOperator = new EventOperator()
-            {
-                OperatorId = userId,
-                EventId = events.Id,
-                EventStart = events.EventFrom,
-                EventEnd = events.EventTo
-            };
-
-            await db.EventOperator.AddAsync(eventOperator);
-            await db.SaveChangesAsync();
-
-            await _auditLogService.AddAsync(userId, events.Id);
-
             try
             {
-                if (events.ShowOnCalender == true)
+                // Validate event exists
+                var eventExists = await db.Events
+                    .AsNoTracking()
+                    .AnyAsync(e => e.Id == eventId);
+
+                if (!eventExists)
                 {
-                    var request = new MessageRequest()
-                    {
-                        Topic = $"{events.CityId}",
-                        Title = events.EventTitle,
-                        Body = $"New event is created! \nstarting in {events.EventVenue} at {events.AttendanceTime}"
-                    };
-
-                    var message = new Message()
-                    {
-                        Notification = new Notification
-                        {
-                            Title = request.Title,
-                            Body = request.Body
-                        },
-                    };
-                    if (string.IsNullOrEmpty(request.Tokens))
-                    {
-                        message.Topic = request.Topic;
-                    }
-                    else
-                    {
-                        message.Token = request.Tokens;
-                    }
-                    if (FirebaseApp.DefaultInstance == null)
-                    {
-                        FirebaseApp.Create(new AppOptions()
-                        {
-                            Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "EventPro-1b0ca-firebase-adminsdk-yp15k-b2881aed59.json")),
-                        });
-                    }
-
-                    var messaging = FirebaseMessaging.DefaultInstance;
-                    var result = await messaging.SendAsync(message);
+                    Log.Warning("DeleteAllGuestsCards failed - Event not found. EventId={EventId}", eventId);
+                    return NotFound("Event not found.");
                 }
+
+                var userIdClaim = _httpContextAccessor.HttpContext?
+                    .User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    Log.Warning("DeleteAllGuestsCards failed - Unauthorized access. EventId={EventId}", eventId);
+                    return Unauthorized();
+                }
+
+                var userId = int.Parse(userIdClaim);
+
+                // Delete from Cloudinary
+                var prefix = $"upload/cards/{eventId}/";
+
+                var deletedCounter = await _cloudinaryService
+                    .DeleteByPrefixAsync(prefix);
+
+                Log.Information(
+                    "Guest cards deletion executed. EventId={EventId}, DeletedCount={DeletedCount}, DeletedBy={UserId}",
+                    eventId,
+                    deletedCounter,
+                    userId);
+
+                // Audit log
+                await _auditLogService.AddAsync(
+                    userId,
+                    eventId,
+                    DAL.Enum.ActionEnum.DeleteAllGuestsCards);
+
+                return Ok(new
+                {
+                    success = true,
+                    deletedCount = deletedCounter
+                });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                Log.Error(dbEx,
+                    "Database error while deleting guest cards. EventId={EventId}",
+                    eventId);
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Database error occurred while logging the operation.");
             }
             catch (Exception ex)
             {
-            }
+                Log.Error(ex,
+                    "Unexpected error while deleting guest cards. EventId={EventId}",
+                    eventId);
 
-            await CreateReminderIcsFileAsync(events);
-            Log.Information($"Event with ID: {events.Id} created by:{userId}");
-            return RedirectToAction(AppAction.Events, AppController.Admin);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Unexpected error occurred.");
+            }
         }
 
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> EditEvent(int id)
+        /// <summary>
+        /// Resets all message status fields for all guests of an event.
+        /// Clears confirmation, card, reminder, congratulation, and location message statuses.
+        /// Allows all messages to be resent.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID to reset guest statuses</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> ResetAllGuestsStatus(int id)
         {
-            if (HasOperatorRole())
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
+            foreach (var guest in guests)
             {
-                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                var isOperatorHasAccess = db.EventOperator
-                     .Any(e => e.OperatorId == userId && e.EventId == id);
-
-                if (!isOperatorHasAccess)
-                    return new RedirectToActionResult(AppAction.AccessDenied, AppController.Login, new { });
+                guest.Response = null;
+                guest.TextDelivered = null;
+                guest.TextRead = null;
+                guest.TextSent = null;
+                guest.TextFailed = null;
+                guest.MessageId = null;
+                guest.ConguratulationMsgId = null;
+                guest.ConguratulationMsgFailed = null;
+                guest.ConguratulationMsgDelivered = null;
+                guest.ConguratulationMsgSent = null;
+                guest.ConguratulationMsgRead = null;
+                guest.ImgDelivered = null;
+                guest.ImgFailed = null;
+                guest.ImgRead = null;
+                guest.ImgSent = null;
+                guest.TextFailed = null;
+                guest.ImgSentMsgId = null;
+                guest.WaresponseTime = null;
+                guest.whatsappMessageEventLocationId = null;
+                guest.EventLocationSent = null;
+                guest.EventLocationRead = null;
+                guest.EventLocationDelivered = null;
+                guest.EventLocationFailed = null;
+                guest.waMessageEventLocationForSendingToAll = null;
+                guest.ReminderMessageId = null;
+                guest.ReminderMessageSent = null;
+                guest.ReminderMessageRead = null;
+                guest.ReminderMessageDelivered = null;
+                guest.ReminderMessageFailed = null;
             }
 
-            var events = await db.Events.Where(p => p.Id == id)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            events.ReminderMessage = events.ReminderMessage?.Replace("\\n", "\r\n").TrimEnd();
-            events.ThanksMessage = events.ThanksMessage?.Replace("\\n", "\r\n").TrimEnd();
-
-            await SetControls(events);
-            return View(events);
-        }
-
-        [HttpPost]
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> EditEvent([FromForm] Events events)
-        {
-            var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-
-            if (events.EventFrom > events.EventTo)
-            {
-                await SetControls(events);
-                ViewBag.ErrorDate = "(Date should be greater then event from date)";
-                return View("EditEvent", events);
-            }
-            if (string.IsNullOrEmpty(events.EventDescription) || string.IsNullOrWhiteSpace(events.EventDescription))
-            {
-                await SetControls(events);
-                ViewBag.ErrorDesc = "(Event Description Can not be empty)";
-                return View("EditEvent", events);
-            }
-
-            Events evt = await db.Events.Where(p => p.Id == events.Id)
-                .FirstOrDefaultAsync();
-
-            if (events.GmapCode.Length > 0)
-            {
-                string[] gmaps = events.GmapCode.Split('/');
-                if (gmaps.Length > 0)
-                {
-                    events.GmapCode = gmaps[gmaps.Length - 1];
-                }
-            }
-            var files = Request.Form.Files;
-            if (files.Count != 0)
-            {
-                string filename = string.Empty;
-                bool hasFile = false;
-                foreach (var file in files)
-                {
-                    try
-                    {
-                        using (var stream = file.OpenReadStream())
-                        {
-                            if (file.ContentType.Contains("image"))
-                            {
-                                filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
-                            }
-                            else if (file.ContentType.Contains("video"))
-                            {
-                                filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
-                            }
-                            else if (file.ContentType.Contains("application/pdf"))
-                            {
-                                filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
-                            }
-
-                            if (!string.IsNullOrEmpty(filename))
-                            {
-                                hasFile = true;
-
-                                if (file.Name.Equals("MessageHeaderImage"))
-                                {
-                                    evt.MessageHeaderImage = filename;
-                                }
-                                else if (file.Name.Equals("ReminderMsgHeaderImg"))
-                                {
-                                    evt.ReminderMsgHeaderImg = filename;
-                                }
-                                else if (file.Name.Equals("CongratulationMsgHeaderImg"))
-                                {
-                                    evt.CongratulationMsgHeaderImg = filename;
-                                }
-                                else if (file.Name.Equals("ResponseInterestedOfMarketingMsgHeaderImage"))
-                                {
-                                    evt.ResponseInterestedOfMarketingMsgHeaderImage = filename;
-                                }
-                                else if (file.Name.Equals("ResponseNotInterestedOfMarketingMsgHeaderImage"))
-                                {
-                                    evt.ResponseNotInterestedOfMarketingMsgHeaderImage = filename;
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        await SetControls(events);
-                        ModelState.AddModelError(string.Empty, ex.Message);
-                        return View("EditEvent", events);
-                    }
-                }
-            }
-            evt.CustomConfirmationTemplateWithVariables = events.CustomConfirmationTemplateWithVariables;
-            evt.CustomCardTemplateWithVariables = events.CustomCardTemplateWithVariables;
-            evt.CustomReminderTemplateWithVariables = events.CustomReminderTemplateWithVariables;
-            evt.CustomCongratulationTemplateWithVariables = events.CustomCongratulationTemplateWithVariables;
-            evt.SendingConfiramtionMessagesLinksLanguage = events.SendingConfiramtionMessagesLinksLanguage;
-            evt.LinkGuestsCardText = events.LinkGuestsCardText;
-            evt.LinkGuestsLocationEmbedSrc = events.LinkGuestsLocationEmbedSrc;
-            evt.ConfirmationButtonsType = events.ConfirmationButtonsType;
-            evt.ResponseInterestedOfMarketingMsg = events.ResponseInterestedOfMarketingMsg;
-            evt.ResponseNotInterestedOfMarketingMsg = events.ResponseNotInterestedOfMarketingMsg;
-            evt.SystemEventTitle = events.SystemEventTitle;
-            evt.WhatsappProviderName = events.WhatsappProviderName ?? evt.WhatsappProviderName;
-            evt.choosenSendingCountryNumber = events.choosenSendingCountryNumber ?? evt.choosenSendingCountryNumber;
-            evt.choosenSendingWhatsappProfile = events.choosenSendingWhatsappProfile ?? evt.choosenSendingWhatsappProfile;
-            evt.ChoosenNumberWithinCountry = events.ChoosenNumberWithinCountry == 0 ? evt.ChoosenNumberWithinCountry : events.ChoosenNumberWithinCountry;
-            evt.ShowFailedSendingCongratulationLink = events.ShowFailedSendingCongratulationLink;
-            evt.ShowFailedSendingEventLocationLink = events.ShowFailedSendingEventLocationLink;
-            evt.FailedSendingConfiramtionMessagesLinksLanguage = events.FailedSendingConfiramtionMessagesLinksLanguage;
-            evt.WhatsappConfirmation = events.WhatsappConfirmation;
-            evt.WhatsappPush = events.WhatsappPush;
-            evt.CreatedFor = events.CreatedFor;
-            evt.FailedGuestsReminderMessage = events.FailedGuestsReminderMessage;
-            evt.FailedGuestsCongratulationMsg = events.FailedGuestsCongratulationMsg;
-            evt.FailedGuestsCardText = events.FailedGuestsCardText;
-            evt.FailedGuestsLocationEmbedSrc = events.FailedGuestsLocationEmbedSrc;
-            evt.FailedGuestsMessag = events.FailedGuestsMessag;
-            evt.ConguratulationsMsgType = events.ConguratulationsMsgType;
-            evt.ConguratulationsMsgTemplateName = events.ConguratulationsMsgTemplateName;
-            evt.MessageHeaderText = events.MessageHeaderText;
-            evt.CardInvitationTemplateType = events.CardInvitationTemplateType;
-            evt.CustomCardInvitationTemplateName = events.CustomCardInvitationTemplateName;
-            evt.CustomInvitationMessageTemplateName = events.CustomInvitationMessageTemplateName;
-            evt.EventTitle = events.EventTitle;
-            evt.ParentTitleGender = events.ParentTitleGender;
-            evt.MessageLanguage = events.MessageLanguage;
-            evt.EventDescription = events.EventDescription;
-            evt.ParentTitle = events.ParentTitle;
-            evt.Type = events.Type;
-            evt.GmapCode = events.GmapCode;
-            evt.EventVenue = events.EventVenue;
-            evt.ModifiedBy = userId;
-            evt.ModifiedOn = DateTime.UtcNow;
-            evt.SendInvitation = events.SendInvitation;
-            evt.CityId = events.CityId;
-            evt.CityId = events.CityId;
-            evt.AttendanceTime = events.EventFrom.Value + events.AttendanceTime.Value.TimeOfDay;
-            evt.ShowOnCalender = events.ShowOnCalender;
-            evt.LinkedEvent = events.LinkedEvent;
-            evt.LeaveTime = events.LeaveTime.Value;
-            evt.ContactName = events.ContactName;
-            evt.ContactPhone = events.ContactPhone;
-            evt.SendingType = events.SendingType;
-            evt.ConguratulationsMsgSentOnNumber = events.ConguratulationsMsgSentOnNumber;
-            evt.ReminderMessageTempName = events.ReminderMessageTempName;
-            evt.ReminderMessage = events.ReminderMessage?.Replace("\r\n", "\\n").TrimEnd();
-            evt.ThanksMessage = events.ThanksMessage?.Replace("\r\n", "\\n").TrimEnd();
-            evt.EventFrom = events.EventFrom;
-            evt.EventTo = events.EventTo;
-            evt.ReminderTempId = events.ReminderTempId;
-            evt.ThanksTempId = events.ThanksTempId;
-            evt.DeclineTempId = events.DeclineTempId;
-
-            Log.Information("Event {eId} edited by {uId}", evt.Id, userId);
-
-            await _auditLogService.AddAsync(userId, events.Id, DAL.Enum.ActionEnum.UpdateEvent);
             await db.SaveChangesAsync();
 
-            var eventOperators = await db.EventOperator.Where(e => e.EventId == evt.Id).ToListAsync();
-            foreach (var eventOperator in eventOperators)
-            {
-                eventOperator.EventStart = evt.EventFrom;
-                eventOperator.EventEnd = evt.EventTo;
-            }
-            db.EventOperator.UpdateRange(eventOperators);
-            await db.SaveChangesAsync();
-            await CreateReminderIcsFileAsync(evt);
-            return RedirectToAction("ViewEvent", AppController.Admin, new { id = events.Id });
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.ResetAllGuestsStatus);
+
+            Log.Information("All guest statuses reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
+            return Ok();
         }
 
-        [AuthorizeRoles("Administrator", "Operator", "Agent", "Supervisor", "Accounting")]
-        public async Task<IActionResult> ViewEvent(int id)
+        /// <summary>
+        /// Resets confirmation message status for all guests of an event.
+        /// Allows confirmation messages to be resent to all guests.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> AllowSendConfirmationMessageAgain(int id)
         {
-            if (HasOperatorRole())
-            {
-                var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                var isOperatorHasAccess = db.EventOperator
-                     .Any(e => e.OperatorId == userId && e.EventId == id);
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
 
-                if (!isOperatorHasAccess)
-                    return new RedirectToActionResult(AppAction.AccessDenied, AppController.Login, new { });
+            foreach (var guest in guests)
+            {
+                guest.Response = null;
+                guest.TextDelivered = null;
+                guest.TextRead = null;
+                guest.TextSent = null;
+                guest.TextFailed = null;
+                guest.MessageId = null;
+                guest.WaresponseTime = null;
             }
 
-            ViewBag.Icon = "nav-icon fas fa-pencil-square-o";
-            ViewBag.CardImage = id + ".png";
-            var cardInfo = await db.CardInfo.Where(p => p.EventId == id)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
+            await db.SaveChangesAsync();
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendConfirmationAgain);
 
-            if (cardInfo == null)
-            {
-                return RedirectToAction("QRSettings", "admin", new { id = id });
-            }
+            Log.Information("Confirmation messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
 
-            ViewBag.CardInfo = cardInfo;
-            ViewBag.EventWhatsappProvider = await db.Events.Where(e => e.Id == id)
-                .Select(e => e.WhatsappProviderName)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            ViewBag.CurrentUsedWhatsappProvider = await db.AppSettings
-                .Select(e => e.WhatsappServiceProvider)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            var model = await db.VwEvents.Where(p => p.Id == id)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            SetBreadcrum("Events", "/admin");
-            return View("ViewEvent - Copy", model);
+            return Ok();
         }
 
+        /// <summary>
+        /// Resets invitation card message status for all guests of an event.
+        /// Allows card messages to be resent to all guests.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> AllowSendCardMessageAgain(int id)
+        {
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
+
+            foreach (var guest in guests)
+            {
+                guest.ImgDelivered = null;
+                guest.ImgFailed = null;
+                guest.ImgRead = null;
+                guest.ImgSent = null;
+                guest.TextFailed = null;
+                guest.ImgSentMsgId = null;
+            }
+
+            await db.SaveChangesAsync();
+
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendCardsAgain);
+
+            Log.Information("Card messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Resets event location message status for all guests of an event.
+        /// Allows location messages to be resent to all guests.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> AllowSendEventLocationMessageAgain(int id)
+        {
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
+
+            foreach (var guest in guests)
+            {
+                guest.EventLocationSent = null;
+                guest.EventLocationRead = null;
+                guest.EventLocationDelivered = null;
+                guest.EventLocationFailed = null;
+                guest.waMessageEventLocationForSendingToAll = null;
+            }
+
+            await db.SaveChangesAsync();
+
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendEventLocationAgain);
+
+            Log.Information("Event location messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Resets reminder message status for all guests of an event.
+        /// Allows reminder messages to be resent to all guests.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> AllowSendReminderMessageAgain(int id)
+        {
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
+
+            foreach (var guest in guests)
+            {
+                guest.ReminderMessageId = null;
+                guest.ReminderMessageSent = null;
+                guest.ReminderMessageRead = null;
+                guest.ReminderMessageDelivered = null;
+                guest.ReminderMessageFailed = null;
+            }
+
+            await db.SaveChangesAsync();
+
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendRemindersAgain);
+
+            Log.Information("Reminder messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Resets congratulation message status for all guests of an event.
+        /// Allows congratulation messages to be resent to all guests.
+        /// Only accessible by Administrator.
+        /// </summary>
+        /// <param name="id">Event ID</param>
+        /// <returns>OK response</returns>
+        [HttpGet]
+        [AuthorizeRoles("Administrator")]
+        public async Task<IActionResult> AllowSendCongratulationMessageAgain(int id)
+        {
+            var guests = await db.Guest.Where(e => e.EventId == id)
+                .ToListAsync();
+
+            foreach (var guest in guests)
+            {
+                guest.ConguratulationMsgId = null;
+                guest.ConguratulationMsgFailed = null;
+                guest.ConguratulationMsgDelivered = null;
+                guest.ConguratulationMsgSent = null;
+                guest.ConguratulationMsgRead = null;
+            }
+
+            await db.SaveChangesAsync();
+
+            var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            await _auditLogService.AddAsync(userId, id, DAL.Enum.ActionEnum.AllowSendCongratulationsAgain);
+
+            Log.Information("Congratulation messages reset: EventId={EventId}, GuestsAffected={Count}, ResetBy={UserId}", id, guests.Count, userId);
+
+            return Ok();
+        }
+
+        #endregion
+
+        #region WhatsApp Template Management Actions
+
+        /// <summary>
+        /// Fetches and stores custom WhatsApp message templates for an event.
+        /// Supports 4 template types: Confirmation (1), Card (2), Reminder (3), Congratulation (4).
+        /// Validates template variable sequence and stores the template content in database.
+        /// </summary>
+        /// <param name="eventId">Event ID to update</param>
+        /// <param name="typeId">Template type (1-4)</param>
+        /// <param name="customTemplates">Template names from request body</param>
+        /// <returns>JSON with success status and template content</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> FetchCustomTemplates(int eventId, int typeId, [FromBody] CustomTemplates customTemplates)
+        {
+            var access = AccessService.AllowAccessForAdministratorAndOperatorOnly(this.HttpContext);
+            if (access != null) return access;
+
+            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+            if (typeId == 1)
+            {
+                evnt.CustomInvitationMessageTemplateName = customTemplates.ConfirmationTemplate;
+            }
+            else if (typeId == 2)
+            {
+                evnt.CustomCardInvitationTemplateName = customTemplates.CardTemplate;
+            }
+            else if (typeId == 3)
+            {
+                evnt.ReminderTempId = customTemplates.ReminderTemplate;
+            }
+            else if (typeId == 4)
+            {
+                evnt.ThanksTempId = customTemplates.CongratulationTemplate;
+            }
+            db.Update(evnt);
+            await db.SaveChangesAsync();
+            try
+            {
+                var template = await _WhatsappSendingProvider
+                    .SelectTwilioSendingProvider()
+                    .GetTemplatesSync()
+                    .GetCustomTemplateWithVariablesAsync(evnt, typeId);
+
+                var matches = Regex.Matches(template, @"\{\{(\d+)\}\}")
+                      .Cast<Match>()
+                      .Select(m => int.Parse(m.Groups[1].Value))
+                      .ToList();
+
+
+                // Check if sequence is strictly ascending
+                for (int i = 1; i < matches.Count; i++)
+                {
+                    if (matches[i] < matches[i - 1])
+                        throw new Exception();
+                }
+
+                if (typeId == 1)
+                {
+                    evnt.CustomConfirmationTemplateWithVariables = template;
+                }
+                else if (typeId == 2)
+                {
+                    evnt.CustomCardTemplateWithVariables = template;
+                }
+                else if (typeId == 3)
+                {
+                    evnt.CustomReminderTemplateWithVariables = template;
+                }
+                else if (typeId == 4)
+                {
+                    evnt.CustomCongratulationTemplateWithVariables = template;
+                }
+                db.Update(evnt);
+                await db.SaveChangesAsync();
+                return Json(new { success = true, message = template, typeId = typeId });
+            }
+            catch
+            {
+                if (typeId == 1)
+                {
+                    evnt.CustomConfirmationTemplateWithVariables = string.Empty;
+                }
+                else if (typeId == 2)
+                {
+                    evnt.CustomCardTemplateWithVariables = string.Empty;
+                }
+                else if (typeId == 3)
+                {
+                    evnt.CustomReminderTemplateWithVariables = string.Empty;
+                }
+                else if (typeId == 4)
+                {
+                    evnt.CustomCongratulationTemplateWithVariables = string.Empty;
+                }
+
+                db.Events.Update(evnt);
+                await db.SaveChangesAsync();
+                return Json(new { success = false, typeId = typeId });
+            }
+
+        }
+
+        #endregion
+
+        #region Event Image Management Actions
+
+        /// <summary>
+        /// Deletes the message header image for an event from blob storage.
+        /// Clears the MessageHeaderImage field in the database.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>Redirect to edit event page</returns>
+        public async Task<IActionResult> DeleteHeaderMessageImage(int eventId)
+        {
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+            var filename = evnt.MessageHeaderImage;
+            var filePath = environment + path + "/" + filename;
+
+
+            if (await _blobStorage.FileExistsAsync(filePath))
+            {
+                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
+            }
+
+            evnt.MessageHeaderImage = "";
+            await db.SaveChangesAsync();
+
+            return Redirect("~/admin/EditEvent/" + evnt.Id);
+
+
+        }
+
+        /// <summary>
+        /// Deletes the reminder message header image for an event from blob storage.
+        /// Clears the ReminderMsgHeaderImg field in the database.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>Redirect to edit event page</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> DeleteReminderMessageImage(int eventId)
+        {
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+            var filename = evnt.ReminderMsgHeaderImg;
+            var filePath = environment + path + "/" + filename;
+
+            if (await _blobStorage.FileExistsAsync(filePath))
+            {
+                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
+            }
+
+            evnt.ReminderMsgHeaderImg = "";
+            await db.SaveChangesAsync();
+
+            return Redirect("~/admin/EditEvent/" + evnt.Id);
+
+
+        }
+
+        /// <summary>
+        /// Deletes the marketing interested response image for an event from blob storage.
+        /// Clears the ResponseInterestedOfMarketingMsgHeaderImage field in the database.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>Redirect to edit event page</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> DeleteInterestedMessageImage(int eventId)
+        {
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+            var filename = evnt.ResponseInterestedOfMarketingMsgHeaderImage;
+            var filePath = environment + path + "/" + filename;
+
+            if (await _blobStorage.FileExistsAsync(filePath))
+            {
+                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
+            }
+
+            evnt.ResponseInterestedOfMarketingMsgHeaderImage = "";
+            await db.SaveChangesAsync();
+
+            return Redirect("~/admin/EditEvent/" + evnt.Id);
+
+
+        }
+
+        /// <summary>
+        /// Deletes the marketing not interested response image for an event from blob storage.
+        /// Clears the ResponseNotInterestedOfMarketingMsgHeaderImage field in the database.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>Redirect to edit event page</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> DeleteNotInterestedMessageImage(int eventId)
+        {
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+            var filename = evnt.ResponseNotInterestedOfMarketingMsgHeaderImage;
+            var filePath = environment + path + "/" + filename;
+
+            if (await _blobStorage.FileExistsAsync(filePath))
+            {
+                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
+            }
+
+            evnt.ResponseNotInterestedOfMarketingMsgHeaderImage = "";
+            await db.SaveChangesAsync();
+
+            return Redirect("~/admin/EditEvent/" + evnt.Id);
+
+
+        }
+
+        /// <summary>
+        /// Deletes the congratulation message header image for an event from blob storage.
+        /// Clears the CongratulationMsgHeaderImg field in the database.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>Redirect to edit event page</returns>
+        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        public async Task<IActionResult> DeleteCongratulationMessageImage(int eventId)
+        {
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+            var filename = evnt.CongratulationMsgHeaderImg;
+            var filePath = environment + path + "/" + filename;
+
+            if (await _blobStorage.FileExistsAsync(filePath))
+            {
+                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
+            }
+            evnt.CongratulationMsgHeaderImg = "";
+            await db.SaveChangesAsync();
+
+            return Redirect("~/admin/EditEvent/" + evnt.Id);
+
+
+        }
+
+        #endregion
+
+        #region Calendar ICS File Generation
+
+        /// <summary>
+        /// Generates an ICS (iCalendar) file content for event reminders.
+        /// Creates a calendar event with default times (20:00-23:00) in Arab Standard Time
+        /// and includes a 2-day reminder alarm.
+        /// </summary>
+        /// <param name="evnt">Event to generate ICS for</param>
+        /// <returns>ICS file content as string</returns>
+        private string GenerateCalendarEventICS(Events evnt)
+        {
+            //var location = "https://maps.app.goo.gl/" + evnt.GmapCode;
+
+            // Arab Standard Time zone (UTC+3)
+            //TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
+
+            // Default party start time (20:00 or 8 PM)
+            DateTime eventDate = evnt.EventFrom.Value.Date;
+            DateTime eventStartTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 20, 0, 0);
+
+            // Party end time (23:00 or 11 PM)
+            DateTime eventEndTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 23, 0, 0);
+            // Alert 2 days before
+            //TimeSpan alertOffset = TimeSpan.FromDays(2);
+
+            // Current UTC time
+            DateTime utcNow = DateTime.UtcNow;
+
+            var sb = new StringBuilder();
+            sb.AppendLine("BEGIN:VCALENDAR");
+            sb.AppendLine("VERSION:2.0");
+            sb.AppendLine("METHOD:PUBLISH");
+
+            sb.AppendLine("BEGIN:VEVENT");
+            sb.AppendLine($"UID:{Guid.NewGuid()}");
+            sb.AppendLine($"DTSTAMP:{utcNow:yyyyMMddTHHmmssZ}");
+
+            // Start and end times in standard calendar format
+            sb.AppendLine($"DTSTART;TZID=Arab Standard Time:{eventStartTime:yyyyMMddTHHmmss}");
+            sb.AppendLine($"DTEND;TZID=Arab Standard Time:{eventEndTime:yyyyMMddTHHmmss}");
+
+            sb.AppendLine($"SUMMARY:{evnt.EventTitle}");
+            sb.AppendLine($"LOCATION:{evnt.LinkGuestsLocationEmbedSrc}");
+
+            // Reminder 2 days before
+            sb.AppendLine("BEGIN:VALARM");
+            sb.AppendLine($"TRIGGER:-P2D"); // P2D = 2 days before
+            sb.AppendLine("ACTION:DISPLAY");
+            sb.AppendLine("DESCRIPTION:Reminder");
+            sb.AppendLine("END:VALARM");
+
+            sb.AppendLine("END:VEVENT");
+            sb.AppendLine("END:VCALENDAR");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        // Saves the ICS file content to Cloudinary storage.
+        // Uploads the ICS file and returns the Cloudinary URL.
+        /// </summary>
+        /// <param name="icsContent">ICS file content</param>
+        /// <param name="fileName">File name (without extension)</param>
+        /// <returns>Cloudinary URL of the uploaded ICS file</returns>
+        public async Task<string> SaveReminderIcsFileAsync(string icsContent, string fileName)
+        {
+            try
+            {
+                // Convert ICS content to memory stream
+                var stream = new MemoryStream(Encoding.UTF8.GetBytes(icsContent));
+                
+                // Upload to Cloudinary in 'ics' folder
+                var icsUrl = await _cloudinaryService.UploadRawFileAsync(stream, $"{fileName}.ics", "ics");
+                
+                Log.Information($"ICS file uploaded to Cloudinary: {icsUrl}");
+               
+                return icsUrl;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, $"Failed to upload ICS file to Cloudinary: {ex.Message}");
+                return null;
+            }
+        }
+
+        /*
+                public async Task SaveReminderIcsFileAsync(string icsContent, string fileName)
+        {
+
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string ReminderIcsFolder = _configuration.GetSection("Uploads").GetSection("ReminderIcs").Value;
+            string filePath = environment + ReminderIcsFolder + "/" + fileName + ".ics";
+
+            try
+            {
+
+                if (await _blobStorage.FileExistsAsync(filePath))
+                {
+                    await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
+                }
+
+                using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(icsContent)))
+                {
+                    await _blobStorage.UploadAsync(stream, "ics", filePath, cancellationToken: default);
+                }
+            }
+            catch (IOException ioEx)
+            {
+
+            }
+
+        }
+         */
+        /// <summary>
+        /// Creates and saves a reminder ICS file for an event.
+        /// Combines ICS generation and storage operations.
+        /// </summary>
+        /// <param name="evnt">Event to create reminder for</param>
+        private async Task CreateReminderIcsFileAsync(Events evnt)
+        {
+            var icsContent = GenerateCalendarEventICS(evnt);
+
+            await SaveReminderIcsFileAsync(icsContent, evnt.Id.ToString());
+
+        }
+
+        #endregion
+
+        #region Helper Methods - ViewBag Setup
+
+        /// <summary>
+        /// Populates ViewBag with all dropdown lists and settings required for the Edit Event form.
+        /// Sets up: event types, linked events, gender options, message languages, WhatsApp providers,
+        /// template options, sending types, locations, and date formatting.
+        /// </summary>
+        /// <param name="entity">Event entity for pre-selecting current values</param>
         private async Task SetControls(Events entity)
         {
             ViewBag.CreatedForUserName = await db.Users
@@ -1658,7 +2522,7 @@ namespace EventPro.Web.Controllers
             ViewBag.choosenSendingCountryNumber = new SelectList(
       new List<SelectListItem>
       {
-
+                                                new SelectListItem { Text = "EGYPT", Value = "EGYPT"},
                                                 new SelectListItem { Text = "SAUDI", Value = "SAUDI"},
                                                 new SelectListItem { Text = "KUWAIT", Value = "KUWAIT"},
                                                 new SelectListItem { Text = "BAHRAIN", Value = "BAHRAIN"},
@@ -1675,292 +2539,14 @@ namespace EventPro.Web.Controllers
             ViewBag.EventTo = Convert.ToDateTime(entity.EventTo).ToString("yyyy-MM-dd");
         }
 
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
+        #endregion
 
-        public async Task<IActionResult> FetchCustomTemplates(int eventId, int typeId, [FromBody] CustomTemplates customTemplates)
-        {
-            var access = AccessService.AllowAccessForAdministratorAndOperatorOnly(this.HttpContext);
-            if (access != null) return access;
+        #region Helper Methods - Role Checking
 
-            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
-            if (typeId == 1)
-            {
-                evnt.CustomInvitationMessageTemplateName = customTemplates.ConfirmationTemplate;
-            }
-            else if (typeId == 2)
-            {
-                evnt.CustomCardInvitationTemplateName = customTemplates.CardTemplate;
-            }
-            else if (typeId == 3)
-            {
-                evnt.ReminderTempId = customTemplates.ReminderTemplate;
-            }
-            else if (typeId == 4)
-            {
-                evnt.ThanksTempId = customTemplates.CongratulationTemplate;
-            }
-            db.Update(evnt);
-            await db.SaveChangesAsync();
-            try
-            {
-                var template = await _WhatsappSendingProvider
-                    .SelectTwilioSendingProvider()
-                    .GetTemplatesSync()
-                    .GetCustomTemplateWithVariablesAsync(evnt, typeId);
-
-                var matches = Regex.Matches(template, @"\{\{(\d+)\}\}")
-                      .Cast<Match>()
-                      .Select(m => int.Parse(m.Groups[1].Value))
-                      .ToList();
-
-
-                // Check if sequence is strictly ascending
-                for (int i = 1; i < matches.Count; i++)
-                {
-                    if (matches[i] < matches[i - 1])
-                        throw new Exception();
-                }
-
-                if (typeId == 1)
-                {
-                    evnt.CustomConfirmationTemplateWithVariables = template;
-                }
-                else if (typeId == 2)
-                {
-                    evnt.CustomCardTemplateWithVariables = template;
-                }
-                else if (typeId == 3)
-                {
-                    evnt.CustomReminderTemplateWithVariables = template;
-                }
-                else if (typeId == 4)
-                {
-                    evnt.CustomCongratulationTemplateWithVariables = template;
-                }
-                db.Update(evnt);
-                await db.SaveChangesAsync();
-                return Json(new { success = true, message = template, typeId = typeId });
-            }
-            catch
-            {
-                if (typeId == 1)
-                {
-                    evnt.CustomConfirmationTemplateWithVariables = string.Empty;
-                }
-                else if (typeId == 2)
-                {
-                    evnt.CustomCardTemplateWithVariables = string.Empty;
-                }
-                else if (typeId == 3)
-                {
-                    evnt.CustomReminderTemplateWithVariables = string.Empty;
-                }
-                else if (typeId == 4)
-                {
-                    evnt.CustomCongratulationTemplateWithVariables = string.Empty;
-                }
-
-                db.Events.Update(evnt);
-                await db.SaveChangesAsync();
-                return Json(new { success = false, typeId = typeId });
-            }
-
-        }
-        public async Task<IActionResult> DeleteHeaderMessageImage(int eventId)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
-            var filename = evnt.MessageHeaderImage;
-            var filePath = environment + path + "/" + filename;
-
-
-            if (await _blobStorage.FileExistsAsync(filePath))
-            {
-                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
-            }
-
-            evnt.MessageHeaderImage = "";
-            await db.SaveChangesAsync();
-
-            return Redirect("~/admin/EditEvent/" + evnt.Id);
-
-
-        }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> DeleteReminderMessageImage(int eventId)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
-            var filename = evnt.ReminderMsgHeaderImg;
-            var filePath = environment + path + "/" + filename;
-
-            if (await _blobStorage.FileExistsAsync(filePath))
-            {
-                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
-            }
-
-            evnt.ReminderMsgHeaderImg = "";
-            await db.SaveChangesAsync();
-
-            return Redirect("~/admin/EditEvent/" + evnt.Id);
-
-
-        }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> DeleteInterestedMessageImage(int eventId)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
-            var filename = evnt.ResponseInterestedOfMarketingMsgHeaderImage;
-            var filePath = environment + path + "/" + filename;
-
-            if (await _blobStorage.FileExistsAsync(filePath))
-            {
-                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
-            }
-
-            evnt.ResponseInterestedOfMarketingMsgHeaderImage = "";
-            await db.SaveChangesAsync();
-
-            return Redirect("~/admin/EditEvent/" + evnt.Id);
-
-
-        }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> DeleteNotInterestedMessageImage(int eventId)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
-            var filename = evnt.ResponseNotInterestedOfMarketingMsgHeaderImage;
-            var filePath = environment + path + "/" + filename;
-
-            if (await _blobStorage.FileExistsAsync(filePath))
-            {
-                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
-            }
-
-            evnt.ResponseNotInterestedOfMarketingMsgHeaderImage = "";
-            await db.SaveChangesAsync();
-
-            return Redirect("~/admin/EditEvent/" + evnt.Id);
-
-
-        }
-
-        [AuthorizeRoles("Administrator", "Operator", "Supervisor")]
-        public async Task<IActionResult> DeleteCongratulationMessageImage(int eventId)
-        {
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string path = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
-            var filename = evnt.CongratulationMsgHeaderImg;
-            var filePath = environment + path + "/" + filename;
-
-            if (await _blobStorage.FileExistsAsync(filePath))
-            {
-                await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
-            }
-            evnt.CongratulationMsgHeaderImg = "";
-            await db.SaveChangesAsync();
-
-            return Redirect("~/admin/EditEvent/" + evnt.Id);
-
-
-        }
-
-        private string GenerateCalendarEventICS(Events evnt)
-        {
-            var location = "https://maps.app.goo.gl/" + evnt.GmapCode;
-
-            // ??????? ????? ????? ?????? (UTC+3)
-            TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
-
-            // ??? ??? ????? ????? (20:00 ?? 8 ?????)
-            DateTime eventDate = evnt.EventFrom.Value.Date;
-            DateTime eventStartTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 20, 0, 0);
-
-            // ??? ????? ????? (23:00 ?? 11 ?????)
-            DateTime eventEndTime = new DateTime(eventDate.Year, eventDate.Month, eventDate.Day, 23, 0, 0);
-
-            // ??? ??????? ??? ?????
-            TimeSpan alertOffset = TimeSpan.FromDays(2);
-
-            // ??????? ?????? UTC
-            DateTime utcNow = DateTime.UtcNow;
-
-            var sb = new StringBuilder();
-            sb.AppendLine("BEGIN:VCALENDAR");
-            sb.AppendLine("VERSION:2.0");
-            sb.AppendLine("METHOD:PUBLISH");
-
-            sb.AppendLine("BEGIN:VEVENT");
-            sb.AppendLine($"UID:{Guid.NewGuid()}");
-            sb.AppendLine($"DTSTAMP:{utcNow:yyyyMMddTHHmmssZ}");
-
-            // ??? ??????? ???????? ?????? ????? ??????
-            sb.AppendLine($"DTSTART;TZID=Arab Standard Time:{eventStartTime:yyyyMMddTHHmmss}");
-            sb.AppendLine($"DTEND;TZID=Arab Standard Time:{eventEndTime:yyyyMMddTHHmmss}");
-
-            sb.AppendLine($"SUMMARY:{evnt.SystemEventTitle}");
-            sb.AppendLine($"LOCATION:{evnt.EventVenue}");
-
-            // ????? ??? ?????
-            sb.AppendLine("BEGIN:VALARM");
-            sb.AppendLine($"TRIGGER:-P2D"); // P2D = ??? ?????
-            sb.AppendLine("ACTION:DISPLAY");
-            sb.AppendLine("DESCRIPTION:Reminder");
-            sb.AppendLine("END:VALARM");
-
-            sb.AppendLine("END:VEVENT");
-            sb.AppendLine("END:VCALENDAR");
-
-            return sb.ToString();
-        }
-
-
-        public async Task SaveReminderIcsFileAsync(string icsContent, string fileName)
-        {
-
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string ReminderIcsFolder = _configuration.GetSection("Uploads").GetSection("ReminderIcs").Value;
-            string filePath = environment + ReminderIcsFolder + "/" + fileName + ".ics";
-
-            try
-            {
-
-                if (await _blobStorage.FileExistsAsync(filePath))
-                {
-                    await _blobStorage.DeleteFileAsync(filePath, cancellationToken: default);
-                }
-
-                using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(icsContent)))
-                {
-                    await _blobStorage.UploadAsync(stream, "ics", filePath, cancellationToken: default);
-                }
-            }
-            catch (IOException ioEx)
-            {
-
-            }
-
-        }
-
-        private async Task CreateReminderIcsFileAsync(Events evnt)
-        {
-            var icsContent = GenerateCalendarEventICS(evnt);
-
-            await SaveReminderIcsFileAsync(icsContent, evnt.Id.ToString());
-
-        }
-
-
+        /// <summary>
+        /// Checks if the current user has the Operator role.
+        /// </summary>
+        /// <returns>True if user is an Operator, false otherwise</returns>
         private bool HasOperatorRole()
         {
             var userRole = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -1974,6 +2560,10 @@ namespace EventPro.Web.Controllers
             }
         }
 
+        /// <summary>
+        /// Checks if the current user has either Operator or Supervisor role.
+        /// </summary>
+        /// <returns>True if user is an Operator or Supervisor, false otherwise</returns>
         private bool HasOperatorOrSupervisorRole()
         {
             var userRole = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -1987,6 +2577,10 @@ namespace EventPro.Web.Controllers
             }
         }
 
+        /// <summary>
+        /// Checks if the current user has the Supervisor role.
+        /// </summary>
+        /// <returns>True if user is a Supervisor, false otherwise</returns>
         private bool HasSupervisorRole()
         {
             var userRole = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -2000,6 +2594,15 @@ namespace EventPro.Web.Controllers
             }
         }
 
+        #endregion
+
+        #region Helper Methods - Operator Event Queries
+
+        /// <summary>
+        /// Gets all upcoming and in-progress events for the current operator.
+        /// Returns events where EventEnd is in the future.
+        /// </summary>
+        /// <returns>List of event operators with their events</returns>
         private async Task<List<EventOperator>> GetOperatorUpcomingAndInProgressEvents()
         {
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -2011,6 +2614,11 @@ namespace EventPro.Web.Controllers
                  .ToListAsync();
         }
 
+        /// <summary>
+        /// Gets all past events for the current operator.
+        /// Returns events where both EventStart and EventEnd are in the past.
+        /// </summary>
+        /// <returns>List of event operators with their past events</returns>
         private async Task<List<EventOperator>> GetOperatorPastEvents()
         {
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -2023,6 +2631,11 @@ namespace EventPro.Web.Controllers
             .ToListAsync();
         }
 
+        /// <summary>
+        /// Gets all currently in-progress events for the current operator.
+        /// Returns events where current time is between EventStart and EventEnd.
+        /// </summary>
+        /// <returns>List of event operators with their in-progress events</returns>
         private async Task<List<EventOperator>> GetOperatorInprogressEvents()
         {
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -2035,6 +2648,11 @@ namespace EventPro.Web.Controllers
            .ToListAsync();
         }
 
+        /// <summary>
+        /// Gets all upcoming events for the current operator.
+        /// Returns events where EventStart is in the future.
+        /// </summary>
+        /// <returns>List of event operators with their upcoming events</returns>
         private async Task<List<EventOperator>> GetOperatorUpcomingEvents()
         {
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -2045,6 +2663,12 @@ namespace EventPro.Web.Controllers
                 && eo.EventStart > DateTime.Now)
             .ToListAsync();
         }
+
+        /// <summary>
+        /// Gets all events (regardless of status) for the current operator.
+        /// Returns all non-deleted events assigned to the operator.
+        /// </summary>
+        /// <returns>List of event operators with all their events</returns>
         private async Task<List<EventOperator>> GetOperatorAllEvents()
         {
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -2054,5 +2678,7 @@ namespace EventPro.Web.Controllers
                 && eo.Event.IsDeleted != true)
             .ToListAsync();
         }
+
+        #endregion
     }
 }

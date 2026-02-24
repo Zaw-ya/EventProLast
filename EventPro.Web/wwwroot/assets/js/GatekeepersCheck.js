@@ -40,19 +40,15 @@ $(document).ready(function () {
                 {
                     "data": "eventTitle", "name": "EventTitle", "autoWidth": true,
                     "render": function (data, type, row) {
-                        
                         if (row.icon) {
-
-                            return ` <div>     <a href="/admin/viewevent/${row.id}">
-
-                                                        <img src="/Upload/card/${row.icon}" class="grid-icon" />${row.eventTitle}
-
-                                                </a> <div/>`
+                            return `<div><a href="/admin/viewevent/${row.id}">
+                                        <img src="${row.icon}" class="grid-icon" />${row.eventTitle}
+                                    </a></div>`
                         }
                         else {
-                            ` <div>     <a href="/viewevent/${row.id}">
-                                               <img src="/Upload/card/default.png" class="grid-icon" /> ${row.eventTitle}
-                                                </a> <div/>`
+                            return `<div><a href="/admin/viewevent/${row.id}">
+                                        ${row.eventTitle}
+                                    </a></div>`
                         }
                     }
                 },

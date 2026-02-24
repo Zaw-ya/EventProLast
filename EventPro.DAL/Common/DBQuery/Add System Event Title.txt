@@ -162,4 +162,14 @@ on e.Id=em.EventId
 ------------------------------------------------------------------------------------
 
 
+//Ali hani
 
+
+CREATE VIEW vw_GateKeeperScheduled 
+AS
+SELECT
+    em.*, e.EventFrom, e.EventTo, e.SystemEventTitle AS EventTitle, e.EventVenue
+FROM 
+    EventGatekeeperMapping em  
+INNER JOIN
+    Events e ON e.Id = em.EventId
