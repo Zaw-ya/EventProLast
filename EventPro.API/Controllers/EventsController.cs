@@ -1,6 +1,7 @@
 using EventPro.API.Models;
 using EventPro.API.Services;
 using EventPro.API.Services.WatiService.Interface;
+using EventPro.Business.MemoryCacheStore.Implementaiion;
 using EventPro.Business.Storage.Interface;
 using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Common;
@@ -44,6 +45,7 @@ namespace EventPro.API.Controllers
         private readonly ILogger<EventsController> _logger;
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly DistributedLockHelper _lockHelper;
 
         #endregion
 
@@ -57,13 +59,15 @@ namespace EventPro.API.Controllers
         /// <param name="whatsappSendingProvider">WhatsApp messaging provider service</param>
         /// <param name="blobStorage">Azure Blob storage service for file uploads</param>
         public EventsController(IConfiguration configuration, ILogger<EventsController> logger,
-            IWhatsappSendingProviderService whatsappSendingProvider , ICloudinaryService cloudinaryService)
+            IWhatsappSendingProviderService whatsappSendingProvider, ICloudinaryService cloudinaryService,
+            DistributedLockHelper lockHelper)
         {
             _configuration = configuration;
             db = new EventProContext(configuration);
             _logger = logger;
             _cloudinaryService = cloudinaryService;
             _whatsappSendingProvider = whatsappSendingProvider;
+            _lockHelper = lockHelper;
         }
 
         #endregion
@@ -181,56 +185,85 @@ namespace EventPro.API.Controllers
                 return check;
             }
 
-            var assignedKeeper = await db.EventGatekeeperMapping
-                                 .Where(EM => EM.EventId == eventId)
-                                 .FirstOrDefaultAsync();
+            IActionResult result = null;
 
-            if (assignedKeeper != null)
-            {
-                return BadRequest("Event is already assigned to another gatekeeper . Refer to Administrator.");
-            }
-
-            var eventFrom = await db.Events.Where(x => x.Id == eventId).Select(x => x.EventFrom).FirstOrDefaultAsync();
-            var assignedAtSameDate = await db.EventGatekeeperMapping.Include(x => x.Event)
-                                           .Where(x => x.GatekeeperId == userToken.UserId &&
-                                                   x.Event.EventFrom.Value.Date.Equals(eventFrom.Value.Date))
-                                       .AnyAsync();
-            if (assignedAtSameDate)
-            {
-                return BadRequest("Can not assign to more than one event on the same day.");
-            }
-            EventGatekeeperMapping egm = new EventGatekeeperMapping
-            {
-                EventId = eventId,
-                GatekeeperId = userToken.UserId,
-                AssignedBy = userToken.UserId,
-                AsssignedOn = DateTime.UtcNow,
-                IsActive = true
-            };
-            db.EventGatekeeperMapping.Add(egm);
-            db.SaveChanges();
-            try
-            {
-                var history = new GKEventHistory
+            var lockAcquired = await _lockHelper.RunWithLockAsync(
+                resourceKey: $"reserve-event-{eventId}",
+                action: async () =>
                 {
-                    CheckType = string.Empty,
-                    Event_Id = eventId,
-                    GK_Id = userToken.UserId,
-                    LogDT = DateTime.Now,
-                    longitude = string.Empty,
-                    latitude = string.Empty
-                };
+                    // Only block if another gatekeeper has SELF-RESERVED (AssignedBy == GatekeeperId)
+                    // Admin assignments (AssignedBy != GatekeeperId) are allowed in parallel
+                    var alreadyReserved = await db.EventGatekeeperMapping
+                        .Where(EM => EM.EventId == eventId && EM.GatekeeperId == EM.AssignedBy)
+                        .FirstOrDefaultAsync();
 
-                await _whatsappSendingProvider.SelectTwilioSendingProvider()
-                         .GetGateKeeperMessageTemplates()
-                         .SendGateKeeperassignEventMessage(history);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error occured while sending whatsapp message in UnassignFromEvent,: {ex.Message} ,GK_Id{userToken?.UserId}");
-            }
+                    if (alreadyReserved != null)
+                    {
+                        result = BadRequest("Event is already reserved by another gatekeeper.");
+                        return;
+                    }
 
-            return Ok(egm);
+                    var eventFrom = await db.Events
+                        .Where(x => x.Id == eventId)
+                        .Select(x => x.EventFrom)
+                        .FirstOrDefaultAsync();
+
+                    var assignedAtSameDate = await db.EventGatekeeperMapping
+                        .Include(x => x.Event)
+                        .Where(x => x.GatekeeperId == userToken.UserId &&
+                                    x.Event.EventFrom.Value.Date == eventFrom.Value.Date)
+                        .AnyAsync();
+
+                    if (assignedAtSameDate)
+                    {
+                        result = BadRequest("Cannot assign to more than one event on the same day.");
+                        return;
+                    }
+
+                    var egm = new EventGatekeeperMapping
+                    {
+                        EventId = eventId,
+                        GatekeeperId = userToken.UserId,
+                        AssignedBy = userToken.UserId,
+                        AsssignedOn = DateTime.UtcNow,
+                        IsActive = true
+                    };
+
+                    db.EventGatekeeperMapping.Add(egm);
+                    await db.SaveChangesAsync();
+
+                    try
+                    {
+                        var history = new GKEventHistory
+                        {
+                            CheckType = string.Empty,
+                            Event_Id = eventId,
+                            GK_Id = userToken.UserId,
+                            LogDT = DateTime.Now,
+                            longitude = string.Empty,
+                            latitude = string.Empty
+                        };
+
+                        await _whatsappSendingProvider.SelectTwilioSendingProvider()
+                            .GetGateKeeperMessageTemplates()
+                            .SendGateKeeperassignEventMessage(history);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error sending WhatsApp message in ReserveEvent: {ex.Message}, GK_Id: {userToken?.UserId}");
+                    }
+
+                    result = Ok(egm);
+                },
+                expiry: TimeSpan.FromSeconds(10),
+                wait: TimeSpan.FromSeconds(10),
+                retry: TimeSpan.FromMilliseconds(200)
+            );
+
+            if (!lockAcquired)
+                return BadRequest("Event is being reserved by another gatekeeper. Please try again.");
+
+            return result;
         }
 
         /// <summary>
