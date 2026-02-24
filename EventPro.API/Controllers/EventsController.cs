@@ -6,7 +6,11 @@ using EventPro.Business.WhatsAppMessagesProviders.Interface;
 using EventPro.DAL.Common;
 using EventPro.DAL.Dto;
 using EventPro.DAL.Models;
+using EventPro.DAL.ViewModels;
 using EventPro.DAL.VMModels;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +18,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.Data;
 using System.Globalization;
@@ -182,7 +187,7 @@ namespace EventPro.API.Controllers
 
             if (assignedKeeper != null)
             {
-                return BadRequest("Event is already assigned to before. Refer to Administrator.");
+                return BadRequest("Event is already assigned to another gatekeeper . Refer to Administrator.");
             }
 
             var eventFrom = await db.Events.Where(x => x.Id == eventId).Select(x => x.EventFrom).FirstOrDefaultAsync();
@@ -198,12 +203,33 @@ namespace EventPro.API.Controllers
             {
                 EventId = eventId,
                 GatekeeperId = userToken.UserId,
-                AssignedBy = 1,
+                AssignedBy = userToken.UserId,
                 AsssignedOn = DateTime.UtcNow,
                 IsActive = true
             };
             db.EventGatekeeperMapping.Add(egm);
             db.SaveChanges();
+            try
+            {
+                var history = new GKEventHistory
+                {
+                    CheckType = string.Empty,
+                    Event_Id = eventId,
+                    GK_Id = userToken.UserId,
+                    LogDT = DateTime.Now,
+                    longitude = string.Empty,
+                    latitude = string.Empty
+                };
+
+                await _whatsappSendingProvider.SelectTwilioSendingProvider()
+                         .GetGateKeeperMessageTemplates()
+                         .SendGateKeeperassignEventMessage(history);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured while sending whatsapp message in UnassignFromEvent,: {ex.Message} ,GK_Id{userToken?.UserId}");
+            }
+
             return Ok(egm);
         }
 
@@ -277,6 +303,63 @@ namespace EventPro.API.Controllers
                 {
                     _logger.LogError($"Error occured while sending whatsapp message in UnassignFromEvent,: {ex.Message} ,GK_Id{userToken?.UserId}");
                 }
+                var events = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+
+                try
+                {
+
+                    if (events.ShowOnCalender == true)
+                    {
+                        // Build the notification payload targeting the city topic
+                        var request = new MessageRequest()
+                        {
+                            Topic = $"{events.CityId}",
+                            Title = events.EventTitle,
+                            Body = $"New event is available now \nstarting in {events.EventVenue} at {events.AttendanceTime}"
+                        };
+
+                        var message = new Message()
+                        {
+                            Notification = new Notification
+                            {
+                                Title = request.Title,
+                                Body = request.Body
+                            },
+                        };
+
+                        // Route to topic (city) or direct device token
+                        if (string.IsNullOrEmpty(request.Tokens))
+                        {
+                            message.Topic = request.Topic;
+                        }
+                        else
+                        {
+                            message.Token = request.Tokens;
+                        }
+
+                        // Fallback: initialize Firebase if not already done in Startup.cs
+                        // Reads the JSON key filename from appsettings ("FireBaseJSON")
+                        if (FirebaseApp.DefaultInstance == null)
+                        {
+                            var firebaseJson = _configuration["FireBaseJSON"];
+                            FirebaseApp.Create(new AppOptions()
+                            {
+                                Credential = GoogleCredential.FromFile(
+                                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, firebaseJson)),
+                            });
+                        }
+
+                        // Send the notification via FCM V1 API
+                        var messaging = FirebaseMessaging.DefaultInstance;
+                        var result = await messaging.SendAsync(message);
+                        _logger.LogInformation("Firebase FCM: Push notification sent for event {EventId} to topic {Topic}, result: {Result}", events.Id, request.Topic, result);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Firebase FCM: Failed to send push notification for event {EventId}", events.Id);
+                }
+
 
                 return Ok("sucess removed from event");
 

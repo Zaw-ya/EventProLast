@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
+    <PackageReference Include="FirebaseAdmin" Version="2.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
@@ -34,6 +35,12 @@
     <ProjectReference Include="..\EventPro.Business\EventPro.Business.csproj" />
     <ProjectReference Include="..\EventPro.DAL\EventPro.DAL.csproj" />
     <ProjectReference Include="..\EventPro.Services\EventPro.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="myinvite-uat-firebase-adminsdk.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 
