@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, myinviteazuread]
+    runs-on: [self-hosted,self-hosted, Windows, X64 ,myinviteazuread]
 
     steps:
     - uses: actions/checkout@v3
