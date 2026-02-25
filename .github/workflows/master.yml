@@ -18,26 +18,12 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
-    - name: Publish to temp folder
-      run: dotnet publish --configuration Release --no-build -o C:\temp\publish
+    - name: Publish to IIS folder
+      run: dotnet publish --configuration Release --no-build -o C:\inetpub\wwwroot\myapp
 
-    - name: Deploy to IIS
+    - name: Restart IIS site
       shell: pwsh
       run: |
         Import-Module WebAdministration
-
-        $sitePath = "C:\inetpub\wwwroot\myapp"
-        $backupPath = "C:\inetpub\wwwroot\backup_$(Get-Date -Format 'yyyyMMddHHmmss')"
-
-        if (Test-Path $sitePath) {
-            Copy-Item $sitePath $backupPath -Recurse
-        }
-
         Stop-Website -Name "Default Web Site"
-
-        Remove-Item "$sitePath\*" -Recurse -Force
-
-        Copy-Item "C:\temp\publish\*" $sitePath -Recurse
-
-        # تشغيل الموقع
         Start-Website -Name "Default Web Site"
