@@ -6,16 +6,38 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, Windows, X64 ,myinviterunner]
+    runs-on: [self-hosted, Windows, X64]
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
 
     - name: Restore
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release
+      run: dotnet build --configuration Release --no-restore
 
-    - name: Publish
-      run: dotnet publish --configuration Release -o C:\inetpub\wwwroot\myapp
+    - name: Publish to temp folder
+      run: dotnet publish --configuration Release --no-build -o C:\temp\publish
+
+    - name: Deploy to IIS
+      shell: pwsh
+      run: |
+        Import-Module WebAdministration
+
+        $sitePath = "C:\inetpub\wwwroot\myapp"
+        $backupPath = "C:\inetpub\wwwroot\backup_$(Get-Date -Format 'yyyyMMddHHmmss')"
+
+        if (Test-Path $sitePath) {
+            Copy-Item $sitePath $backupPath -Recurse
+        }
+
+        Stop-Website -Name "Default Web Site"
+
+        Remove-Item "$sitePath\*" -Recurse -Force
+
+        Copy-Item "C:\temp\publish\*" $sitePath -Recurse
+
+        # تشغيل الموقع
+        Start-Website -Name "Default Web Site"
