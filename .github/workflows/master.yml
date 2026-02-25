@@ -31,18 +31,28 @@ jobs:
     - name: Publish
       run: dotnet publish --configuration Release --output publish
 
-    # Deploy to VM
-    - name: Deploy to Windows VM
-      uses: appleboy/powershell-action@v0.2.0
-      with:
-        host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_USER }}
-        password: ${{ secrets.VM_PASSWORD }}
-        script: |
-          Stop-Website -Name "Default Web Site"
-          
-          Remove-Item -Recurse -Force "C:\inetpub\wwwroot\myapp\*"
-          
-          Copy-Item -Path "${{ github.workspace }}\publish\*" -Destination "C:\inetpub\wwwroot\myapp" -Recurse
-          
-          Start-Website -Name "Default Web Site"
+    # Deploy to Windows VM via WinRM
+    - name: Deploy to VM
+      shell: pwsh
+      run: |
+        $vmHost = "${{ secrets.VM_HOST }}"
+        $vmUser = "${{ secrets.VM_USER }}"
+        $vmPassword = "${{ secrets.VM_PASSWORD }}" | ConvertTo-SecureString -AsPlainText -Force
+        $cred = New-Object System.Management.Automation.PSCredential ($vmUser, $vmPassword)
+
+        $session = New-PSSession -ComputerName $vmHost -Credential $cred -Authentication Default
+
+        Invoke-Command -Session $session -ScriptBlock {
+            Import-Module WebAdministration
+
+            Stop-Website -Name "Default Web Site"
+
+            Remove-Item -Recurse -Force "C:\inetpub\wwwroot\myapp\*"
+
+            Copy-Item -Path "C:\github\workspace\publish\*" -Destination "C:\inetpub\wwwroot\myapp" -Recurse
+
+            Start-Website -Name "Default Web Site"
+        }
+
+        # اغلاق الـ session
+        Remove-PSSession $session
