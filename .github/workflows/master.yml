@@ -20,10 +20,3 @@ jobs:
 
     - name: Publish to IIS folder
       run: dotnet publish --configuration Release --no-build -o C:\inetpub\wwwroot\myapp
-
-    - name: Restart IIS site
-      shell: pwsh
-      run: |
-        Import-Module WebAdministration
-        Stop-Website -Name "Default Web Site"
-        Start-Website -Name "Default Web Site"
