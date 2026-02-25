@@ -18,5 +18,20 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
-    - name: Publish to IIS folder
-      run: dotnet publish --configuration Release --no-build -o C:\inetpub\wwwroot\myapp
+    - name: Publish to temp folder
+      run: dotnet publish --configuration Release --no-build -o C:\temp\publish
+
+    - name: Deploy to IIS
+      shell: powershell
+      run: |
+        Import-Module WebAdministration
+    
+        $sitePath = "C:\inetpub\wwwroot\myapp"
+    
+        Stop-Website -Name "Default Web Site"
+    
+        Remove-Item "$sitePath\*" -Recurse -Force
+    
+        Copy-Item "C:\temp\publish\*" $sitePath -Recurse
+    
+        Start-Website -Name "Default Web Site"
