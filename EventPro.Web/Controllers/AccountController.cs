@@ -92,7 +92,7 @@ namespace EventPro.Web.Controllers
                     case "Client":
                         return RedirectToAction(AppAction.Index, AppController.User);
                     default:
-                        return RedirectToAction(AppAction.AccessDenied, AppController.Login);ء
+                        return RedirectToAction(AppAction.AccessDenied, AppController.Login);
                 }
             }
             else
