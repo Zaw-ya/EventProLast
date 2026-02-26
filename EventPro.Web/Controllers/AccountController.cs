@@ -44,6 +44,9 @@ namespace EventPro.Web.Controllers
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
+            TempData["test"] = $"Ahmed From Function {user}";
+
+
             if (user != null)
             {
                 var role = roles.Where(p => p.Id == user.Role && user.IsActive == true)
