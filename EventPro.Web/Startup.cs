@@ -398,7 +398,8 @@ namespace EventPro.Web
                 ForwardLimit = null
             });
 
-            app.Use((context, next) => { context.Request.Scheme = "https"; return next(); });
+            // Commented for dubgging
+            //app.Use((context, next) => { context.Request.Scheme = "https"; return next(); });
 
             app.UseSerilogRequestLogging(options =>
             {

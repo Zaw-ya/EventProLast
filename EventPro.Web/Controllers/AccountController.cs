@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -92,7 +92,7 @@ namespace EventPro.Web.Controllers
                     case "Client":
                         return RedirectToAction(AppAction.Index, AppController.User);
                     default:
-                        return RedirectToAction(AppAction.AccessDenied, AppController.Login);
+                        return RedirectToAction(AppAction.AccessDenied, AppController.Login);ء
                 }
             }
             else
