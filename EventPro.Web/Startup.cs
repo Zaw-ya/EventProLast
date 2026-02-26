@@ -150,21 +150,21 @@ namespace EventPro.Web
                         options.Cookie.Name = ".EventPro.Auth";
                         options.Cookie.HttpOnly = true;
                         options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-                        options.Cookie.SameSite = SameSiteMode.None;
+                        options.Cookie.SameSite = SameSiteMode.Lax;
                         options.LoginPath = "/Login";
                         options.AccessDeniedPath = "/AccessDenied";
                         options.ExpireTimeSpan = TimeSpan.FromHours(2);
                         options.SlidingExpiration = true;
 
-                        // If redis ticket found
-                        options.Events.OnSigningIn = context =>
-                        {
-                            var ticketStore = context.HttpContext.RequestServices.GetService<ITicketStore>();
-                            if (ticketStore != null)
-                                options.SessionStore = ticketStore;
+                        //// If redis ticket found
+                        //options.Events.OnSigningIn = context =>
+                        //{
+                        //    var ticketStore = context.HttpContext.RequestServices.GetService<ITicketStore>();
+                        //    if (ticketStore != null)
+                        //        options.SessionStore = ticketStore;
 
-                            return Task.CompletedTask;
-                        };
+                        //    return Task.CompletedTask;
+                        //};
                     });
 
             //services.PostConfigure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
