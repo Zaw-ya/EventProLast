@@ -149,7 +149,7 @@ namespace EventPro.Web
                     {
                         options.Cookie.Name = ".EventPro.Auth";
                         options.Cookie.HttpOnly = true;
-                        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
                         options.Cookie.SameSite = SameSiteMode.None;
                         options.LoginPath = "/Login";
                         options.AccessDeniedPath = "/AccessDenied";
