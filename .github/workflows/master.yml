@@ -18,5 +18,36 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
-    - name: Publish to IIS folder
-      run: dotnet publish --configuration Release --no-build -o C:\inetpub\wwwroot\myapp
+    - name: Clean temp publish
+      shell: powershell
+      run: |
+        if (Test-Path "C:\temp\publish") {
+          Remove-Item "C:\temp\publish\*" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+    - name: Publish to temp folder (Self-Contained)
+      run: dotnet publish --configuration Release --framework net7.0 --runtime win-x64 --self-contained true --no-build -o C:\temp\publish
+
+    - name: Deploy to IIS
+      shell: powershell
+      run: |
+        Import-Module WebAdministration
+
+        $sitePath = "C:\inetpub\wwwroot\myapp"
+        $appPool = "DefaultAppPool"
+
+        Write-Host "Stopping App Pool..."
+        Stop-WebAppPool -Name $appPool
+
+        Start-Sleep -Seconds 5
+
+        Write-Host "Cleaning old site files..."
+        Remove-Item "$sitePath\*" -Recurse -Force -ErrorAction SilentlyContinue
+
+        Write-Host "Copying new files..."
+        Copy-Item "C:\temp\publish\*" $sitePath -Recurse -Force
+
+        Write-Host "Starting App Pool..."
+        Start-WebAppPool -Name $appPool
+
+        Write-Host "Deployment completed successfully."
