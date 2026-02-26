@@ -18,6 +18,13 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Clean temp publish
+      shell: powershell
+      run: |
+        if (Test-Path "C:\temp\publish") {
+          Remove-Item "C:\temp\publish\*" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
     - name: Publish to temp folder
       run: dotnet publish --configuration Release --no-build -o C:\temp\publish
 
@@ -25,13 +32,22 @@ jobs:
       shell: powershell
       run: |
         Import-Module WebAdministration
-    
+
         $sitePath = "C:\inetpub\wwwroot\myapp"
-    
-        Stop-Website -Name "Default Web Site"
-    
-        Remove-Item "$sitePath\*" -Recurse -Force
-    
-        Copy-Item "C:\temp\publish\*" $sitePath -Recurse
-    
-        Start-Website -Name "Default Web Site"
+        $appPool = "DefaultAppPool"
+
+        Write-Host "Stopping App Pool..."
+        Stop-WebAppPool -Name $appPool
+
+        Start-Sleep -Seconds 5
+
+        Write-Host "Cleaning old site files..."
+        Remove-Item "$sitePath\*" -Recurse -Force -ErrorAction SilentlyContinue
+
+        Write-Host "Copying new files..."
+        Copy-Item "C:\temp\publish\*" $sitePath -Recurse -Force
+
+        Write-Host "Starting App Pool..."
+        Start-WebAppPool -Name $appPool
+
+        Write-Host "Deployment completed successfully."
