@@ -12,11 +12,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Restore
-      run: dotnet restore
+    - name: Restore Web project with runtime
+      run: dotnet restore EventPro.Web\EventPro.Web.csproj --runtime win-x64
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Build Web project
+      run: dotnet build EventPro.Web\EventPro.Web.csproj --configuration Release --no-restore
 
     - name: Clean temp publish
       shell: powershell
@@ -25,8 +25,9 @@ jobs:
           Remove-Item "C:\temp\publish\*" -Recurse -Force -ErrorAction SilentlyContinue
         }
 
-    - name: Publish to temp folder (Self-Contained)
-      run: dotnet publish EventPro.Web\EventPro.Web.csproj -c Release --framework net7.0 --runtime win-x64 --self-contained true -o C:\temp\publish
+    - name: Publish Web project (Self-Contained)
+      run: dotnet publish EventPro.Web\EventPro.Web.csproj -c Release --framework net7.0-windows --runtime win-x64 --self-contained true -o C:\temp\publish
+
     - name: Deploy to IIS
       shell: powershell
       run: |
