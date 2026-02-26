@@ -26,8 +26,7 @@ jobs:
         }
 
     - name: Publish to temp folder (Self-Contained)
-      run: dotnet publish --configuration Release --framework net7.0 --runtime win-x64 --self-contained true --no-build -o C:\temp\publish
-
+      run: dotnet publish EventPro.Web\EventPro.Web.csproj -c Release --framework net7.0 --runtime win-x64 --self-contained true -o C:\temp\publish
     - name: Deploy to IIS
       shell: powershell
       run: |
