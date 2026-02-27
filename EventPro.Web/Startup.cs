@@ -288,9 +288,7 @@ namespace EventPro.Web
             // ------------------------------
             // BlobStorage (try-catch)
             // ------------------------------
-            //var blobConnection = Configuration.GetSection("Database")["BlobStorage"];
-            var blobConnection = Environment.GetEnvironmentVariable("BLOB_CONNECTION_STRING");
-            
+            var blobConnection = Configuration.GetSection("Database")["BlobStorage"];
             if (!string.IsNullOrWhiteSpace(blobConnection))
             {
                 try
