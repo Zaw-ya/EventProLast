@@ -613,8 +613,8 @@ namespace EventPro.Web.Controllers
                     _logger.LogWarning("CardInfo not found | EventId={EventId}", eventId);
                 }
 
-                await RefreshQRCode(guest, cardinfo);
-                await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
+                //await RefreshQRCode(guest, cardinfo);
+                //await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
                 await db.SaveChangesAsync();
 
                 return addedOrModified;
@@ -653,6 +653,7 @@ namespace EventPro.Web.Controllers
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             string environment = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             //await _cloudinaryService.DeleteAsync();
+            await _blobStorage.DeleteFileAsync(environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", cancellationToken: default);
 
             TempData["error"] = "Guest information deleted successfully!";
 
@@ -1005,11 +1006,18 @@ namespace EventPro.Web.Controllers
             // Validate guest phone numbers exist
             if (!CheckGuestsNumbersExist(guests))
                 return Json(new { success = false, message = "يجب وجود رقم احتياطي واساسي لكل ضيف من الضيوف" });
-            
-            // Validate invitation cards exist in blob storage
-            if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
 
+            // Validate invitation cards exist in blob storage
+            var guestsWithoutCards = await GetGuestsWithoutCardsAsync(guests, _event);
+            if (guestsWithoutCards.Any())
+            {
+                var names = string.Join("، ", guestsWithoutCards);
+                return Json(new
+                {
+                    success = false,
+                    message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}"
+                });
+            }
             // Validate webhook consumer is in valid state for bulk sending
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
                 return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
@@ -1086,10 +1094,11 @@ namespace EventPro.Web.Controllers
             }
 
             // Validate invitation card exists
-            if (!await CheckGuestsCardsExistAsync(guests, _event))
+            var guestsWithoutCards = await GetGuestsWithoutCardsAsync(guests, _event);
+            if (guestsWithoutCards.Any())
             {
-                _logger.LogWarning("Card validation failed for GuestId {GuestId}", guest.GuestId);
-                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
+                var names = string.Join("، ", guestsWithoutCards);
+                return Json(new { success = false, message = $"الضيف التالي ليس لديه بطاقة دعوة: {names}" });
             }
 
             try
@@ -3053,6 +3062,23 @@ namespace EventPro.Web.Controllers
             }
         }
 
+        private async Task<List<string>> GetGuestsWithoutCardsAsync(List<Guest> guests, DAL.Models.Events _event)
+        {
+            var guestsWithoutCards = new List<string>();
+
+            foreach (var guest in guests)
+            {
+                // How we handle it 
+                //var cardExists = await _blobStorage.FileExistsAsync();
+                //var cardExists = await _cloudinaryService.
+                if (true)
+                {
+                    guestsWithoutCards.Add($"{guest.FirstName} (ID: {guest.GuestId})");
+                }
+            }
+
+            return guestsWithoutCards;
+        }
 
         #endregion
 

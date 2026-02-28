@@ -1167,13 +1167,22 @@
             reloading();
         }
 
-        async function SendQR(guestId) {
+                async function SendQR(guestId) {
             sendingMessage.hidden = false;
-           var data = await fetch(`/admin/SendQRCode/${guestId}`);
+            var data = await fetch(`/admin/SendQRCode/${guestId}`);
             var result = await data.json();
-            if (!result.success) { 
-                Swal.fire(result.message);
-        }
+
+            if (!result.success) {
+                // Show guest name that does not has an card
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تنبيه',
+                    text: result.message
+                });
+            } else {
+                Swal.fire({ icon: 'success', title: 'تم الإرسال بنجاح' });
+            }
+
             sendingMessage.hidden = true;
             reloading();
         }
