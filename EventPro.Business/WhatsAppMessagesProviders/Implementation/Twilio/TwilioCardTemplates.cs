@@ -58,6 +58,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                 templateId
             );
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Invitation Card template ID (Arabic without guest name) is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             try
@@ -125,6 +128,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             var templateId = profileSettings.ArabicCardWithGuestName;
             _logger.LogInformation("Using Twilio templateId={TemplateId}", templateId);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Invitation Card template ID (Arabic with guest name) is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, ct) =>
@@ -180,11 +186,14 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             var templateId = profileSettings.EnglihsCardWithoutGuestName;
             _logger.LogInformation("Using Twilio templateId={TemplateId}", templateId);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Invitation Card template ID (English without guest name) is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, ct) =>
             {
-                
+
             });
 
             foreach (var guest in guests)
@@ -242,6 +251,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
             var templateId = profileSettings.EnglishCardWithGuestName;
             _logger.LogInformation("Using Twilio templateId={TemplateId}", templateId);
+
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Invitation Card template ID (English with guest name) is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
 
             int counter = SetSendingCounter(guests, events);
 
@@ -458,6 +470,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             List<Guest> guests,
             TwilioProfileSettings profileSettings)
                 {
+                    if (string.IsNullOrEmpty(templateId))
+                        throw new InvalidOperationException("Invitation Card template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
                     _logger.LogInformation(
                         "Sending WhatsApp card. EventId {EventId}, GuestId {GuestId}, Phone {Phone}, TemplateId {TemplateId}",
                         events.Id,

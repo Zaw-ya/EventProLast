@@ -42,6 +42,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         private async Task SendDuplicateAnswerMessage(List<Guest> guests, Events events, string? templateId,TwilioProfileSettings profileSettings)
         {
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Duplicate Answer template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             foreach (var guest in guests)
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";

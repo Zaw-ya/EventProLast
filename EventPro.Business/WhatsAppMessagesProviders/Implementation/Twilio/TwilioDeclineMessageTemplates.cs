@@ -26,6 +26,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                    .AsNoTracking()
                    .FirstOrDefaultAsync();
             var templateId = events.DeclineTempId;
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Decline template ID is not configured on this event. Please set the Decline Template ID in the event settings.");
+
             foreach (var guest in guests)
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";
@@ -50,6 +53,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                                .AsNoTracking()
                                .FirstOrDefaultAsync();
             var templateId = profileSettings?.ArabicDecline;
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Decline template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             foreach (Guest guest in guests)
             {
                 string fullPhoneNumber = $"+{guest.SecondaryContactNo}{guest.PrimaryContactNo}";

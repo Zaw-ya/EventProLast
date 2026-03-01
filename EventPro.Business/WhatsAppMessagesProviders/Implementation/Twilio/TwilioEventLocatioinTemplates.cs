@@ -45,6 +45,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         private async Task SendMessageAndUpdateGuest(Events events, string? templateId, Guest guest, string fullPhoneNumber, string[] parameters, List<Guest> guests,TwilioProfileSettings profileSettings)
         {
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Event Location template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             string messageSid = await SendWhatsAppTemplateMessageAsync(fullPhoneNumber, templateId, parameters, events.CityId, events.ChoosenNumberWithinCountry, profileSettings, events.choosenSendingCountryNumber);
             if (messageSid != null)
             {
