@@ -5,6 +5,7 @@ using Google.Api.Gax.ResourceNames;
 using EventPro.Business.Storage.Interface;
 using EventPro.DAL.Dto;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 
 namespace EventPro.Business.Storage.Implementation
 {
@@ -127,22 +128,67 @@ namespace EventPro.Business.Storage.Implementation
             return new FileResponse(response.Value.Content.ToStream(), response.Value.Details.ToString());
         }
 
+        /// <summary>
+        /// Sanitizes the file name portion of a blob path.
+        /// Replaces spaces and unsafe characters with underscores, and truncates to 40 characters (preserving extension).
+        /// The folder prefix (everything before the last '/') is kept unchanged.
+        /// </summary>
+        private static string SanitizeFileName(string blobPath)
+        {
+            int lastSlash = blobPath.LastIndexOf('/');
+            string folder = lastSlash >= 0 ? blobPath.Substring(0, lastSlash + 1) : string.Empty;
+            string raw    = lastSlash >= 0 ? blobPath.Substring(lastSlash + 1) : blobPath;
+
+            string ext  = Path.GetExtension(raw);
+            string name = Path.GetFileNameWithoutExtension(raw);
+
+            // Replace any character that is not alphanumeric, dash, or dot with underscore
+            name = Regex.Replace(name, @"[^a-zA-Z0-9\-]", "_");
+            // Collapse consecutive underscores and trim edges
+            name = Regex.Replace(name, @"_+", "_").Trim('_');
+            // Truncate to 40 characters
+            if (name.Length > 40)
+                name = name.Substring(0, 40).TrimEnd('_');
+
+            return folder + name + ext;
+        }
+
         public async Task<string> UploadAsync(Stream stream, string contentType, string fileName, CancellationToken cancellationToken)
         {
+            fileName = SanitizeFileName(fileName);
             stream.Position = 0;
 
             BlobContainerClient containerClient = _blobStorage.GetBlobContainerClient(ContainerName);
+            await containerClient.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
 
             BlobClient blobClient = containerClient.GetBlobClient(fileName);
 
             await blobClient.UploadAsync(
                 stream,
-                new BlobHttpHeaders { ContentType = contentType },
+                new BlobUploadOptions { HttpHeaders = new BlobHttpHeaders { ContentType = contentType } },
                 cancellationToken: cancellationToken);
 
-            return fileName;
+            return GetFileUrl(fileName);
         }
 
+        public string GetFileUrl(string fileName)
+        {
+            if (fileName.StartsWith("/"))
+                fileName = fileName.Substring(1);
+            BlobContainerClient containerClient = _blobStorage.GetBlobContainerClient(ContainerName);
+            BlobClient blobClient = containerClient.GetBlobClient(fileName);
+
+            var sasBuilder = new Azure.Storage.Sas.BlobSasBuilder
+            {
+                BlobContainerName = ContainerName,
+                BlobName = fileName,
+                Resource = "b",
+                ExpiresOn = DateTimeOffset.UtcNow.AddYears(1)
+            };
+            sasBuilder.SetPermissions(Azure.Storage.Sas.BlobSasPermissions.Read);
+
+            return blobClient.GenerateSasUri(sasBuilder).ToString();
+        }
         public async Task<bool> FileExistsAsync(string filePath)
         {
             if (filePath.StartsWith("/"))

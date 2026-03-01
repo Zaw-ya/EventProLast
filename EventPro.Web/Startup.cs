@@ -293,18 +293,22 @@ namespace EventPro.Web
             {
                 try
                 {
-                    services.AddSingleton(new BlobServiceClient(blobConnection));
+                    var blobServiceClient = new BlobServiceClient(blobConnection);
+                    blobServiceClient.GetPropertiesAsync().GetAwaiter().GetResult();
+                    Log.Information("BlobStorage connected successfully. Account: {Account}", blobServiceClient.AccountName);
+                    services.AddSingleton(blobServiceClient);
                     services.AddSingleton<IBlobStorage, BlobStorage>();
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(ex, "BlobStorage is disabled due to invalid connection string");
-                    services.AddSingleton<IBlobStorage,DummyBlobStorage>();
+                    Log.Warning(ex, "BlobStorage connection failed. Using DummyBlobStorage.");
+                    services.AddSingleton<IBlobStorage, DummyBlobStorage>();
                 }
             }
             else
             {
-                Log.Warning("BlobStorage connection string is empty. Blob features disabled.");
+                Log.Warning("BlobStorage connection string is empty. Using DummyBlobStorage.");
+                services.AddSingleton<IBlobStorage, DummyBlobStorage>();
             }
 
             #region Firebase Admin SDK Initialization

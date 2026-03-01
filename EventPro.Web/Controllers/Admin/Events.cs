@@ -6,6 +6,7 @@ using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 using EventPro.Business.Storage.Interface;
@@ -417,7 +418,7 @@ namespace EventPro.Web.Controllers
 
         /// <summary>
         /// Creates a new event in the database.
-        /// Validates date range and description, uploads media files to Cloudinary,
+        /// Validates date range and description, uploads media files to Blob Storage,
         /// sets default values, creates event-operator mapping, sends Firebase notification
         /// if ShowOnCalender is enabled, and generates reminder ICS file.
         /// </summary>
@@ -478,15 +479,15 @@ namespace EventPro.Web.Controllers
                     {
                         if (file.ContentType.Contains("image"))
                         {
-                            filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
+                            filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"events/{file.FileName}", CancellationToken.None);
                         }
                         else if (file.ContentType.Contains("video"))
                         {
-                            filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
+                            filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"events/{file.FileName}", CancellationToken.None);
                         }
                         else if (file.ContentType.Contains("application/pdf"))
                         {
-                            filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
+                            filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"events/{file.FileName}", CancellationToken.None);
                         }
 
                         if (!string.IsNullOrEmpty(filename))
@@ -668,7 +669,7 @@ namespace EventPro.Web.Controllers
 
         /// <summary>
         /// Updates an existing event in the database.
-        /// Validates date range and description, handles file uploads to Cloudinary,
+        /// Validates date range and description, handles file uploads to Blob Storage,
         /// updates all event properties, syncs event operator dates,
         /// and regenerates the reminder ICS file.
         /// </summary>
@@ -717,15 +718,15 @@ namespace EventPro.Web.Controllers
                         {
                             if (file.ContentType.Contains("image"))
                             {
-                                filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "events");
+                                filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"events/{file.FileName}", CancellationToken.None);
                             }
                             else if (file.ContentType.Contains("video"))
                             {
-                                filename = await _cloudinaryService.UploadVideoAsync(stream, file.FileName, "events");
+                                filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"events/{file.FileName}", CancellationToken.None);
                             }
                             else if (file.ContentType.Contains("application/pdf"))
                             {
-                                filename = await _cloudinaryService.UploadFileAsync(stream, file.FileName, "events");
+                                filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"events/{file.FileName}", CancellationToken.None);
                             }
 
                             if (!string.IsNullOrEmpty(filename))
@@ -1693,19 +1694,17 @@ namespace EventPro.Web.Controllers
             //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             //await _blobStorage.DeleteFolderAsync(environment + cardPreview + "/" + id + "/", cancellationToken: default);
 
-            // Delete from Cloudinary
-            var prefix = $"upload/cards/{eventId}/";
+            // Delete from Blob Storage
+            var prefix = $"cards/{eventId}/";
 
-            var deletedCounter = await _cloudinaryService
-                .DeleteByPrefixAsync(prefix);
+            await _blobStorage.DeleteFolderAsync(prefix, CancellationToken.None);
 
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, eventId, DAL.Enum.ActionEnum.DeleteAllGuests);
 
             Log.Information(
-               "Guest cards deletion executed. EventId={EventId}, DeletedCount={DeletedCount}, DeletedBy={UserId}",
+               "Guest cards deletion executed. EventId={EventId}, DeletedBy={UserId}",
                eventId,
-               deletedCounter,
                userId);
 
             Log.Information("All guests deleted: EventId={EventId}, GuestsRemoved={Count}, DeletedBy={UserId}", eventId, guests.Count, userId);
@@ -1748,16 +1747,14 @@ namespace EventPro.Web.Controllers
 
                 var userId = int.Parse(userIdClaim);
 
-                // Delete from Cloudinary
-                var prefix = $"upload/cards/{eventId}/";
+                // Delete from Blob Storage
+                var prefix = $"cards/{eventId}/";
 
-                var deletedCounter = await _cloudinaryService
-                    .DeleteByPrefixAsync(prefix);
+                await _blobStorage.DeleteFolderAsync(prefix, CancellationToken.None);
 
                 Log.Information(
-                    "Guest cards deletion executed. EventId={EventId}, DeletedCount={DeletedCount}, DeletedBy={UserId}",
+                    "Guest cards deletion executed. EventId={EventId}, DeletedBy={UserId}",
                     eventId,
-                    deletedCounter,
                     userId);
 
                 // Audit log
@@ -1766,11 +1763,7 @@ namespace EventPro.Web.Controllers
                     eventId,
                     DAL.Enum.ActionEnum.DeleteAllGuestsCards);
 
-                return Ok(new
-                {
-                    success = true,
-                    deletedCount = deletedCounter
-                });
+                return Ok(new { success = true });
             }
             catch (DbUpdateException dbEx)
             {
@@ -2323,29 +2316,29 @@ namespace EventPro.Web.Controllers
         }
 
         /// <summary>
-        // Saves the ICS file content to Cloudinary storage.
-        // Uploads the ICS file and returns the Cloudinary URL.
+        /// Saves the ICS file content to Blob Storage.
+        /// Uploads the ICS file and returns the Blob Storage URL.
         /// </summary>
         /// <param name="icsContent">ICS file content</param>
         /// <param name="fileName">File name (without extension)</param>
-        /// <returns>Cloudinary URL of the uploaded ICS file</returns>
+        /// <returns>Blob Storage URL of the uploaded ICS file</returns>
         public async Task<string> SaveReminderIcsFileAsync(string icsContent, string fileName)
         {
             try
             {
                 // Convert ICS content to memory stream
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(icsContent));
-                
-                // Upload to Cloudinary in 'ics' folder
-                var icsUrl = await _cloudinaryService.UploadRawFileAsync(stream, $"{fileName}.ics", "ics");
-                
-                Log.Information($"ICS file uploaded to Cloudinary: {icsUrl}");
-               
+
+                // Upload to Blob Storage in 'ics' folder
+                var icsUrl = await _blobStorage.UploadAsync(stream, "text/calendar", $"ics/{fileName}.ics", CancellationToken.None);
+
+                Log.Information($"ICS file uploaded to Blob Storage: {icsUrl}");
+
                 return icsUrl;
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"Failed to upload ICS file to Cloudinary: {ex.Message}");
+                Log.Error(ex, $"Failed to upload ICS file to Blob Storage: {ex.Message}");
                 return null;
             }
         }

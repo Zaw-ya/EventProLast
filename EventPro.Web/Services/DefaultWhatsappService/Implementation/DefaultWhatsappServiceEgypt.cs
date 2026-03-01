@@ -10,7 +10,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 {
     public class DefaultWhatsappServiceEgypt : DefaultWhatsappService, IDefaultWhatsappServcieEgypt
     {
-        public DefaultWhatsappServiceEgypt(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ICloudinaryService cloudinaryService) : base(configuration, httpContextAccessor, cloudinaryService)
+        public DefaultWhatsappServiceEgypt(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IBlobStorage blobStorage) : base(configuration, httpContextAccessor, blobStorage)
         {
 
         }
