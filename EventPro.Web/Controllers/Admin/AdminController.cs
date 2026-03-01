@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EventPro.Web.Controllers
@@ -50,7 +51,6 @@ namespace EventPro.Web.Controllers
         private readonly IWebHookBulkMessagingQueueConsumerService _WebHookQueueConsumerService;
         private readonly IMemoryCacheStoreService _MemoryCacheStoreService;
         private readonly IBlobStorage _blobStorage;
-        private readonly ICloudinaryService _cloudinaryService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         /// <summary>
@@ -68,13 +68,12 @@ namespace EventPro.Web.Controllers
                                  IBlobStorage blobStorage,
                                  IHttpContextAccessor httpContextAccessor,
                                  IUnitOfWork unitOfWork,
-                                 ICloudinaryService cloudinaryService, ILogger<AdminController> logger)
+                                 ILogger<AdminController> logger)
         {
             SetBreadcrum("Dashboard", "/");
             _configuration = configuration;
             db = new EventProContext(configuration);
             _unitOfWork = unitOfWork;
-            _cloudinaryService = cloudinaryService;
             WAMessageLimit = Convert.ToInt32(_configuration.GetSection("InterkatSettings").GetSection("messageLimit").Value);
             this.webHostEnvironment = env;
             _FirbaseAPI = firbaseAPI;
@@ -203,7 +202,7 @@ namespace EventPro.Web.Controllers
         /// <summary>
         /// POST: Admin/EventCategory
         /// Creates a new event category or updates an existing one
-        /// Handles category icon upload to Cloudinary storage
+        /// Handles category icon upload to Blob Storage
         /// Validates for duplicate category names before creation
         /// </summary>
         /// <param name="eventCategory">Event category model with Id, name, and other properties</param>
@@ -220,7 +219,7 @@ namespace EventPro.Web.Controllers
                 var files = Request.Form.Files;
                 string filename = string.Empty;
 
-                // Handle category icon upload to Cloudinary
+                // Handle category icon upload to Blob Storage
                 if (files != null && files.Count > 0)
                 {
                     var file = files[0];
@@ -228,8 +227,10 @@ namespace EventPro.Web.Controllers
                     {
                         using (var stream = file.OpenReadStream())
                         {
-                            // Upload to Cloudinary in 'categories' folder
-                            filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "categories");
+                            //filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "categories");
+                            
+                            // Upload to Blob Storage in 'categories' folder
+                            filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"categories/{file.FileName}", CancellationToken.None);
                         }
                     }
                 }
