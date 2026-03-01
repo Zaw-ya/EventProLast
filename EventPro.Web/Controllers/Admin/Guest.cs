@@ -10,6 +10,7 @@ using System.Linq.Dynamic.Core;
 using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -564,7 +565,7 @@ namespace EventPro.Web.Controllers
                         guest.GuestId.ToString()
                     );
 
-                    
+
                     await _auditLogService.AddAsync(userId, eventId, ActionEnum.UpdateGuest, guestId, gst.FirstName);
                     await db.SaveChangesAsync();
 
@@ -613,8 +614,8 @@ namespace EventPro.Web.Controllers
                     _logger.LogWarning("CardInfo not found | EventId={EventId}", eventId);
                 }
 
-                //await RefreshQRCode(guest, cardinfo);
-                //await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
+                await RefreshQRCode(guest, cardinfo);
+                await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
                 await db.SaveChangesAsync();
 
                 return addedOrModified;
@@ -652,9 +653,6 @@ namespace EventPro.Web.Controllers
             Log.Information("Event {eId} guest {gId} removed by {uId}", eventId, guest.GuestId, userId);
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             string environment = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            //await _cloudinaryService.DeleteAsync();
-            await _blobStorage.DeleteFileAsync(environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg", cancellationToken: default);
-
             TempData["error"] = "Guest information deleted successfully!";
 
             return RedirectToAction("Guests", "admin", new { id = eventId });
@@ -1007,12 +1005,9 @@ namespace EventPro.Web.Controllers
             if (!CheckGuestsNumbersExist(guests))
                 return Json(new { success = false, message = "يجب وجود رقم احتياطي واساسي لكل ضيف من الضيوف" });
 
-            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
-            if (guestsWithoutCards.Any())
-            {
-                var names = string.Join("، ", guestsWithoutCards);
-                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
-            }
+            // Validate invitation cards exist in blob storage
+            if (!await CheckGuestsCardsExistAsync(guests, _event))
+                return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
 
             // Validate webhook consumer is in valid state for bulk sending
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
@@ -1026,9 +1021,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await sendingProvider.SendCardMessagesAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Invitation Card في Twilio " });
             }
             finally
             {
@@ -1054,13 +1049,13 @@ namespace EventPro.Web.Controllers
 
             Guest guest = await db.Guest.Where(p => p.GuestId == id)
                 .FirstOrDefaultAsync();
-            
+
             if (guest == null)
             {
                 _logger.LogWarning("Guest not found with GuestId {GuestId}", id);
                 return Json(new { success = false, message = "الضيف غير موجود" });
             }
-            
+
             var guests = new List<Guest>() { guest };
 
             var _event = await db.Events.Where(p => p.Id == guest.EventId)
@@ -1090,11 +1085,10 @@ namespace EventPro.Web.Controllers
             }
 
             // Validate invitation card exists
-            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
-            if (guestsWithoutCards.Any())
+            if (!await CheckGuestsCardsExistAsync(guests, _event))
             {
-                var names = string.Join("، ", guestsWithoutCards);
-                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
+                _logger.LogWarning("Card validation failed for GuestId {GuestId}", guest.GuestId);
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
             }
 
             try
@@ -1123,16 +1117,10 @@ namespace EventPro.Web.Controllers
 
                 return Json(new { success = true });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError(
-                            ex,
-                            "Error while sending QRCode to GuestId {GuestId}, EventId {EventId}",
-                            guest.GuestId,
-                            _event.Id
-                        );
-
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال" });
+                _logger.LogError(ex, "Error while sending QRCode to GuestId {GuestId}, EventId {EventId}", guest.GuestId, _event.Id);
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Invitation Card في Twilio " });
             }
 
         }
@@ -1238,7 +1226,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Event Location في Twilio " });
             }
             finally
             {
@@ -1283,9 +1271,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendEventLocationAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Event Location في Twilio " });
             }
 
             return Json(new { success = true });
@@ -1381,6 +1369,7 @@ namespace EventPro.Web.Controllers
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
                 return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
+
             try
             {
                 // Pause webhook consumer during bulk send
@@ -1388,10 +1377,11 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
             }
             finally
             {
@@ -1482,10 +1472,14 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+                if (_event.ReminderTempId == null)
+                {
+                    return Json(new { success = false, message = "template id is missing" });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
             }
             finally
             {
@@ -1592,10 +1586,14 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+                if (_event.ReminderTempId == null)
+                {
+                    return Json(new { success = false, message = "template id is missing" });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
             }
             finally
             {
@@ -1700,10 +1698,14 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+                if (_event.ReminderTempId == null)
+                {
+                    return Json(new { success = false, message = "template id is missing" });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
             }
             finally
             {
@@ -1815,12 +1817,8 @@ namespace EventPro.Web.Controllers
                 return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             // Validate invitation cards exist
-            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
-            if (guestsWithoutCards.Any())
-            {
-                var names = string.Join("، ", guestsWithoutCards);
-                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
-            }
+            if (!await CheckGuestsCardsExistAsync(guests, _event))
+                return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
 
             // Validate webhook consumer state
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
@@ -1834,9 +1832,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendConfirmationMessagesAsync(guests, _event);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Confirmation في Twilio " });
             }
             finally
             {
@@ -1947,9 +1945,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendCongratulationMessageAsync(guests, _event);
             }
-            catch
+            catch (Exception)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Conguratilation في Twilio " });
             }
             finally
             {
@@ -2008,12 +2006,8 @@ namespace EventPro.Web.Controllers
                 return Json(new { success = false, message = "رقم الجوال غير موجود" });
 
             // Validate invitation card exists
-            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
-            if (guestsWithoutCards.Any())
-            {
-                var names = string.Join("، ", guestsWithoutCards);
-                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
-            }
+            if (!await CheckGuestsCardsExistAsync(guests, _event))
+                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             try
             {
@@ -2021,9 +2015,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await sendingProvider.SendConfirmationMessagesAsync(guests, _event);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Confirmation في Twilio " });
             }
 
             return Json(new { success = true });
@@ -2057,9 +2051,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
             }
-            catch
+            catch (Exception)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
             }
             return Json(new { success = true });
         }
@@ -2102,9 +2096,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendCongratulationMessageAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Conguratilation في Twilio " });
             }
 
             return Json(new { success = true });
@@ -2314,9 +2308,8 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال" });
             }
-
             return Json(new { success = true, totalGuests = totalGuests, totalMembers = totalMembers });
         }
 
@@ -2589,66 +2582,74 @@ namespace EventPro.Web.Controllers
         #region Region 15: Helper Methods - Validation and Processing
 
         /// <summary>
-        /// Validates that all guests have valid phone numbers
-        /// Checks both PrimaryContactNo and SecondaryContactNo are not empty
-        /// </summary>
-        /// <param name="guests">List of guests to validate</param>
-        /// <returns>True if all guests have valid phone numbers(primary,secondary), false otherwise</returns>
-        /// <summary>
         /// Validates that invitation cards exist in blob storage for all guests
-        /// Returns list of guest names who are missing cards (empty list = all cards exist)
+        /// Checks if event card folder exists and validates each guest's card file
         /// Card filename format: E00000{eventId}_{guestId}_{noOfMembers}.jpg
         /// </summary>
-        private async Task<List<string>> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
+        /// <param name="guests">List of guests to validate cards for</param>
+        /// <param name="_event">Event containing card configuration</param>
+        /// <returns>True if all cards exist, false otherwise</returns>
+        private async Task<bool> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
         {
-            var guestsWithoutCards = new List<string>();
+            #region Old checking code with blob storage
+            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            //// Check if event card folder exists
+            //if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
+            //{
+            //    return false;
+            //}
 
+            //// Validate each guest has a card file
+            //foreach (var guest in guests)
+            //{
+            //    string imagePath = cardPreview + "/" + guest.EventId + "/" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+            //    if (!await _blobStorage.FileExistsAsync(environment + imagePath))
+            //    {
+            //        return false;
+            //    }
+            //}
+            #endregion
             _logger.LogInformation(
                 "Checking invitation cards for EventId {EventId}, GuestsCount {GuestsCount}",
-                _event.Id, guests.Count
+                _event.Id,
+                guests.Count
             );
 
-            // Check if event card folder exists
-            if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
-            {
-                _logger.LogWarning("Card folder not found for EventId {EventId}", _event.Id);
-                // If folder not found it means all guests does not have 
-                guests.ForEach(g => guestsWithoutCards.Add($"{g.FirstName} (ID: {g.GuestId})"));
-                return guestsWithoutCards;
-            }
-
-            // Validate each guest has a card file
             foreach (var guest in guests)
             {
-                string imagePath = cardPreview + "/" + guest.EventId + "/" +
-                                   "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
+                var cardPublicId =
+                    $"cards/{_event.Id}/E00000{_event.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
 
                 _logger.LogInformation(
-                    "Checking card for GuestId {GuestId}, Path {Path}",
-                    guest.GuestId, imagePath
+                    "Checking card for GuestId {GuestId}, PublicId {PublicId}",
+                    guest.GuestId,
+                    cardPublicId
                 );
 
-                if (!await _blobStorage.FileExistsAsync(environment + imagePath))
+                var guestFinalInvitationUrl = _blobStorage.GetFileUrl(cardPublicId);
+
+                if (string.IsNullOrEmpty(guestFinalInvitationUrl))
                 {
                     _logger.LogError(
-                        "Invitation card NOT found for GuestId {GuestId}",
-                        guest.GuestId
+                        "Invitation card NOT found for GuestId {GuestId}, PublicId {PublicId}",
+                        guest.GuestId,
+                        cardPublicId
                     );
-                    guestsWithoutCards.Add($"{guest.FirstName} (ID: {guest.GuestId})");
+                    return false;
                 }
-                else
-                {
-                    _logger.LogInformation(
-                        "Invitation card found for GuestId {GuestId}",
-                        guest.GuestId
-                    );
-                }
+
+                _logger.LogInformation(
+                    "Invitation card found for GuestId {GuestId}, Url {Url}",
+                    guest.GuestId,
+                    guestFinalInvitationUrl
+                );
             }
 
-            return guestsWithoutCards;
+            _logger.LogInformation("All invitation cards exist for EventId {EventId}", _event.Id);
+            return true;
+
         }
 
         /// <summary>
@@ -2706,8 +2707,8 @@ namespace EventPro.Web.Controllers
         /// <summary>
         /// Generates and updates the invitation card for a guest
         /// Process:
-        /// 1. Loads card template from local storage or Cloudinary background image
-        /// 2. Loads guest QR code from Cloudinary
+        /// 1. Loads card template from local storage or Blob Storage background image
+        /// 2. Loads guest QR code from Blob Storage
         /// 3. Draws guest-specific data on card (name, phone, additional text, member count)
         /// 4. Handles text alignment (right/left/center) and font configuration
         /// 5. Applies zoom ratio for high-resolution images
@@ -2726,7 +2727,6 @@ namespace EventPro.Web.Controllers
             int guestId = guest.GuestId;
             int nos = Convert.ToInt32(guest.NoOfMembers);
 
-            //Ali hani we depand on cloudinary service to get the latest version of qr code image becasue it clean to add all placeholder on it
             // Always load the original background image (without placeholders)
             // This ensures guest data replaces placeholders cleanly
             //Image img;
@@ -2761,17 +2761,14 @@ namespace EventPro.Web.Controllers
                 zoomRatio = Convert.ToDouble(img.Width) / Convert.ToDouble(900);
             }
 
-            // Load guest QR code from Cloudinary
+            // Load guest QR code from Blob Storage
             using HttpClient clientQR = new HttpClient();
-            string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
 
-            // var barcodeUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{eventId}/{guestId}.png";
             // We refresh qr code before we refresh the card so we have to get the latest version of qr code here
-            // We have to get the latest version of the qr code in case it was regenerated
-            var qrPublicId = $"QR/{eventId}/{guestId}";
-            var barcodeUrl = await _cloudinaryService.GetLatestVersionUrlAsync(qrPublicId);
+            var qrPublicId = $"QR/{eventId}/{guestId}.png";
+            var barcodeUrl = _blobStorage.GetFileUrl(qrPublicId);
             byte[] barcodeData = await clientQR.GetByteArrayAsync(barcodeUrl);
-            
+
             using MemoryStream fsBarcode = new MemoryStream(barcodeData);
             Image barcode = Image.FromStream(fsBarcode);
             Bitmap myBitmap = new Bitmap(img);
@@ -2809,9 +2806,9 @@ namespace EventPro.Web.Controllers
 
                 var font = new System.Drawing.Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
 
-       
 
-       //AliHani         //grap.DrawImage(
+
+                //AliHani         //grap.DrawImage(
                 //    img,
                 //    destRect: new Rectangle(
                 //        (int)((nameXAxis - 10) * zoomRatio),
@@ -2936,18 +2933,11 @@ namespace EventPro.Web.Controllers
             {
                 // Save the final image to memory stream
                 myBitmap.Save(ms, ImageFormat.Jpeg);
-                // Here we will upload the image to cloudianry with a filename relate to the guest
-                // to make us able to retrieve it later when sending whatsapp message
-                var cloudinaryFileName = $"E00000{eventId}_{guestId}_{nos}.jpg";
+                // Upload the card image to Blob Storage with a filename related to the guest
+                // so we can retrieve it later when sending WhatsApp message
+                var blobFileName = $"E00000{eventId}_{guestId}_{nos}.jpg";
 
-                var cloudinaryUrl = await _cloudinaryService.UploadImageAsync(
-                    ms,
-                    cloudinaryFileName,
-                    $"cards/{eventId}"
-                );
-
-
-                //await _blobStorage.UploadAsync(ms, "jpg", environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guestId + "_" + nos + ".jpg", cancellationToken: default);
+                await _blobStorage.UploadAsync(ms, "image/jpeg", $"cards/{eventId}/{blobFileName}", CancellationToken.None);
             }
 
             // Dispose graphics objects
@@ -2987,7 +2977,7 @@ namespace EventPro.Web.Controllers
         /// Encrypts guest ID for QR code content
         /// Supports custom foreground/background colors from card configuration
         /// Handles transparent background when foreground is white (#FFFFFF)
-        /// Uploads generated QR code to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
+        /// Uploads generated QR code to Blob Storage in folder structure: QR/{eventId}/{guestId}.png
         /// QR codes are used for guest check-in scanning at event entrance
         /// </summary>
         /// <param name="guest">Guest to generate QR code for</param>
@@ -3034,11 +3024,7 @@ namespace EventPro.Web.Controllers
                 using var ms = new MemoryStream();
                 qrCodeImage.Save(ms, ImageFormat.Png);
 
-                await _cloudinaryService.UploadImageAsync(
-                    ms,
-                    $"{guest.GuestId}.png",
-                    $"QR/{guest.EventId}"
-                );
+                await _blobStorage.UploadAsync(ms, "image/png", $"QR/{guest.EventId}/{guest.GuestId}.png", CancellationToken.None);
 
                 _logger.LogInformation(
                     "RefreshQRCode completed | GuestId={GuestId}",
@@ -3056,6 +3042,7 @@ namespace EventPro.Web.Controllers
                 throw;
             }
         }
+
 
         #endregion
 
