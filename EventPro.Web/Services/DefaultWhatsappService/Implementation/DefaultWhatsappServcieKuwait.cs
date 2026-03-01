@@ -8,7 +8,7 @@ namespace EventPro.Web.Services.DefaultWhatsapp.Implementation
 {
     public class DefaultWhatsappServcieKuwait : DefaultWhatsappService.Implementation.DefaultWhatsappService, IDefaultWhatsappServcieKuwait
     {
-        public DefaultWhatsappServcieKuwait(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ICloudinaryService cloudinaryService) : base(configuration, httpContextAccessor, cloudinaryService)
+        public DefaultWhatsappServcieKuwait(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IBlobStorage blobStorage) : base(configuration, httpContextAccessor, blobStorage)
         {
         }
         public override ChromeOptions ChromeOptions()

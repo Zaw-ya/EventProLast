@@ -153,7 +153,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
         /// Database context for accessing DefaultWhatsappSettings.
         /// </summary>
         private readonly EventProContext _db;
-        private readonly ICloudinaryService _cloudinaryService;
+        private readonly IBlobStorage _blobStorage;
 
         #endregion
 
@@ -166,12 +166,12 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
         /// <param name="httpContextAccessor">HTTP context for URL generation</param>
         public DefaultWhatsappService(IConfiguration configuration,
             IHttpContextAccessor httpContextAccessor,
-            ICloudinaryService cloudinaryService)
+            IBlobStorage blobStorage)
         {
             _configuration = configuration;
             _db = new EventProContext(configuration);
             _httpContextAccessor = httpContextAccessor;
-            _cloudinaryService = cloudinaryService;
+            _blobStorage = blobStorage;
         }
 
         #endregion
@@ -484,10 +484,10 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
                     Log.Information("Message text typed successfully");
                 }
 
-                string publicId = $"cards/{evnt.Id}/E00000{evnt.Id}_{guest.GuestId}_{guest.NoOfMembers}";
-                Log.Information("Fetching card image from Cloudinary - PublicId: {PublicId}", publicId);
+                string publicId = $"cards/{evnt.Id}/E00000{evnt.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
+                Log.Information("Fetching card image from Blob Storage - PublicId: {PublicId}", publicId);
 
-                string imageUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId, "image");
+                string imageUrl = _blobStorage.GetFileUrl(publicId);
                 if (string.IsNullOrEmpty(imageUrl))
                     throw new Exception($"Card image not found: {publicId}");
                 Log.Information("Card image URL retrieved - URL: {ImageUrl}", imageUrl);

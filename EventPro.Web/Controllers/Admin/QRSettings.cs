@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 using EventPro.DAL.Models;
@@ -99,7 +100,7 @@ namespace EventPro.Web.Controllers
         /// <summary>
         /// POST: Admin/QRSettings
         /// Saves QR code and card settings including background image upload
-        /// Generates QR code with specified colors and uploads to Cloudinary
+        /// Generates QR code with specified colors and uploads to Blob Storage
         /// Validates file size (max 1MB) and processes background image
         /// Creates folder structure: QR/{eventId}/{eventId}.png
         /// Logs update action in audit trail
@@ -140,9 +141,9 @@ namespace EventPro.Web.Controllers
                 string extension = file.ContentType.ToLower().Replace(@"image/", "");
                 filename = Guid.NewGuid() + "." + extension;
 
-                // Upload to Cloudinary
+                // Upload to Blob Storage
                 using var stream = file.OpenReadStream();
-                backgroundImageUrl = await _cloudinaryService.UploadImageAsync(stream, environment + path + "/" + filename, path);
+                backgroundImageUrl = await _blobStorage.UploadAsync(stream, file.ContentType, $"{path.Trim('/')}/{filename}", CancellationToken.None);
                 hasFile = true;
             }
 
@@ -205,15 +206,15 @@ namespace EventPro.Web.Controllers
             string qrFileName = $"{info.EventId}.png";
 
             // Delete existing QR code if any
-            await _cloudinaryService.DeleteAsync($"{qrFolderPath}/{qrFileName}");
+            await _blobStorage.DeleteFileAsync($"{qrFolderPath}/{qrFileName}", CancellationToken.None);
 
-            // Upload QR code to Cloudinary
+            // Upload QR code to Blob Storage
             string qrCodeUrl = string.Empty;
             using (MemoryStream ms = new MemoryStream())
             {
                 // Convert to PNG format (supports transparency)
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                qrCodeUrl = await _cloudinaryService.UploadImageAsync(ms, qrFileName, qrFolderPath);
+                qrCodeUrl = await _blobStorage.UploadAsync(ms, "image/png", $"{qrFolderPath}/{qrFileName}", CancellationToken.None);
             }
 
             // Store QR code URL in database
@@ -313,16 +314,15 @@ namespace EventPro.Web.Controllers
             ViewBag.ImageHeight = img.Height;
             ViewBag.Fonts = new SelectList(GetFonts(), "Name", "Name");
 
-            // Set QR code URL - use stored URL or construct Cloudinary URL
+            // Set QR code URL - use stored URL or construct Blob Storage URL
             if (!string.IsNullOrEmpty(cardInfo.BarcodeColorCode))
             {
                 ViewBag.Barcode = cardInfo.BarcodeColorCode;
             }
             else
             {
-                // Construct Cloudinary URL: QR/{eventId}/{eventId}.png
-                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
-                ViewBag.Barcode = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{id}/{id}.png";
+                // Construct Blob Storage URL: QR/{eventId}/{eventId}.png
+                ViewBag.Barcode = _blobStorage.GetFileUrl($"QR/{id}/{id}.png");
             }
 
             return View(cardInfo);
@@ -416,8 +416,8 @@ namespace EventPro.Web.Controllers
             }
             else
             {
-                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
-                ViewBag.Barcode = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{cardInfo.EventId}/{cardInfo.EventId}.png";
+                // Construct Blob Storage URL: QR/{eventId}/{eventId}.png
+                ViewBag.Barcode = _blobStorage.GetFileUrl($"QR/{cardInfo.EventId}/{cardInfo.EventId}.png");
             }
 
             // Validate background image
@@ -651,13 +651,13 @@ namespace EventPro.Web.Controllers
                 {
                     foreach (var guest in guests)
                     {
-                        // build the fileId or publicId 
-                        string publicId = $"cards/{id}/E00000{id}_{guest.GuestId}_{guest.NoOfMembers}";
+                        // build the fileId or publicId
+                        string publicId = $"cards/{id}/E00000{id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
 
                         try
                         {
                             // get the latest URL
-                            string latestUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId);
+                            string latestUrl = _blobStorage.GetFileUrl(publicId);
 
                             // download image
                             using var client = new HttpClient();
@@ -700,10 +700,10 @@ namespace EventPro.Web.Controllers
             try
             {
                 // بناء الـ publicId بنفس الطريقة اللي بتستخدمها في الرفع
-                string publicId = $"cards/{eventId}/E00000{eventId}_{guestId}_{noOfMembers}";
+                string publicId = $"cards/{eventId}/E00000{eventId}_{guestId}_{noOfMembers}.jpg";
 
                 // استدعاء الدالة اللي عملناها
-                string latestUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId);
+                string latestUrl = _blobStorage.GetFileUrl(publicId);
 
                 return Ok(new { success = true, url = latestUrl });
             }
@@ -722,9 +722,9 @@ namespace EventPro.Web.Controllers
         {
             try
             {
-                string publicId = $"QR/{eventId}/{guestId}";
+                string publicId = $"QR/{eventId}/{guestId}.png";
 
-                string latestUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId);
+                string latestUrl = _blobStorage.GetFileUrl(publicId);
 
                 return Ok(new { success = true, url = latestUrl });
             }
@@ -929,7 +929,7 @@ namespace EventPro.Web.Controllers
 
         /// <summary>
         /// Adds QR code image to card at specified position
-        /// Retrieves QR code from database URL or constructs Cloudinary URL
+        /// Retrieves QR code from database URL or constructs Blob Storage URL
         /// Applies zoom ratio for proper scaling
         /// </summary>
         /// <param name="cardInfo">Card settings with barcode position and size</param>
@@ -941,7 +941,7 @@ namespace EventPro.Web.Controllers
         {
             using HttpClient client = new HttpClient();
 
-            // Get QR code URL from database or construct Cloudinary URL
+            // Get QR code URL from database or construct Blob Storage URL
             string imageUrl;
             if (!string.IsNullOrEmpty(cardInfo.BarcodeColorCode))
             {
@@ -949,9 +949,8 @@ namespace EventPro.Web.Controllers
             }
             else
             {
-                // Construct Cloudinary URL: QR/{eventId}/{eventId}.png
-                string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
-                imageUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{cardInfo.EventId}/{cardInfo.EventId}.png";
+                // Construct Blob Storage URL: QR/{eventId}/{eventId}.png
+                imageUrl = _blobStorage.GetFileUrl($"QR/{cardInfo.EventId}/{cardInfo.EventId}.png");
             }
 
             // Download QR code image

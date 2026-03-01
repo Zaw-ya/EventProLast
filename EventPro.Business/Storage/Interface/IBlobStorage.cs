@@ -14,5 +14,6 @@ namespace EventPro.Business.Storage.Interface
         Task<bool> FolderExistsAsync(string folderName);
         Task<int> CountFilesInFolderAsync(string folderPath);
         Task<MemoryStream> DownloadFilesAsZipStreamAsync(string folderName);
+        string GetFileUrl(string fileName);
     }
 }

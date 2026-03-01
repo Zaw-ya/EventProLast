@@ -30,6 +30,8 @@ using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable CS0168 // catch variable declared but never used
+
 namespace EventPro.API.Configuration
 {
     public static class DependencyInjectionConfig
@@ -59,11 +61,34 @@ namespace EventPro.API.Configuration
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
             // ------------------------------
+            // Blob Storage
+            // ------------------------------
+            var blobConnection = configuration.GetSection("Database")["BlobStorage"];
+            if (!string.IsNullOrWhiteSpace(blobConnection))
+            {
+                try
+                {
+                    services.AddSingleton(new BlobServiceClient(blobConnection));
+                    services.AddSingleton<IBlobStorage, BlobStorage>();
+                }
+                catch (Exception)
+                {
+                    Log.Warning("API BlobStorage disabled due to invalid connection string. Using DummyBlobStorage.");
+                    services.AddSingleton<IBlobStorage, DummyBlobStorage>();
+                }
+            }
+            else
+            {
+                Log.Warning("API BlobStorage connection string is empty. Using DummyBlobStorage.");
+                services.AddSingleton<IBlobStorage, DummyBlobStorage>();
+            }
+
+            // ------------------------------
             // Application Services
             // ------------------------------
             services.AddScoped<IWhatsappSendingProviderService, WhatsappSendingProvidersService>();
             services.AddScoped<ITwilioWebhookService, TwilioWebhookService>();
-            services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddSingleton<ICloudinaryService, CloudinaryService>();
             services.AddSingleton<UrlProtector>();
 
             // ------------------------------

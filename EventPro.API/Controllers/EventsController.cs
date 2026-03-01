@@ -25,6 +25,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EventPro.API.Controllers
@@ -44,7 +45,7 @@ namespace EventPro.API.Controllers
         private readonly EventProContext db;
         private readonly ILogger<EventsController> _logger;
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
-        private readonly ICloudinaryService _cloudinaryService;
+        private readonly IBlobStorage _blobStorage;
         private readonly DistributedLockHelper _lockHelper;
 
         #endregion
@@ -59,13 +60,13 @@ namespace EventPro.API.Controllers
         /// <param name="whatsappSendingProvider">WhatsApp messaging provider service</param>
         /// <param name="blobStorage">Azure Blob storage service for file uploads</param>
         public EventsController(IConfiguration configuration, ILogger<EventsController> logger,
-            IWhatsappSendingProviderService whatsappSendingProvider, ICloudinaryService cloudinaryService,
+            IWhatsappSendingProviderService whatsappSendingProvider, IBlobStorage blobStorage,
             DistributedLockHelper lockHelper)
         {
             _configuration = configuration;
             db = new EventProContext(configuration);
             _logger = logger;
-            _cloudinaryService = cloudinaryService;
+            _blobStorage = blobStorage;
             _whatsappSendingProvider = whatsappSendingProvider;
             _lockHelper = lockHelper;
         }
@@ -451,14 +452,9 @@ namespace EventPro.API.Controllers
                 var extension = file.ContentType.ToLower().Replace(@"image/", "");
                 using var stream = file.OpenReadStream();
 
-                var fileName = $"{eventId}{Path.GetExtension(file.FileName)}";
+                var fileName = $"GatekeeperEventLocation/{eventId}{Path.GetExtension(file.FileName)}";
 
-                var imageUrl = await _cloudinaryService.UploadImageAsync(
-                    stream,
-                    fileName,
-                    "GatekeeperEventLocation"
-                );
-                //await _blobStorage.UploadAsync(stream, extension, environment + gkHistoryPath + "/" + filename, cancellationToken: default);
+                var imageUrl = await _blobStorage.UploadAsync(stream, file.ContentType, fileName, CancellationToken.None);
                 var history = new GKEventHistory
                 {
                     CheckType = "In",
