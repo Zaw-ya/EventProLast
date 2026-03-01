@@ -463,6 +463,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         }
         private async Task SendDefaultMessageToGuestAndUpdateGuest(List<Guest> guests, Events events, string? templateId, TwilioProfileSettings profileSettings)
         {
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Thank you / Congratulation template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             foreach (var guest in guests)
@@ -503,6 +506,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         }
         private async Task SendDefaultMessageToGuestWithHeaderImageAndUpdateGuest(List<Guest> guests, Events events, string? templateId, TwilioProfileSettings profileSettings)
         {
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Thank you / Congratulation template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             foreach (var guest in guests)
