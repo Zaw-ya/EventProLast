@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /nul
 /EventPro.Web/nul
+/EventPro.Web/appsettings.Development.json
