@@ -614,8 +614,8 @@ namespace EventPro.Web.Controllers
                     _logger.LogWarning("CardInfo not found | EventId={EventId}", eventId);
                 }
 
-                await RefreshQRCode(guest, cardinfo);
-                await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
+                //await RefreshQRCode(guest, cardinfo);
+                //await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
                 await db.SaveChangesAsync();
 
                 return addedOrModified;
@@ -1023,7 +1023,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Invitation Card في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1120,7 +1120,7 @@ namespace EventPro.Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while sending QRCode to GuestId {GuestId}, EventId {EventId}", guest.GuestId, _event.Id);
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Invitation Card في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
 
         }
@@ -1226,7 +1226,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Event Location في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1273,7 +1273,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Event Location في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
 
             return Json(new { success = true });
@@ -1379,9 +1379,9 @@ namespace EventPro.Web.Controllers
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1479,7 +1479,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1593,7 +1593,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1705,7 +1705,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1832,9 +1832,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendConfirmationMessagesAsync(guests, _event);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Confirmation في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1945,9 +1945,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendCongratulationMessageAsync(guests, _event);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Conguratilation في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -2015,9 +2015,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await sendingProvider.SendConfirmationMessagesAsync(guests, _event);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Confirmation في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
 
             return Json(new { success = true });
@@ -2051,9 +2051,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Reminder في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
             return Json(new { success = true });
         }
@@ -2098,7 +2098,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال، تأكد من وجود Template ID Of Conguratilation في Twilio " });
+                return Json(new { success = false, message = ex.Message });
             }
 
             return Json(new { success = true });
