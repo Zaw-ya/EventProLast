@@ -1007,17 +1007,13 @@ namespace EventPro.Web.Controllers
             if (!CheckGuestsNumbersExist(guests))
                 return Json(new { success = false, message = "يجب وجود رقم احتياطي واساسي لكل ضيف من الضيوف" });
 
-            // Validate invitation cards exist in blob storage
-            var guestsWithoutCards = await GetGuestsWithoutCardsAsync(guests, _event);
+            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
             if (guestsWithoutCards.Any())
             {
                 var names = string.Join("، ", guestsWithoutCards);
-                return Json(new
-                {
-                    success = false,
-                    message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}"
-                });
+                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
             }
+
             // Validate webhook consumer is in valid state for bulk sending
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
                 return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
@@ -1094,11 +1090,11 @@ namespace EventPro.Web.Controllers
             }
 
             // Validate invitation card exists
-            var guestsWithoutCards = await GetGuestsWithoutCardsAsync(guests, _event);
+            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
             if (guestsWithoutCards.Any())
             {
                 var names = string.Join("، ", guestsWithoutCards);
-                return Json(new { success = false, message = $"الضيف التالي ليس لديه بطاقة دعوة: {names}" });
+                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
             }
 
             try
@@ -1819,8 +1815,12 @@ namespace EventPro.Web.Controllers
                 return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
 
             // Validate invitation cards exist
-            if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
+            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
+            if (guestsWithoutCards.Any())
+            {
+                var names = string.Join("، ", guestsWithoutCards);
+                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
+            }
 
             // Validate webhook consumer state
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
@@ -2008,8 +2008,12 @@ namespace EventPro.Web.Controllers
                 return Json(new { success = false, message = "رقم الجوال غير موجود" });
 
             // Validate invitation card exists
-            if (!await CheckGuestsCardsExistAsync(guests, _event))
-                return Json(new { success = false, message = "بطاقة الضيوف غير موجودة" });
+            var guestsWithoutCards = await CheckGuestsCardsExistAsync(guests, _event);
+            if (guestsWithoutCards.Any())
+            {
+                var names = string.Join("، ", guestsWithoutCards);
+                return Json(new { success = false, message = $"الضيوف التالية ليس لديهم بطاقات دعوة:\n{names}" });
+            }
 
             try
             {
@@ -2585,75 +2589,66 @@ namespace EventPro.Web.Controllers
         #region Region 15: Helper Methods - Validation and Processing
 
         /// <summary>
+        /// Validates that all guests have valid phone numbers
+        /// Checks both PrimaryContactNo and SecondaryContactNo are not empty
+        /// </summary>
+        /// <param name="guests">List of guests to validate</param>
+        /// <returns>True if all guests have valid phone numbers(primary,secondary), false otherwise</returns>
+        /// <summary>
         /// Validates that invitation cards exist in blob storage for all guests
-        /// Checks if event card folder exists and validates each guest's card file
+        /// Returns list of guest names who are missing cards (empty list = all cards exist)
         /// Card filename format: E00000{eventId}_{guestId}_{noOfMembers}.jpg
         /// </summary>
-        /// <param name="guests">List of guests to validate cards for</param>
-        /// <param name="_event">Event containing card configuration</param>
-        /// <returns>True if all cards exist, false otherwise</returns>
-        private async Task<bool> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
+        private async Task<List<string>> CheckGuestsCardsExistAsync(List<Guest> guests, Events _event)
         {
-            #region Old checking code with blob storage
-            //string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
-            //string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+            var guestsWithoutCards = new List<string>();
 
-            //// Check if event card folder exists
-            //if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
-            //{
-            //    return false;
-            //}
+            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
 
-            //// Validate each guest has a card file
-            //foreach (var guest in guests)
-            //{
-            //    string imagePath = cardPreview + "/" + guest.EventId + "/" + "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
-            //    if (!await _blobStorage.FileExistsAsync(environment + imagePath))
-            //    {
-            //        return false;
-            //    }
-            //}
-            #endregion
             _logger.LogInformation(
                 "Checking invitation cards for EventId {EventId}, GuestsCount {GuestsCount}",
-                _event.Id,
-                guests.Count
+                _event.Id, guests.Count
             );
 
-            foreach (var guest in guests)
+            // Check if event card folder exists
+            if (!await _blobStorage.FolderExistsAsync(environment + cardPreview + "/" + _event.Id))
             {
-                var cardPublicId =
-                    $"upload/cards/{_event.Id}/E00000{_event.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
-
-                _logger.LogInformation(
-                    "Checking card for GuestId {GuestId}, PublicId {PublicId}",
-                    guest.GuestId,
-                    cardPublicId
-                );
-
-                var guestFinalInvitationUrl =
-                    await _cloudinaryService.GetLatestVersionUrlAsync(cardPublicId);
-
-                if (string.IsNullOrEmpty(guestFinalInvitationUrl))
-                {
-                    _logger.LogError(
-                        "Invitation card NOT found for GuestId {GuestId}, PublicId {PublicId}",
-                        guest.GuestId,
-                        cardPublicId
-                    );
-                    return false;
-                }
-
-                _logger.LogInformation(
-                    "Invitation card found for GuestId {GuestId}, Url {Url}",
-                    guest.GuestId,
-                    guestFinalInvitationUrl
-                );
+                _logger.LogWarning("Card folder not found for EventId {EventId}", _event.Id);
+                // If folder not found it means all guests does not have 
+                guests.ForEach(g => guestsWithoutCards.Add($"{g.FirstName} (ID: {g.GuestId})"));
+                return guestsWithoutCards;
             }
 
-            _logger.LogInformation("All invitation cards exist for EventId {EventId}", _event.Id);
-            return true;
+            // Validate each guest has a card file
+            foreach (var guest in guests)
+            {
+                string imagePath = cardPreview + "/" + guest.EventId + "/" +
+                                   "E00000" + guest.EventId + "_" + guest.GuestId + "_" + guest.NoOfMembers + ".jpg";
 
+                _logger.LogInformation(
+                    "Checking card for GuestId {GuestId}, Path {Path}",
+                    guest.GuestId, imagePath
+                );
+
+                if (!await _blobStorage.FileExistsAsync(environment + imagePath))
+                {
+                    _logger.LogError(
+                        "Invitation card NOT found for GuestId {GuestId}",
+                        guest.GuestId
+                    );
+                    guestsWithoutCards.Add($"{guest.FirstName} (ID: {guest.GuestId})");
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "Invitation card found for GuestId {GuestId}",
+                        guest.GuestId
+                    );
+                }
+            }
+
+            return guestsWithoutCards;
         }
 
         /// <summary>
@@ -3060,24 +3055,6 @@ namespace EventPro.Web.Controllers
                 );
                 throw;
             }
-        }
-
-        private async Task<List<string>> GetGuestsWithoutCardsAsync(List<Guest> guests, DAL.Models.Events _event)
-        {
-            var guestsWithoutCards = new List<string>();
-
-            foreach (var guest in guests)
-            {
-                // How we handle it 
-                //var cardExists = await _blobStorage.FileExistsAsync();
-                //var cardExists = await _cloudinaryService.
-                if (true)
-                {
-                    guestsWithoutCards.Add($"{guest.FirstName} (ID: {guest.GuestId})");
-                }
-            }
-
-            return guestsWithoutCards;
         }
 
         #endregion
