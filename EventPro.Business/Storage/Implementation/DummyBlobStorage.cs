@@ -57,5 +57,7 @@ namespace EventPro.Business.Storage.Implementation
         {
             return Task.FromResult(new MemoryStream());
         }
+
+        public string GetFileUrl(string fileName) => string.Empty;
     }
 }
