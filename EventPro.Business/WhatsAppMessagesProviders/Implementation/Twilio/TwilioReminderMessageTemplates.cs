@@ -502,6 +502,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             var templateId = events.ReminderTempId;
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId}", templateId, events.Id);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Reminder template ID is not configured on this event. Please set the Reminder Template ID in the event settings.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
@@ -559,13 +562,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId}", templateId ?? "NULL", events.Id);
 
             if (string.IsNullOrEmpty(templateId))
-            {
-                _logger.LogError(
-                    "TemplateId is NULL! EventId={EventId}, ReminderTempId property value: {ReminderTempId}",
-                    events.Id,
-                    events.ReminderTempId ?? "NULL");
-                return;
-            }
+                throw new InvalidOperationException("Reminder template ID is not configured on this event. Please set the Reminder Template ID in the event settings.");
 
             int counter = SetSendingCounter(guests, events);
 
@@ -627,6 +624,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             var templateId = profileSettings?.ReminderTemp1;
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId}", templateId, events.Id);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Reminder Template 1 ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
@@ -682,6 +682,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
             var templateId = profileSettings?.ReminderTemp1WithCalenderIcs;
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId}", templateId, events.Id);
+
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Reminder Template 1 (with Calendar ICS) ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
 
             int counter = SetSendingCounter(guests, events);
 
@@ -740,6 +743,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             var templateId = profileSettings?.ReminderTemp1WithHeaderImage;
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId}", templateId, events.Id);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Reminder Template 1 (with Header Image) ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
@@ -797,6 +803,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
             var templateId = profileSettings?.ReminderTemp1WithHeaderImageWithCalenderIcs;
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId}", templateId, events.Id);
+
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Reminder Template 1 (with Header Image and Calendar ICS) ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
 
             int counter = SetSendingCounter(guests, events);
 
@@ -868,6 +877,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId} (Gender={Gender})",
                 templateId, events.Id, events.ParentTitleGender);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException($"Reminder Template {(events.ParentTitleGender == "Female" ? "2" : "3")} ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
@@ -931,6 +943,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId} (Gender={Gender})",
                 templateId, events.Id, events.ParentTitleGender);
+
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException($"Reminder Template {(events.ParentTitleGender == "Female" ? "2" : "3")} (with Calendar ICS) ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
 
             int counter = SetSendingCounter(guests, events);
 
@@ -997,6 +1012,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId} (Gender={Gender})",
                 templateId, events.Id, events.ParentTitleGender);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException($"Reminder Template {(events.ParentTitleGender == "Female" ? "2 (with Header Image)" : "3")} ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
@@ -1062,6 +1080,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
             _logger.LogInformation("Using TemplateId={TemplateId} for EventId={EventId} (Gender={Gender})",
                 templateId, events.Id, events.ParentTitleGender);
 
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException($"Reminder Template {(events.ParentTitleGender == "Female" ? "2" : "3")} (with Header Image and Calendar ICS) ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             int counter = SetSendingCounter(guests, events);
 
             await Parallel.ForEachAsync(guests, parallelOptions, async (guest, CancellationToken) =>
@@ -1108,6 +1129,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         // Common method to send WhatsApp template message and update guest information
         private async Task SendMessageAndUpdateGuest(Events events, Guest guest, string fullPhoneNumber, string templateId, string[] parameters, List<Guest> guests, TwilioProfileSettings profileSettings)
         {
+            if (string.IsNullOrEmpty(templateId))
+                throw new InvalidOperationException("Reminder template ID is not configured in the Twilio profile. Please open the profile settings and fill in the required template ID.");
+
             _logger.LogInformation(
                 "Sending WhatsApp reminder. EventId={EventId}, GuestId={GuestId}, Phone={Phone}, TemplateId={TemplateId}",
                 events.Id, guest.GuestId, fullPhoneNumber, templateId);

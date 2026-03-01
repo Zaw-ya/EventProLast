@@ -29,18 +29,15 @@ namespace EventPro.Web.Controllers
         private readonly bool _isPrimary;
         private readonly string _primaryVmUrl;
         private readonly System.Net.Http.HttpClient _httpClient;
-        private readonly ICloudinaryService _cloudinaryService;
 
         public DefaultWhatsappController(IConfiguration configuration,
                IUnitOFWorkDefaultWhatsappService unitOFWorkDefaultWhatsappService,
-               IBlobStorage blobStorage,
-               ICloudinaryService cloudinaryService)
+               IBlobStorage blobStorage)
         {
             _UnitOFWorkDefaultWhatsappService = unitOFWorkDefaultWhatsappService;
             _configuration = configuration;
             db = new EventProContext(configuration);
             _blobStorage = blobStorage;
-            _cloudinaryService = cloudinaryService;
         }
         public async Task<IActionResult> sendMessage(int id)
         {
@@ -359,28 +356,19 @@ namespace EventPro.Web.Controllers
                 return Json(new { success = false, message = "Card text is not configured" });
             }
 
-            // 4. بناء publicId وتحقق من الصورة في Cloudinary
-            string publicId = $"cards/{evnt.Id}/E00000{evnt.Id}_{guest.GuestId}_{guest.NoOfMembers}";
-            Log.Information("Checking Cloudinary for card image - PublicId: {PublicId}", publicId);
+            // 4. بناء publicId وتحقق من الصورة في Blob Storage
+            string publicId = $"cards/{evnt.Id}/E00000{evnt.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
+            Log.Information("Checking Blob Storage for card image - PublicId: {PublicId}", publicId);
 
-            string imageUrl;
-            try
-            {
-                imageUrl = await _cloudinaryService.GetLatestVersionUrlAsync(publicId, "image");
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Failed to get image URL from Cloudinary - PublicId: {PublicId}", publicId);
-                return Json(new { success = false, message = "Failed to retrieve image from storage" });
-            }
+            string imageUrl = _blobStorage.GetFileUrl(publicId);
 
             if (string.IsNullOrEmpty(imageUrl))
             {
-                Log.Warning("Card image not found in Cloudinary - PublicId: {PublicId}, GuestId: {GuestId}", publicId, guest.GuestId);
+                Log.Warning("Card image not found in Blob Storage - PublicId: {PublicId}, GuestId: {GuestId}", publicId, guest.GuestId);
                 return Json(new { success = false, message = "Card image not found in storage" });
             }
 
-            Log.Information("Card image found in Cloudinary - URL: {ImageUrl}, PublicId: {PublicId}", imageUrl, publicId);
+            Log.Information("Card image found in Blob Storage - URL: {ImageUrl}, PublicId: {PublicId}", imageUrl, publicId);
 
             // 5. اختيار خدمة WhatsApp حسب البلد
             var whatsappService = ChooseSendingNumber(guest, evnt);

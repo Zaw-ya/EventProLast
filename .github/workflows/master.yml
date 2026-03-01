@@ -1,0 +1,53 @@
+name: .NET 7 CI/CD to Windows VM
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Restore Web project with runtime
+      run: dotnet restore EventPro.Web\EventPro.Web.csproj --runtime win-x64
+
+    - name: Build Web project
+      run: dotnet build EventPro.Web\EventPro.Web.csproj --configuration Release --no-restore
+
+    - name: Clean temp publish
+      shell: powershell
+      run: |
+        if (Test-Path "C:\temp\publish") {
+          Remove-Item "C:\temp\publish\*" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+    - name: Publish Web project (Self-Contained)
+      run: dotnet publish EventPro.Web\EventPro.Web.csproj -c Release --framework net7.0-windows --runtime win-x64 --self-contained true -o C:\temp\publish
+
+    - name: Deploy to IIS
+      shell: powershell
+      run: |
+        Import-Module WebAdministration
+
+        $sitePath = "C:\inetpub\wwwroot\myapp"
+        $appPool = "DefaultAppPool"
+
+        Write-Host "Stopping App Pool..."
+        Stop-WebAppPool -Name $appPool
+
+        Start-Sleep -Seconds 5
+
+        Write-Host "Cleaning old site files..."
+        Remove-Item "$sitePath\*" -Recurse -Force -ErrorAction SilentlyContinue
+
+        Write-Host "Copying new files..."
+        Copy-Item "C:\temp\publish\*" $sitePath -Recurse -Force
+
+        Write-Host "Starting App Pool..."
+        Start-WebAppPool -Name $appPool
+
+        Write-Host "Deployment completed successfully."

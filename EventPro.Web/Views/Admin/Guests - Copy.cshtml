@@ -1,9 +1,10 @@
+@using Microsoft.AspNetCore.Routing
 @model EventPro.DAL.Models.Guest
 @{
     ViewData["Title"] = "EventCatgory";
     Layout = "~/Views/Shared/_Admin.cshtml";
     var language = "arabic";
-
+    var eventId = int.TryParse(Context.GetRouteValue("id")?.ToString(), out var parsedRouteId) ? parsedRouteId : (int)(ViewBag.EventId ?? 0);
 }
 <style>
     @@keyframes rotate {
@@ -170,34 +171,34 @@
                                             Action
                                         </button>
                                         <div class="dropdown-menu" style="font-size: small">
-                                            <a href="#" onclick="SetEventId(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:cornflowerblue"></i>&nbsp; Add Guest</a>
+                                            <a href="#" onclick="SetEventId(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:cornflowerblue"></i>&nbsp; Add Guest</a>
                                             <a href="#" class="dropdown-item" data-toggle="modal" data-target="#modal-uploadguest"><i class="nav-icon fas fa-upload" style="color:cornflowerblue"></i>&nbsp; Upload Guest</a>
                                             <div class="dropdown-divider"></div>
                                             <a href="~/Upload/Samplefile.xlsx" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download Template</a>
                                             <div class="dropdown-divider"></div>
-                                            <a href="#" onclick="RefreshALl(@ViewBag.EventId,1);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh New</a>
-@*                                             <a href="#" onclick="RefreshALl(@ViewBag.EventId,0);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh All</a> *@
-                                            <a href="~/admin/DownloadAll/@ViewBag.EventId" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download All</a>
+                                            <a href="#" onclick="RefreshALl(@eventId,1);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh New</a>
+@*                                             <a href="#" onclick="RefreshALl(@eventId,0);return false;" class="dropdown-item"><i class="fas fa-sync-alt" style="color:cornflowerblue"></i>&nbsp; Refresh All</a> *@
+                                            <a href="~/admin/DownloadAll/@eventId" target="_blank" class="dropdown-item"><i class="nav-icon fas fa-download" style="color:cornflowerblue"></i>&nbsp; Download All</a>
                                             
                                             @if (ViewBag.IsAdmin == 1)
                                             {
-                                                <a href="#" onclick="RefreshAllGuestsStatus(@ViewBag.EventId)" class="dropdown-item"><i class="fas fa-sync-alt" title="تحديث حالة الرسائل الأخيرة" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
-                                                @*                                             <a href="~/admin/ValidateAllGuestPhoneNumbers/@ViewBag.EventId" class="dropdown-item">
+                                                <a href="#" onclick="RefreshAllGuestsStatus(@eventId)" class="dropdown-item"><i class="fas fa-sync-alt" title="تحديث حالة الرسائل الأخيرة" style="color: darkgreen;"></i>&nbsp; Get Last Messages Status</a>
+                                                @*                                             <a href="~/admin/ValidateAllGuestPhoneNumbers/@eventId" class="dropdown-item">
                                                 Gharabawy : This code when download the guest list it will validate all phone numbers (but it commented for now)
                                                 <i class="fas fa-check-circle" style="color:blue"></i>&nbsp;Validate All Numbers Format
                                             </a> *@
                                             }
 
                                             <div class="dropdown-divider"></div>
-                                            <a style="cursor: pointer;" class="dropdown-item" onclick="SendConfirmationToAll(@ViewBag.EventId)"><i class="far fa-question-circle" style="color:orangered"></i>&nbsp; Send confirmation Whatsapp</a>
-                                            <a style="cursor: pointer;" onclick="SendPushToAll(@ViewBag.EventId)" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp; Send Push whatsapp</a>
-                                            <a style="cursor: pointer;" onclick="SendEventLocationToAll(@ViewBag.EventId)" class="dropdown-item"><i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Event Location</a>
-                                            <a style="cursor: pointer;" onclick="SendCongratulationMessageToAll(@ViewBag.EventId)" class="dropdown-item"><i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Thanks Cards</a>
+                                            <a style="cursor: pointer;" class="dropdown-item" onclick="SendConfirmationToAll(@eventId)"><i class="far fa-question-circle" style="color:orangered"></i>&nbsp; Send confirmation Whatsapp</a>
+                                            <a style="cursor: pointer;" onclick="SendPushToAll(@eventId)" class="dropdown-item"><i class="far fa-comments" style="color:green"></i>&nbsp; Send Push whatsapp</a>
+                                            <a style="cursor: pointer;" onclick="SendEventLocationToAll(@eventId)" class="dropdown-item"><i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Event Location</a>
+                                            <a style="cursor: pointer;" onclick="SendCongratulationMessageToAll(@eventId)" class="dropdown-item"><i class="fa fa-map-marker" style="color:red"></i>&nbsp; Send Thanks Cards</a>
 @*                                             <div style="padding-left:15px;" class="dropdown ">
                                                 <i class="far fa-comments" style="color:green"></i>&nbsp;Failed Message
                                                 <div style="right:50px;" class="dropdown-content">
-                                                    <a onclick="SendFailedMsgsToAll(@ViewBag.EventId)" class="dropdown-item " style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Messages To All</a>
-                                                    <a onclick="SendFailedImgsToAll(@ViewBag.EventId)" class=" dropdown-item " style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Images To All</a>
+                                                    <a onclick="SendFailedMsgsToAll(@eventId)" class="dropdown-item " style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Messages To All</a>
+                                                    <a onclick="SendFailedImgsToAll(@eventId)" class=" dropdown-item " style="cursor: pointer;  "><i class="far fa-comments" style="color:green"></i>&nbsp;Send Failed Images To All</a>
                                                    
                                                 </div>
                                             </div> *@
@@ -207,15 +208,15 @@
                                                 </button>
 
                                                 <div id="dropList" hidden class="dropdown-menu" style="font-size: small; margin-left:-115px">
-                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToAll(@ViewBag.EventId) ">Send Reminder Message To All</a>
-                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToOnlyAccepted(@ViewBag.EventId)"> Send Reminder Message To Only Accepted</a>
-                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToOnlyNoAnswer(@ViewBag.EventId)">Send Reminder Message To Only No Answer</a>
-                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToOnlyReceived(@ViewBag.EventId)">Send Reminder Message To Only Received</a>
+                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToAll(@eventId) ">Send Reminder Message To All</a>
+                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToOnlyAccepted(@eventId)"> Send Reminder Message To Only Accepted</a>
+                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToOnlyNoAnswer(@eventId)">Send Reminder Message To Only No Answer</a>
+                                                    <a style="cursor: pointer;" class="dropdown-item" onclick="SendReminderMessagesToOnlyReceived(@eventId)">Send Reminder Message To Only Received</a>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <a href="~/admin/viewevent/@ViewBag.EventId" class="btn btn-warning btn-sm">Back to Events</a>
+                                    <a href="~/admin/viewevent/@eventId" class="btn btn-warning btn-sm">Back to Events</a>
                                 </div>
                                 @if(ViewBag.IsAdmin == 1)
                                 {
@@ -225,15 +226,15 @@
                                                 Admin Action
                                             </button>
                                             <div class="dropdown-menu" style="font-size: small">
-                                                <a href="#" onclick="DeleteAllGuests(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:red"></i>&nbsp; Delete All Guests</a>
-                                                <a href="#" onclick="DeleteAllGuestsCards(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:red"></i>&nbsp; Delete All Guests Cards</a>
-                                                <a href="#" onclick="ResetAllGuestsStatus(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:red"></i>&nbsp; Reset All Guests status</a>
+                                                <a href="#" onclick="DeleteAllGuests(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:red"></i>&nbsp; Delete All Guests</a>
+                                                <a href="#" onclick="DeleteAllGuestsCards(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:red"></i>&nbsp; Delete All Guests Cards</a>
+                                                <a href="#" onclick="ResetAllGuestsStatus(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:red"></i>&nbsp; Reset All Guests status</a>
                                                 <div class="dropdown-divider"></div>
-                                                <a href="#" onclick="AllowSendConfirmationMessageAgain(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send confirmation message again</a>
-                                                <a href="#" onclick="AllowSendCardMessageAgain(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send card message again</a>
-                                                <a href="#" onclick="AllowSendEventLocationMessageAgain(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send event location message again</a>
-                                                <a href="#" onclick="AllowSendReminderMessageAgain(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send reminder message again</a>
-                                                <a href="#" onclick="AllowSendCongratulationMessageAgain(@ViewBag.EventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send congratulation message again</a>
+                                                <a href="#" onclick="AllowSendConfirmationMessageAgain(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send confirmation message again</a>
+                                                <a href="#" onclick="AllowSendCardMessageAgain(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send card message again</a>
+                                                <a href="#" onclick="AllowSendEventLocationMessageAgain(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send event location message again</a>
+                                                <a href="#" onclick="AllowSendReminderMessageAgain(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send reminder message again</a>
+                                                <a href="#" onclick="AllowSendCongratulationMessageAgain(@eventId)" class="dropdown-item"><i class="nav-icon fas fa-edit" style="color:blue"></i>&nbsp; Allow send congratulation message again</a>
 
                                             </div>
                                         </div>
@@ -386,7 +387,7 @@
                 <div class="modal-body">
 
                     <div class="card-body">
-                        <input type="hidden" name="UploadEventId" value="@ViewBag.EventId" />
+                        <input type="hidden" name="UploadEventId" value="@eventId" />
                         <div class="form-group" sytle="border:10px" >
                             <label>Upload Excel Sheet</label>
                             <input class="form-control" type="file" id="myfile" name="myfile" placeholder="Upload Excel Sheet">
@@ -453,7 +454,7 @@
         }
 
         function uploadGuests() {
-            console.log(@ViewBag.EventId);
+            console.log(@eventId);
             const closeUploadButton = document.getElementById('closeUploadButton');
             const submitUpload = document.getElementById('submitUpload');
             var fileSelect = document.getElementById('myfile');
@@ -470,7 +471,7 @@
             darkoverlay2.hidden = false;
             loader2.hidden = false;
             $.ajax({
-                url: '@Url.Action("Upload", "admin")?eventId=' + @ViewBag.EventId,
+                url: '@Url.Action("Upload", "admin")?eventId=' + @eventId,
                 data: formData,
                 processData: false,
                 contentType: false,
@@ -535,7 +536,7 @@
 
         console.log(@ViewBag.IsAdmin);
         $(document).ready(function () {
-            console.log(@ViewBag.EventId);
+            console.log(@eventId);
             $('#GuestsTable').DataTable({
                 "bStateSave": true,
                 "fixedHeader": false,
@@ -567,7 +568,7 @@
                 "processing": true,
                 "filter": true,
                 "ajax": {
-                    "url": "/admin/GetGuests?id=" + @ViewBag.EventId,
+                    "url": "/admin/GetGuests?id=" + @eventId,
                     "type": "POST",
                     "dataType": "json"
                 },
@@ -579,13 +580,13 @@
                 "columns": [
                     {
                         "render": function (data, type, row) {
-                            return `<a href="/admin/StatusRefreshIndividually/${row.id}?eventid=${@ViewBag.EventId}" class="rotate-icon">
+                            return `<a href="/admin/StatusRefreshIndividually/${row.id}?eventid=${@eventId}" class="rotate-icon">
                                                                         <i class="fas fa-sync-alt" title="تحديث الحالة" style="color: darkgreen;"></i>
                                                                     </a>`}, "autowidth": true, "orderable": false, "data": null
                     },
                     {
                         "render": function (data, type, row) {
-                            return `<a onclick="GuestStatusRefresh(${row.id},${@ViewBag.EventId})" class="rotate-icon" style="cursor: pointer;">
+                            return `<a onclick="GuestStatusRefresh(${row.id},${@eventId})" class="rotate-icon" style="cursor: pointer;">
                                                                                 <i class="fas fa-sync-alt" title="تحديث الحالة" style="color: darkgreen;"></i>
                                                                             </a>`}, "autowidth": true, "orderable": false, "data": null
                     },
@@ -632,18 +633,18 @@
                     </div>
                     <!-- Download Card -->
                     <a
-                       onclick="downloadLatestCard(${@ViewBag.EventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg')"
+                       onclick="downloadLatestCard(${@eventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@eventId}_${row.id}_${row.noOfMembers}.jpg')"
                        class="dropdown-item latest-card-link"
                        style="cursor: pointer;">
                         <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card
                     </a>      
-                    <a onclick="downloadCardAndSetAccept(${@ViewBag.EventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@ViewBag.EventId}_${row.id}_${row.noOfMembers}.jpg')"
+                    <a onclick="downloadCardAndSetAccept(${@eventId}, ${row.id}, ${row.noOfMembers}, 'E00000${@eventId}_${row.id}_${row.noOfMembers}.jpg')"
                        class="dropdown-item"
                        style="cursor: pointer;">
                         <i class="nav-icon fas fa-address-card" style="color:cornflowerblue"></i>&nbsp; Download Card And Set Accept
                     </a>
                     <a
-                               onclick="downloadLatestQr(${@ViewBag.EventId}, ${row.id}, 'barcode_${row.id}.png')"
+                               onclick="downloadLatestQr(${@eventId}, ${row.id}, 'barcode_${row.id}.png')"
                                class="dropdown-item latest-qr-link"
                                style="cursor: pointer;">
                                 <i class="nav-icon fas fa-qrcode" style="color:cornflowerblue"></i>&nbsp; Download Barcode
@@ -726,7 +727,7 @@
 
         async function GetRefreshAllGuestsStatusData(remainingStatus) {
 
-            var loading = await fetch(`/admin/GetRefreshGuestsStatusData?id=${@ViewBag.EventId}&&remaningStatus=${remainingStatus}`);
+            var loading = await fetch(`/admin/GetRefreshGuestsStatusData?id=${@eventId}&&remaningStatus=${remainingStatus}`);
             var data = await loading.json();
             progressbar.value = data.remaningStatus;
             progressbar.max = data.allStatus;
@@ -813,7 +814,7 @@
 
         async function GetConfirmationSendingData(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetConfirmationSendingData?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetConfirmationSendingData?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             console.log(loading);
             var data = await loading.json();
             console.log(data);
@@ -890,7 +891,7 @@
 
         async function GetPushSendingData(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetCardSendingData?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetCardSendingData?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             console.log(loading);
             var data = await loading.json();
             console.log(data);
@@ -936,7 +937,7 @@
 
         async function GetEventLocatioinSendingData(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetEventLocationSendingData?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetEventLocationSendingData?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             var data = await loading.json();
             progressbar.value = data.sentMessages;
             progressbar.max = data.remainingMessages;
@@ -980,7 +981,7 @@
 
         async function GetReminderMessagesSendingToAllData(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetReminderMessagesSendingDataToAll?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetReminderMessagesSendingDataToAll?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             var data = await loading.json();
             progressbar.value = data.sentMessages;
             progressbar.max = data.remainingMessages;
@@ -1024,7 +1025,7 @@
 
         async function GetReminderMessaagesSendingDataToOnlyAccepted(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetReminderMessagesSendingDataToOnlyAccepted?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetReminderMessagesSendingDataToOnlyAccepted?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             var data = await loading.json();
             progressbar.value = data.sentMessages;
             progressbar.max = data.remainingMessages;
@@ -1103,7 +1104,7 @@
 
         async function GetReminderMessaagesSendingDataToNoAnswer(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetReminderMessagesSendingDataToNoAnswer?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetReminderMessagesSendingDataToNoAnswer?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             var data = await loading.json();
             progressbar.value = data.sentMessages;
             progressbar.max = data.remainingMessages;
@@ -1148,7 +1149,7 @@
 
         async function GetCongratulationMessaagesSendingData(remainingMessages) {
 
-            var loading = await fetch(`/admin/GetCongratulationSendingData?id=${@ViewBag.EventId}&&remainingMessages=${remainingMessages}`);
+            var loading = await fetch(`/admin/GetCongratulationSendingData?id=${@eventId}&&remainingMessages=${remainingMessages}`);
             var data = await loading.json();
             progressbar.value = data.sentMessages;
             progressbar.max = data.remainingMessages;
@@ -1167,13 +1168,22 @@
             reloading();
         }
 
-        async function SendQR(guestId) {
+                async function SendQR(guestId) {
             sendingMessage.hidden = false;
-           var data = await fetch(`/admin/SendQRCode/${guestId}`);
+            var data = await fetch(`/admin/SendQRCode/${guestId}`);
             var result = await data.json();
-            if (!result.success) { 
-                Swal.fire(result.message);
-        }
+
+            if (!result.success) {
+                // Show guest name that does not has an card
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تنبيه',
+                    text: result.message
+                });
+            } else {
+                Swal.fire({ icon: 'success', title: 'تم الإرسال بنجاح' });
+            }
+
             sendingMessage.hidden = true;
             reloading();
         }
@@ -1211,6 +1221,10 @@
         }
 
         async function DeleteAllGuestsCards(eventId) {
+            if (!eventId || eventId <= 0) {
+                Swal.fire({ icon: 'error', title: 'خطأ', text: 'معرّف الحدث غير صحيح، يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.' });
+                return;
+            }
             Swal.fire({
                 title: "هل تريد حذف جميع بطاقات الضيوف؟",
                 text: "سيتم حذف جميع البطاقات، يمكنك إعادة إنشائها لاحقاً",
@@ -1223,9 +1237,19 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     processingMessage.hidden = false;
-                    await fetch(`/admin/DeleteAllGuestsCards/${eventId}`);
-                    processingMessage.hidden = true;
-                    reloading();
+                    try {
+                        const response = await fetch(`/admin/DeleteAllGuestsCards?eventId=${eventId}`);
+                        processingMessage.hidden = true;
+                        if (response.ok) {
+                            reloading();
+                        } else {
+                            const errorText = await response.text();
+                            Swal.fire({ icon: 'error', title: 'خطأ في الحذف', text: errorText || 'حدث خطأ أثناء حذف البطاقات.' });
+                        }
+                    } catch (err) {
+                        processingMessage.hidden = true;
+                        Swal.fire({ icon: 'error', title: 'خطأ في الاتصال', text: 'تعذر الاتصال بالخادم، يرجى المحاولة مرة أخرى.' });
+                    }
                 }
             });
         }
@@ -1582,7 +1606,7 @@
         async function GetCardsData() {
             loaderText.textContent = "جاري تحديث البطاقات...";
             console.log("working SendConfirmation");
-            var loading = await fetch(`/admin/GetCurrentRefreshUpdates/${@ViewBag.EventId}`);
+            var loading = await fetch(`/admin/GetCurrentRefreshUpdates/${@eventId}`);
             console.log(loading);
             var data = await loading.json();
             console.log(data);

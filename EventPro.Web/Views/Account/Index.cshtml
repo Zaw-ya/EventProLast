@@ -19,10 +19,11 @@
                 {
                     <div class="alert alert-danger" role="alert">
                         <strong>Error!</strong> @TempData["message"]
+                        <strong>Error!</strong> @TempData["test"]
                     </div>
                 }
 
-                @using (Html.BeginForm("Index", null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+                @using (Html.BeginForm("Index", "Account", FormMethod.Post))
                 {
                     <div class="form-group mb-3 position-relative">
                         <span class="form-icon"><i class="fas fa-user"></i></span>

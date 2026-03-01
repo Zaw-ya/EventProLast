@@ -149,22 +149,22 @@ namespace EventPro.Web
                     {
                         options.Cookie.Name = ".EventPro.Auth";
                         options.Cookie.HttpOnly = true;
-                        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                        options.Cookie.SameSite = SameSiteMode.None;
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+                        options.Cookie.SameSite = SameSiteMode.Lax;
                         options.LoginPath = "/Login";
                         options.AccessDeniedPath = "/AccessDenied";
                         options.ExpireTimeSpan = TimeSpan.FromHours(2);
                         options.SlidingExpiration = true;
 
-                        // If redis ticket found
-                        options.Events.OnSigningIn = context =>
-                        {
-                            var ticketStore = context.HttpContext.RequestServices.GetService<ITicketStore>();
-                            if (ticketStore != null)
-                                options.SessionStore = ticketStore;
+                        //// If redis ticket found
+                        //options.Events.OnSigningIn = context =>
+                        //{
+                        //    var ticketStore = context.HttpContext.RequestServices.GetService<ITicketStore>();
+                        //    if (ticketStore != null)
+                        //        options.SessionStore = ticketStore;
 
-                            return Task.CompletedTask;
-                        };
+                        //    return Task.CompletedTask;
+                        //};
                     });
 
             //services.PostConfigure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -293,18 +293,22 @@ namespace EventPro.Web
             {
                 try
                 {
-                    services.AddSingleton(new BlobServiceClient(blobConnection));
+                    var blobServiceClient = new BlobServiceClient(blobConnection);
+                    blobServiceClient.GetPropertiesAsync().GetAwaiter().GetResult();
+                    Log.Information("BlobStorage connected successfully. Account: {Account}", blobServiceClient.AccountName);
+                    services.AddSingleton(blobServiceClient);
                     services.AddSingleton<IBlobStorage, BlobStorage>();
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(ex, "BlobStorage is disabled due to invalid connection string");
-                    services.AddSingleton<IBlobStorage,DummyBlobStorage>();
+                    Log.Warning(ex, "BlobStorage connection failed. Using DummyBlobStorage.");
+                    services.AddSingleton<IBlobStorage, DummyBlobStorage>();
                 }
             }
             else
             {
-                Log.Warning("BlobStorage connection string is empty. Blob features disabled.");
+                Log.Warning("BlobStorage connection string is empty. Using DummyBlobStorage.");
+                services.AddSingleton<IBlobStorage, DummyBlobStorage>();
             }
 
             #region Firebase Admin SDK Initialization
@@ -398,7 +402,8 @@ namespace EventPro.Web
                 ForwardLimit = null
             });
 
-            app.Use((context, next) => { context.Request.Scheme = "https"; return next(); });
+            // Commented for dubgging
+            //app.Use((context, next) => { context.Request.Scheme = "https"; return next(); });
 
             app.UseSerilogRequestLogging(options =>
             {

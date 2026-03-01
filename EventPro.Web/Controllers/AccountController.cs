@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +43,9 @@ namespace EventPro.Web.Controllers
                 .Where(p => p.UserName == model.UserName && p.Password == model.Password)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
+
+            TempData["test"] = $"Ahmed From Function {user}";
+
 
             if (user != null)
             {

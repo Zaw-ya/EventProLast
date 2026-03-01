@@ -10,6 +10,7 @@ using System.Linq.Dynamic.Core;
 using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -564,7 +565,7 @@ namespace EventPro.Web.Controllers
                         guest.GuestId.ToString()
                     );
 
-                    
+
                     await _auditLogService.AddAsync(userId, eventId, ActionEnum.UpdateGuest, guestId, gst.FirstName);
                     await db.SaveChangesAsync();
 
@@ -613,8 +614,8 @@ namespace EventPro.Web.Controllers
                     _logger.LogWarning("CardInfo not found | EventId={EventId}", eventId);
                 }
 
-                await RefreshQRCode(guest, cardinfo);
-                await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
+                //await RefreshQRCode(guest, cardinfo);
+                //await RefreshCard(guest, eventId, cardinfo, cardPreview, guestcode, path);
                 await db.SaveChangesAsync();
 
                 return addedOrModified;
@@ -652,8 +653,6 @@ namespace EventPro.Web.Controllers
             Log.Information("Event {eId} guest {gId} removed by {uId}", eventId, guest.GuestId, userId);
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             string environment = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
-            //await _cloudinaryService.DeleteAsync();
-
             TempData["error"] = "Guest information deleted successfully!";
 
             return RedirectToAction("Guests", "admin", new { id = eventId });
@@ -1005,7 +1004,7 @@ namespace EventPro.Web.Controllers
             // Validate guest phone numbers exist
             if (!CheckGuestsNumbersExist(guests))
                 return Json(new { success = false, message = "يجب وجود رقم احتياطي واساسي لكل ضيف من الضيوف" });
-            
+
             // Validate invitation cards exist in blob storage
             if (!await CheckGuestsCardsExistAsync(guests, _event))
                 return Json(new { success = false, message = "صورة البطاقة غير موجودة" });
@@ -1022,9 +1021,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await sendingProvider.SendCardMessagesAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1050,13 +1049,13 @@ namespace EventPro.Web.Controllers
 
             Guest guest = await db.Guest.Where(p => p.GuestId == id)
                 .FirstOrDefaultAsync();
-            
+
             if (guest == null)
             {
                 _logger.LogWarning("Guest not found with GuestId {GuestId}", id);
                 return Json(new { success = false, message = "الضيف غير موجود" });
             }
-            
+
             var guests = new List<Guest>() { guest };
 
             var _event = await db.Events.Where(p => p.Id == guest.EventId)
@@ -1118,16 +1117,10 @@ namespace EventPro.Web.Controllers
 
                 return Json(new { success = true });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError(
-                            ex,
-                            "Error while sending QRCode to GuestId {GuestId}, EventId {EventId}",
-                            guest.GuestId,
-                            _event.Id
-                        );
-
-                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال" });
+                _logger.LogError(ex, "Error while sending QRCode to GuestId {GuestId}, EventId {EventId}", guest.GuestId, _event.Id);
+                return Json(new { success = false, message = ex.Message });
             }
 
         }
@@ -1233,7 +1226,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1278,9 +1271,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendEventLocationAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
 
             return Json(new { success = true });
@@ -1376,6 +1369,7 @@ namespace EventPro.Web.Controllers
             if (!_WebHookQueueConsumerService.IsValidSendingBulkMessages())
                 return Json(new { success = false, message = "حدث خطأ فادح ، رابط الموقع غير موجود" });
 
+
             try
             {
                 // Pause webhook consumer during bulk send
@@ -1383,10 +1377,11 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1477,10 +1472,14 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+                if (_event.ReminderTempId == null)
+                {
+                    return Json(new { success = false, message = "template id is missing" });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1587,10 +1586,14 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+                if (_event.ReminderTempId == null)
+                {
+                    return Json(new { success = false, message = "template id is missing" });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1695,10 +1698,14 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
+                if (_event.ReminderTempId == null)
+                {
+                    return Json(new { success = false, message = "template id is missing" });
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1827,7 +1834,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -1938,9 +1945,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendCongratulationMessageAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             finally
             {
@@ -2010,7 +2017,7 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
 
             return Json(new { success = true });
@@ -2044,9 +2051,9 @@ namespace EventPro.Web.Controllers
                     .SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendReminderMessageAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
             return Json(new { success = true });
         }
@@ -2089,9 +2096,9 @@ namespace EventPro.Web.Controllers
                 var whatsappProvider = await _WhatsappSendingProvider.SelectConfiguredSendingProviderAsync(_event);
                 await whatsappProvider.SendCongratulationMessageAsync(guests, _event);
             }
-            catch
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "??? ??? ??" });
+                return Json(new { success = false, message = ex.Message });
             }
 
             return Json(new { success = true });
@@ -2301,9 +2308,8 @@ namespace EventPro.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false });
+                return Json(new { success = false, message = "حدث خطأ أثناء الإرسال" });
             }
-
             return Json(new { success = true, totalGuests = totalGuests, totalMembers = totalMembers });
         }
 
@@ -2614,7 +2620,7 @@ namespace EventPro.Web.Controllers
             foreach (var guest in guests)
             {
                 var cardPublicId =
-                    $"upload/cards/{_event.Id}/E00000{_event.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
+                    $"cards/{_event.Id}/E00000{_event.Id}_{guest.GuestId}_{guest.NoOfMembers}.jpg";
 
                 _logger.LogInformation(
                     "Checking card for GuestId {GuestId}, PublicId {PublicId}",
@@ -2622,8 +2628,7 @@ namespace EventPro.Web.Controllers
                     cardPublicId
                 );
 
-                var guestFinalInvitationUrl =
-                    await _cloudinaryService.GetLatestVersionUrlAsync(cardPublicId);
+                var guestFinalInvitationUrl = _blobStorage.GetFileUrl(cardPublicId);
 
                 if (string.IsNullOrEmpty(guestFinalInvitationUrl))
                 {
@@ -2702,8 +2707,8 @@ namespace EventPro.Web.Controllers
         /// <summary>
         /// Generates and updates the invitation card for a guest
         /// Process:
-        /// 1. Loads card template from local storage or Cloudinary background image
-        /// 2. Loads guest QR code from Cloudinary
+        /// 1. Loads card template from local storage or Blob Storage background image
+        /// 2. Loads guest QR code from Blob Storage
         /// 3. Draws guest-specific data on card (name, phone, additional text, member count)
         /// 4. Handles text alignment (right/left/center) and font configuration
         /// 5. Applies zoom ratio for high-resolution images
@@ -2722,7 +2727,6 @@ namespace EventPro.Web.Controllers
             int guestId = guest.GuestId;
             int nos = Convert.ToInt32(guest.NoOfMembers);
 
-            //Ali hani we depand on cloudinary service to get the latest version of qr code image becasue it clean to add all placeholder on it
             // Always load the original background image (without placeholders)
             // This ensures guest data replaces placeholders cleanly
             //Image img;
@@ -2757,17 +2761,14 @@ namespace EventPro.Web.Controllers
                 zoomRatio = Convert.ToDouble(img.Width) / Convert.ToDouble(900);
             }
 
-            // Load guest QR code from Cloudinary
+            // Load guest QR code from Blob Storage
             using HttpClient clientQR = new HttpClient();
-            string cloudName = _configuration.GetSection("CloudinarySettings").GetSection("CloudName").Value;
 
-            // var barcodeUrl = $"https://res.cloudinary.com/{cloudName}/image/upload/QR/{eventId}/{guestId}.png";
             // We refresh qr code before we refresh the card so we have to get the latest version of qr code here
-            // We have to get the latest version of the qr code in case it was regenerated
-            var qrPublicId = $"QR/{eventId}/{guestId}";
-            var barcodeUrl = await _cloudinaryService.GetLatestVersionUrlAsync(qrPublicId);
+            var qrPublicId = $"QR/{eventId}/{guestId}.png";
+            var barcodeUrl = _blobStorage.GetFileUrl(qrPublicId);
             byte[] barcodeData = await clientQR.GetByteArrayAsync(barcodeUrl);
-            
+
             using MemoryStream fsBarcode = new MemoryStream(barcodeData);
             Image barcode = Image.FromStream(fsBarcode);
             Bitmap myBitmap = new Bitmap(img);
@@ -2805,9 +2806,9 @@ namespace EventPro.Web.Controllers
 
                 var font = new System.Drawing.Font(cardInfo.FontName, (float)(cardInfo.FontSize * 0.63 * zoomRatio));
 
-       
 
-       //AliHani         //grap.DrawImage(
+
+                //AliHani         //grap.DrawImage(
                 //    img,
                 //    destRect: new Rectangle(
                 //        (int)((nameXAxis - 10) * zoomRatio),
@@ -2932,18 +2933,11 @@ namespace EventPro.Web.Controllers
             {
                 // Save the final image to memory stream
                 myBitmap.Save(ms, ImageFormat.Jpeg);
-                // Here we will upload the image to cloudianry with a filename relate to the guest
-                // to make us able to retrieve it later when sending whatsapp message
-                var cloudinaryFileName = $"E00000{eventId}_{guestId}_{nos}.jpg";
+                // Upload the card image to Blob Storage with a filename related to the guest
+                // so we can retrieve it later when sending WhatsApp message
+                var blobFileName = $"E00000{eventId}_{guestId}_{nos}.jpg";
 
-                var cloudinaryUrl = await _cloudinaryService.UploadImageAsync(
-                    ms,
-                    cloudinaryFileName,
-                    $"cards/{eventId}"
-                );
-
-
-                //await _blobStorage.UploadAsync(ms, "jpg", environment + cardPreview + @"/" + eventId + @"/" + "E00000" + eventId + "_" + guestId + "_" + nos + ".jpg", cancellationToken: default);
+                await _blobStorage.UploadAsync(ms, "image/jpeg", $"cards/{eventId}/{blobFileName}", CancellationToken.None);
             }
 
             // Dispose graphics objects
@@ -2983,7 +2977,7 @@ namespace EventPro.Web.Controllers
         /// Encrypts guest ID for QR code content
         /// Supports custom foreground/background colors from card configuration
         /// Handles transparent background when foreground is white (#FFFFFF)
-        /// Uploads generated QR code to Cloudinary in folder structure: QR/{eventId}/{guestId}.png
+        /// Uploads generated QR code to Blob Storage in folder structure: QR/{eventId}/{guestId}.png
         /// QR codes are used for guest check-in scanning at event entrance
         /// </summary>
         /// <param name="guest">Guest to generate QR code for</param>
@@ -3030,11 +3024,7 @@ namespace EventPro.Web.Controllers
                 using var ms = new MemoryStream();
                 qrCodeImage.Save(ms, ImageFormat.Png);
 
-                await _cloudinaryService.UploadImageAsync(
-                    ms,
-                    $"{guest.GuestId}.png",
-                    $"QR/{guest.EventId}"
-                );
+                await _blobStorage.UploadAsync(ms, "image/png", $"QR/{guest.EventId}/{guest.GuestId}.png", CancellationToken.None);
 
                 _logger.LogInformation(
                     "RefreshQRCode completed | GuestId={GuestId}",
