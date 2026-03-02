@@ -1,0 +1,198 @@
+﻿@model List<EventPro.Web.Controllers.LogFileInfo>
+@{
+    Layout = null;
+    ViewData["Title"] = "System Logs";
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+        --bg: #f5f5f5;
+        --surface: #ffffff;
+        --border: #e0e0e0;
+        --text: #1a1a1a;
+        --text-dim: #888;
+        --accent: #2563eb;
+    }
+
+    [data-theme="dark"] {
+        --bg: #111318;
+        --surface: #1a1e26;
+        --border: #252c38;
+        --text: #c8d4e0;
+        --text-dim: #4a6070;
+        --accent: #3b82f6;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+        min-height: 100vh;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+            .header h1 span {
+                color: var(--text-dim);
+                font-weight: 400;
+            }
+
+    .theme-btn {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.15s;
+    }
+
+        .theme-btn:hover {
+            color: var(--text);
+            border-color: var(--text-dim);
+        }
+
+    .log-table {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .tbl-head {
+        display: grid;
+        grid-template-columns: 1fr 90px 160px 80px;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+        font-size: 10px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        background: var(--bg);
+    }
+
+    .tbl-row {
+        display: grid;
+        grid-template-columns: 1fr 90px 160px 80px;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--border);
+        align-items: center;
+        transition: background 0.1s;
+    }
+
+        .tbl-row:last-child {
+            border-bottom: none;
+        }
+
+        .tbl-row:hover {
+            background: var(--bg);
+        }
+
+    .c-dim {
+        color: var(--text-dim);
+        font-size: 11px;
+    }
+
+    .btn-view {
+        display: inline-block;
+        padding: 4px 10px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        text-decoration: none;
+        border-radius: 3px;
+        transition: all 0.15s;
+    }
+
+        .btn-view:hover {
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+        }
+
+    .empty {
+        padding: 48px;
+        text-align: center;
+        color: var(--text-dim);
+        font-size: 12px;
+    }
+</style>
+
+<div class="wrap">
+    <div class="header">
+        <h1>System Logs <span>/ @(Model?.Count ?? 0) files</span></h1>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+    </div>
+
+    <div class="log-table">
+        <div class="tbl-head">
+            <span>File</span>
+            <span>Size</span>
+            <span>Modified</span>
+            <span></span>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty">No log files found.</div>
+        }
+        else
+        {
+            @foreach (var file in Model)
+            {
+                <div class="tbl-row">
+                    <span>@file.FileName</span>
+                    <span class="c-dim">@file.SizeFormatted</span>
+                    <span class="c-dim">@file.LastModified.ToString("yyyy-MM-dd HH:mm")</span>
+                    <a asp-action="ViewFile" asp-route-fileName="@file.FileName" class="btn-view">View</a>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<script>
+    const saved = localStorage.getItem('theme') || 'light';
+    applyTheme(saved);
+
+    function applyTheme(t) {
+        document.documentElement.setAttribute('data-theme', t);
+        document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    }
+
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', next);
+        applyTheme(next);
+    }
+</script>
