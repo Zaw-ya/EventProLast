@@ -16,6 +16,58 @@ namespace EventPro.Web.Controllers
         {
             _env = env;
         }
+        [AuthorizeRoles("Administrator")]
+        public IActionResult ViewFile(string fileName, int page = 1, int pageSize = 500)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return BadRequest();
+
+            // Prevent path traversal
+            fileName = Path.GetFileName(fileName);
+
+            if (Path.GetExtension(fileName).ToLower() != ".txt")
+                return BadRequest();
+
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 500;
+
+            var filePath = Path.Combine(_env.ContentRootPath, "Logs", fileName);
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Log file not found.");
+
+            var pagedLines = new List<string>();
+            int totalLines = 0;
+
+            using (var stream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite))
+            using (var reader = new StreamReader(stream))
+            {
+                string line;
+                int startLine = (page - 1) * pageSize;
+                int endLine = startLine + pageSize;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (totalLines >= startLine && totalLines < endLine)
+                    {
+                        pagedLines.Add(line);
+                    }
+
+                    totalLines++;
+                }
+            }
+
+            ViewBag.FileName = fileName;
+            ViewBag.Lines = pagedLines;
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalLines / (double)pageSize);
+
+            return View();
+        }
 
         [AuthorizeRoles("Administrator")]
         public IActionResult Index()
@@ -41,32 +93,32 @@ namespace EventPro.Web.Controllers
             return View(files);
         }
 
-        [AuthorizeRoles("Administrator")]
-        public IActionResult ViewFile(string fileName)
-        {
-            if (string.IsNullOrEmpty(fileName))
-                return BadRequest();
+        //[AuthorizeRoles("Administrator")]
+        //public IActionResult ViewFile(string fileName)
+        //{
+        //    if (string.IsNullOrEmpty(fileName))
+        //        return BadRequest();
 
-            // Prevent path traversal
-            fileName = Path.GetFileName(fileName);
+        //    // Prevent path traversal
+        //    fileName = Path.GetFileName(fileName);
 
-            var filePath = Path.Combine(_env.ContentRootPath, "Logs", fileName);
+        //    var filePath = Path.Combine(_env.ContentRootPath, "Logs", fileName);
 
-            if (!System.IO.File.Exists(filePath))
-                return NotFound("Log file not found.");
+        //    if (!System.IO.File.Exists(filePath))
+        //        return NotFound("Log file not found.");
 
-            string content;
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var reader = new StreamReader(stream))
-            {
-                content = reader.ReadToEnd();
-            }
+        //    string content;
+        //    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        //    using (var reader = new StreamReader(stream))
+        //    {
+        //        content = reader.ReadToEnd();
+        //    }
 
-            ViewBag.FileName = fileName;
-            ViewBag.Content = content;
+        //    ViewBag.FileName = fileName;
+        //    ViewBag.Content = content;
 
-            return View();
-        }
+        //    return View();
+        //}
 
         [AuthorizeRoles("Administrator")]
         public IActionResult DownloadFile(string fileName)
