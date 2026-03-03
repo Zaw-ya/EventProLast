@@ -204,7 +204,11 @@
                         <div class="col-md-9">
                             <div id="mainBody">
                                 <div id="mydiv">
-                                    <img id="mydivheader" src="@ViewBag.Barcode?v=@DateTime.UtcNow.Ticks" width=@Model.BarcodeWidth height=@Model.BarcodeHeight>
+                                    @{
+                                        var barcodeUrl = ViewBag.Barcode as string ?? "";
+                                        var barcodeSep = barcodeUrl.Contains("?") ? "&" : "?";
+                                    }
+                                    <img id="mydivheader" src="@(barcodeUrl + barcodeSep + "v=" + DateTime.UtcNow.Ticks)" width=@Model.BarcodeWidth height=@Model.BarcodeHeight>
                                 </div>
                                 <div id="text1">
                                     Guest Name
@@ -306,7 +310,11 @@
 }
 <script>
     $(document).ready(function () {
-        SetCardBackground('@Model.BackgroundImage' + '?v=' + new Date().getTime());
+        var bgUrl = '@Html.Raw(Model.BackgroundImage ?? "")';
+        if (bgUrl) {
+            var sep = bgUrl.indexOf('?') !== -1 ? '&' : '?';
+            SetCardBackground(bgUrl + sep + 'v=' + new Date().getTime());
+        }
         setCardPosition();
         LoadPlaceholder();
         ToggleLang();
