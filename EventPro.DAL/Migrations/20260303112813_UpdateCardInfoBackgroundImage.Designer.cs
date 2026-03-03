@@ -4,6 +4,7 @@ using EventPro.DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventPro.DAL.Migrations
 {
     [DbContext(typeof(EventProContext))]
-    partial class EventProContextModelSnapshot : ModelSnapshot
+    [Migration("20260303112813_UpdateCardInfoBackgroundImage")]
+    partial class UpdateCardInfoBackgroundImage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -183,7 +186,7 @@ namespace EventPro.DAL.Migrations
                     b.Property<string>("BarcodeColorCode")
                         .HasMaxLength(150)
                         .IsUnicode(false)
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("varchar(150)");
 
                     b.Property<int?>("BarcodeHeight")
                         .HasColumnType("int");
