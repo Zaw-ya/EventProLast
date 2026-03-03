@@ -2,6 +2,8 @@
 // If you have enabled NRTs for your project, then un-comment the following line:
 // #nullable disable
 
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace EventPro.DAL.Models
 {
     public partial class CardInfo
@@ -37,7 +39,9 @@ namespace EventPro.DAL.Models
         public string Status { get; set; }
         public int? CardWidth { get; set; }
         public int? CardHeight { get; set; }
+        [Column(TypeName = "nvarchar(max)")]
         public string BackgroundColor { get; set; }
+        [Column(TypeName = "nvarchar(max)")]
         public string ForegroundColor { get; set; }
         public bool? TransparentBackground { get; set; }
         public string DefaultFont { get; set; }

@@ -1213,7 +1213,7 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     processingMessage.hidden = false;
-                    await fetch(`/admin/DeleteAllGuests/${eventId}`);
+                    await fetch(`/admin/DeleteAllGuests?eventId=${eventId}`);
                     processingMessage.hidden = true;
                     reloading();
                 }
