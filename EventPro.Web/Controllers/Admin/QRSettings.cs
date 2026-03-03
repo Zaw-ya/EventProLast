@@ -699,17 +699,18 @@ namespace EventPro.Web.Controllers
         {
             try
             {
-                // بناء الـ publicId بنفس الطريقة اللي بتستخدمها في الرفع
                 string publicId = $"cards/{eventId}/E00000{eventId}_{guestId}_{noOfMembers}.jpg";
 
-                // استدعاء الدالة اللي عملناها
+                bool cardExists = await _blobStorage.FileExistsAsync(publicId);
+                if (!cardExists)
+                    return Ok(new { success = false, message = "Invitation card has not been generated yet for this guest." });
+
                 string latestUrl = _blobStorage.GetFileUrl(publicId);
 
                 return Ok(new { success = true, url = latestUrl });
             }
             catch (Exception ex)
             {
-                // يفضل تسجل الخطأ في log حقيقي
                 return StatusCode(500, new { success = false, message = "حدث خطأ أثناء جلب رابط الدعوة: " + ex.Message });
             }
         }

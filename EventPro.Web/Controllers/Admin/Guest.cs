@@ -2628,9 +2628,9 @@ namespace EventPro.Web.Controllers
                     cardPublicId
                 );
 
-                var guestFinalInvitationUrl = _blobStorage.GetFileUrl(cardPublicId);
+                var cardExists = await _blobStorage.FileExistsAsync(cardPublicId);
 
-                if (string.IsNullOrEmpty(guestFinalInvitationUrl))
+                if (!cardExists)
                 {
                     _logger.LogError(
                         "Invitation card NOT found for GuestId {GuestId}, PublicId {PublicId}",
@@ -2639,6 +2639,8 @@ namespace EventPro.Web.Controllers
                     );
                     return false;
                 }
+
+                var guestFinalInvitationUrl = _blobStorage.GetFileUrl(cardPublicId);
 
                 _logger.LogInformation(
                     "Invitation card found for GuestId {GuestId}, Url {Url}",
