@@ -1511,16 +1511,16 @@
                     document.body.removeChild(a);
                 } else {
                     Swal.fire({
-                        icon: 'error',
-                        title: 'خطأ',
-                        text: data.message || 'تعذر جلب رابط الدعوة'
+                        icon: 'warning',
+                        title: 'Card Not Found',
+                        text: data.message || 'Invitation card has not been generated yet for this guest.'
                     });
                 }
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'خطأ في الاتصال',
-                    text: 'حدث خطأ أثناء جلب رابط الدعوة'
+                    title: 'Connection Error',
+                    text: 'An error occurred while fetching the card URL.'
                 });
             }
         }
