@@ -10,11 +10,13 @@ namespace EventPro.DAL.Models
     {
         public int CardId { get; set; }
         public int? EventId { get; set; }
+        [Column(TypeName = "nvarchar(max)")]
         public string BackgroundImage { get; set; }
         public double? BarcodeXaxis { get; set; }
         public double? BarcodeYaxis { get; set; }
         public int? BarcodeWidth { get; set; }
         public int? BarcodeHeight { get; set; }
+        [Column(TypeName = "nvarchar(max)")]
         public string BarcodeColorCode { get; set; }
         public double? ContactNameXaxis { get; set; }
         public double? ContactNameYaxis { get; set; }
