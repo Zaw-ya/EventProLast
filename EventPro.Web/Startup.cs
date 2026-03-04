@@ -97,8 +97,30 @@ namespace EventPro.Web
             // HttpContextAccessor accessed by IUnitOFWorkDefaultWhatsappService
             services.AddHttpContextAccessor();
 
-            // used in any service needs IHttpClientFactory
-            services.AddHttpClient();
+            // Named HttpClient registrations — never use new HttpClient() directly.
+            // "ImageDownload": for downloading images from Blob/Cloudinary storage.
+            services.AddHttpClient("ImageDownload")
+                .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
+                {
+                    PooledConnectionLifetime    = TimeSpan.FromMinutes(2),
+                    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+                    MaxConnectionsPerServer     = 20,
+                    ConnectTimeout              = TimeSpan.FromSeconds(10)
+                });
+
+            // "Twilio": for Twilio REST API calls (auth header set per-request).
+            services.AddHttpClient("Twilio", c =>
+            {
+                c.BaseAddress = new Uri("https://api.twilio.com");
+                c.Timeout     = TimeSpan.FromSeconds(30);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
+            {
+                PooledConnectionLifetime    = TimeSpan.FromMinutes(2),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+                MaxConnectionsPerServer     = 10,
+                ConnectTimeout              = TimeSpan.FromSeconds(5)
+            });
 
 
             // ------------------------------
