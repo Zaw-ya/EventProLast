@@ -29,6 +29,7 @@ using Serilog;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 
 #pragma warning disable CS0168 // catch variable declared but never used
 
@@ -52,7 +53,17 @@ namespace EventPro.API.Configuration
             });
 
             services.AddHttpContextAccessor();
-            services.AddHttpClient();
+
+            // Named HttpClient registrations — never use new HttpClient() directly.
+            // "ImageDownload": for downloading images from Blob/Cloudinary storage.
+            services.AddHttpClient("ImageDownload")
+                .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
+                {
+                    PooledConnectionLifetime    = TimeSpan.FromMinutes(2),
+                    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+                    MaxConnectionsPerServer     = 20,
+                    ConnectTimeout              = TimeSpan.FromSeconds(10)
+                });
 
             // ------------------------------
             // Repository Pattern

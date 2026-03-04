@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 
 using OpenQA.Selenium.Chrome;
+using System.Net.Http;
 
 namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 {
     public class DefaultWhatsappServiceEgypt : DefaultWhatsappService, IDefaultWhatsappServcieEgypt
     {
-        public DefaultWhatsappServiceEgypt(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IBlobStorage blobStorage) : base(configuration, httpContextAccessor, blobStorage)
+        public DefaultWhatsappServiceEgypt(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IBlobStorage blobStorage, IHttpClientFactory httpClientFactory) : base(configuration, httpContextAccessor, blobStorage , httpClientFactory)
         {
 
         }

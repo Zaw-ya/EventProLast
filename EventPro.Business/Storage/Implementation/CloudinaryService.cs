@@ -9,6 +9,7 @@ using Google.Apis.Logging;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace EventPro.Business.Storage.Implementation
 {
@@ -16,7 +17,9 @@ namespace EventPro.Business.Storage.Implementation
     {
         private readonly Cloudinary _cloudinary;
         private readonly ILogger<CloudinaryService> _logger;
-        public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger, IHttpClientFactory httpClientFactory)
         {
             var settings = configuration.GetSection("CloudinarySettings");
             var cloudName = settings["CloudName"];
@@ -32,6 +35,7 @@ namespace EventPro.Business.Storage.Implementation
             _cloudinary = new Cloudinary(account);
             _cloudinary.Api.Secure = true;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<string> UploadImageAsync(Stream stream, string fileName, string folder = null)
@@ -372,7 +376,7 @@ namespace EventPro.Business.Storage.Implementation
 
                         try
                         {
-                            using var client = new HttpClient();
+                            var client = _httpClientFactory.CreateClient("ImageDownload");
                             var imageBytes = await client.GetByteArrayAsync(resource.SecureUrl);
 
                             var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);

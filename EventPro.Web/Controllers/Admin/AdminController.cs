@@ -1,3 +1,5 @@
+using System.Net.Http;
+
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.RabbitMQMessaging.Interface;
 using EventPro.Business.Storage.Interface;
@@ -52,6 +54,7 @@ namespace EventPro.Web.Controllers
         private readonly IMemoryCacheStoreService _MemoryCacheStoreService;
         private readonly IBlobStorage _blobStorage;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Constructor - Initializes AdminController with all required dependencies
@@ -68,7 +71,8 @@ namespace EventPro.Web.Controllers
                                  IBlobStorage blobStorage,
                                  IHttpContextAccessor httpContextAccessor,
                                  IUnitOfWork unitOfWork,
-                                 ILogger<AdminController> logger)
+                                 ILogger<AdminController> logger,
+                                 IHttpClientFactory httpClientFactory)
         {
             SetBreadcrum("Dashboard", "/");
             _configuration = configuration;
@@ -85,6 +89,7 @@ namespace EventPro.Web.Controllers
             _blobStorage = blobStorage;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         #endregion

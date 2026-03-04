@@ -30,11 +30,14 @@ namespace EventPro.Services.TwilioService
         private IConfiguration choosenSendingWhatsappProfileSettingsConfig;
         private readonly IEmailSender _emailSender;
         private readonly EventProContext _db;
-        public TwilioService(IConfiguration configuration, IEmailSender emailSender)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public TwilioService(IConfiguration configuration, IEmailSender emailSender, IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
             _db = new EventProContext(configuration);
             _emailSender = emailSender;
+            _httpClientFactory = httpClientFactory;
         }
         #endregion
 
@@ -3084,7 +3087,7 @@ namespace EventPro.Services.TwilioService
 
                 var url = $"https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Balance.json";
 
-                using var client = new HttpClient();
+                var client = _httpClientFactory.CreateClient("Twilio");
                 var byteArray = Encoding.ASCII.GetBytes($"{accountSid}:{authToken}");
                 client.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
