@@ -56,12 +56,13 @@ namespace EventPro.API.Configuration
 
             // Named HttpClient registrations — never use new HttpClient() directly.
             // "ImageDownload": for downloading images from Blob/Cloudinary storage.
+            // MaxConnectionsPerServer=int.MaxValue: unlimited — supports high-volume card generation (5000+ images/day).
             services.AddHttpClient("ImageDownload")
                 .ConfigurePrimaryHttpMessageHandler(() => new System.Net.Http.SocketsHttpHandler
                 {
                     PooledConnectionLifetime    = TimeSpan.FromMinutes(2),
-                    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
-                    MaxConnectionsPerServer     = 20,
+                    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+                    MaxConnectionsPerServer     = int.MaxValue,
                     ConnectTimeout              = TimeSpan.FromSeconds(10)
                 });
 
