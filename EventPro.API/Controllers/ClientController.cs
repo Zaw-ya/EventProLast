@@ -44,7 +44,7 @@ namespace EventPro.API.Controllers
                 return check;
             }
 
-            UserDto user = await db.Users.Include(u => u.City).ThenInclude(c => c.Country)
+            UserDto user = await db.Users.AsNoTracking().Include(u => u.City).ThenInclude(c => c.Country)
                 .Where(u => u.UserId == userToken.UserId)
                 .Select(u => new UserDto()
                 {
@@ -85,7 +85,7 @@ namespace EventPro.API.Controllers
 
 
                 IQueryable<ClientEventsModel> clientEvents =
-                                             db.Events.Where(e => e.CreatedFor == userToken.UserId && (e.IsDeleted == false || e.IsDeleted == null))
+                                             db.Events.AsNoTracking().Where(e => e.CreatedFor == userToken.UserId && (e.IsDeleted == false || e.IsDeleted == null))
                                             .OrderByDescending(p => p.EventFrom)
                                             .Select(e => new ClientEventsModel()
                                             {
@@ -142,7 +142,7 @@ namespace EventPro.API.Controllers
                     PageSize = int.Parse(_configuration["PageSize"]);
 
                 IQueryable<EventScannInfoModel> eventScannInfo =
-                                             db.Guest.Include(g => g.ScanHistory)
+                                             db.Guest.AsNoTracking().Include(g => g.ScanHistory)
                                             .Include(g => g.Event)
                                             .Where(g => g.EventId == eventId && (g.Event.IsDeleted == false || g.Event.IsDeleted == null))
                                             .OrderByDescending(g => g.FirstName)

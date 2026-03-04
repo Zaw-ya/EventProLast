@@ -126,6 +126,7 @@ namespace EventPro.Web.Controllers
             {
                 var userId = Int32.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                 var operatorEventIds = db.EventOperator
+                    .AsNoTracking()
                     .Where(e => e.OperatorId == userId)
                     .Select(e => e.EventId)
                     .ToList();

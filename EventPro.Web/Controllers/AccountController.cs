@@ -37,7 +37,7 @@ namespace EventPro.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(LoginModel model)
         {
-            List<Roles> roles = await db.Roles.ToListAsync();
+            List<Roles> roles = await db.Roles.AsNoTracking().ToListAsync();
 
             var user = await db.Users
                 .Where(p => p.UserName == model.UserName && p.Password == model.Password)

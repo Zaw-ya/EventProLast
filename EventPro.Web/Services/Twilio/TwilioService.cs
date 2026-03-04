@@ -1888,7 +1888,7 @@ namespace EventPro.Services.TwilioService
             CountrySendingProfileConfig = _configuration.GetSection("EventProBackup");
             var templateId = CountrySendingProfileConfig["Templates:SendCongratulationMessageToOwner"];
             var eventSentOnNum = await _db.Events.Where(x => x.Id == guest.EventId).Select(x => x.ConguratulationsMsgSentOnNumber).FirstOrDefaultAsync();
-            var detectTheEvet = await _db.Events.Where(x => x.Id == guest.EventId).FirstOrDefaultAsync();
+            var detectTheEvet = await _db.Events.AsNoTracking().Where(x => x.Id == guest.EventId).FirstOrDefaultAsync();
             string fullPhoneNumber = $"+{eventSentOnNum}";
             var parameters = new string[]
             {
@@ -1915,7 +1915,7 @@ namespace EventPro.Services.TwilioService
             var templateId = CountrySendingProfileConfig["Templates:SendCongratulationMessageToOwnerEnglish"];
 
             var eventSentOnNum = await _db.Events.Where(x => x.Id == guest.EventId).Select(x => x.ConguratulationsMsgSentOnNumber).FirstOrDefaultAsync();
-            var detectTheEvet = await _db.Events.Where(x => x.Id == guest.EventId).FirstOrDefaultAsync();
+            var detectTheEvet = await _db.Events.AsNoTracking().Where(x => x.Id == guest.EventId).FirstOrDefaultAsync();
             string fullPhoneNumber = $"+{eventSentOnNum}";
             var parameters = new string[]
             {

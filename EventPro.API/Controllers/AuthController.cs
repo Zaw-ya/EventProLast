@@ -68,7 +68,8 @@ namespace EventPro.API.Controllers
         private async Task<Users> AuthenticateUser(string username, string password)
         {
             var allowedRoles = await db.Roles
-                .Where(r => r.Id == RoleIds.GateKeeper || r.Id == RoleIds.Client )
+                .AsNoTracking()
+                .Where(r => r.Id == RoleIds.GateKeeper || r.Id == RoleIds.Client)
                 .Select(r => r.Id)
                 .ToListAsync();
 
@@ -124,11 +125,11 @@ namespace EventPro.API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterModel registerModel)
         {
             registerModel.UserName = registerModel.UserName.Trim();
-            var user = await db.Users.Where(p => p.UserName == registerModel.UserName).FirstOrDefaultAsync();
+            var user = await db.Users.AsNoTracking().Where(p => p.UserName == registerModel.UserName).FirstOrDefaultAsync();
 
             if (user != null)
                 return BadRequest("This GateKeeper/Client username already exists.");
-            var roleTypeId = (await db.Roles.Where(r => r.RoleName.ToLower() == registerModel.Role.ToLower())
+            var roleTypeId = (await db.Roles.AsNoTracking().Where(r => r.RoleName.ToLower() == registerModel.Role.ToLower())
                              .FirstOrDefaultAsync())?.Id;
 
             var newUser = new Users
