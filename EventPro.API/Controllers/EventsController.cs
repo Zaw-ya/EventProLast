@@ -195,6 +195,7 @@ namespace EventPro.API.Controllers
                     // Only block if another gatekeeper has SELF-RESERVED (AssignedBy == GatekeeperId)
                     // Admin assignments (AssignedBy != GatekeeperId) are allowed in parallel
                     var alreadyReserved = await db.EventGatekeeperMapping
+                        .AsNoTracking()
                         .Where(EM => EM.EventId == eventId && EM.GatekeeperId == EM.AssignedBy)
                         .FirstOrDefaultAsync();
 

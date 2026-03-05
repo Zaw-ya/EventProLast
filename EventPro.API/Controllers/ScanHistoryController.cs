@@ -56,7 +56,7 @@ namespace EventPro.API.Controllers
                 IQueryable<EventScanHistory> eventScanHistories;
                 if (userToken.Role == "Client")
                     eventScanHistories =
-                                db.ScanHistory.Include(x => x.Guest).ThenInclude(sh => sh.Event)
+                                db.ScanHistory.AsNoTracking().Include(x => x.Guest).ThenInclude(sh => sh.Event)
                                   .Where(x => x.Guest.Archived == null &&
                                               x.Guest.EventId == Convert.ToInt32(eventId) &&
                                               x.GuestId == Convert.ToInt32(guestID))
@@ -70,7 +70,7 @@ namespace EventPro.API.Controllers
                                    });
                 else
                     eventScanHistories =
-                                     db.ScanHistory.Include(x => x.Guest).ThenInclude(sh => sh.Event)
+                                     db.ScanHistory.AsNoTracking().Include(x => x.Guest).ThenInclude(sh => sh.Event)
                                        .Where(x => x.ScanBy == userToken.UserId &&
                                                  x.Guest.Archived == null &&
                                                  x.Guest.EventId == Convert.ToInt32(eventId))

@@ -21,7 +21,7 @@ namespace EventPro.Web.Controllers
         public async Task<IActionResult> Index()
         {
             ViewBag.PageTitle = "Countries";
-            return View(await _context.Country.ToListAsync());
+            return View(await _context.Country.AsNoTracking().ToListAsync());
         }
 
         public ActionResult Create()

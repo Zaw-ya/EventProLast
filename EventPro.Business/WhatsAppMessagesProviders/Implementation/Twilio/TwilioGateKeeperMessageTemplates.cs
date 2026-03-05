@@ -25,9 +25,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
         #region all of this template send notifiction for number of operater we get it from app setting
         public async Task SendCheckInMessage(GKEventHistory gkEventHistory)
         {
-            var gkUser = await db.Users.Where(gk => gk.UserId == gkEventHistory.GK_Id)
+            var gkUser = await db.Users.AsNoTracking().Where(gk => gk.UserId == gkEventHistory.GK_Id)
                          .FirstOrDefaultAsync();
-            var _event = await db.Events.Where(e => e.Id == gkEventHistory.Event_Id)
+            var _event = await db.Events.AsNoTracking().Where(e => e.Id == gkEventHistory.Event_Id)
                          .FirstOrDefaultAsync();
             string gmapCode = "https://maps.app.goo.gl/" + _event.GmapCode;
             string location = $"https://www.google.com/maps/search/?api=1&query={gkEventHistory.latitude},{gkEventHistory.longitude}";
@@ -59,9 +59,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         public async Task SendCheckOutMessage(GKEventHistory gkEventHistory)
         {
-            var gkUser = await db.Users.Where(gk => gk.UserId == gkEventHistory.GK_Id)
+            var gkUser = await db.Users.AsNoTracking().Where(gk => gk.UserId == gkEventHistory.GK_Id)
                           .FirstOrDefaultAsync();
-            var _event = await db.Events.Where(e => e.Id == gkEventHistory.Event_Id)
+            var _event = await db.Events.AsNoTracking().Where(e => e.Id == gkEventHistory.Event_Id)
                          .FirstOrDefaultAsync();
             string gmapCode = "https://maps.app.goo.gl/" + _event.GmapCode;
             string location = $"https://www.google.com/maps/search/?api=1&query={gkEventHistory.latitude},{gkEventHistory.longitude}";
@@ -93,9 +93,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         public async Task SendGateKeeperassignEventMessage(GKEventHistory gkEventHistory)
         {
-            var gkUser = await db.Users.Where(gk => gk.UserId == gkEventHistory.GK_Id)
+            var gkUser = await db.Users.AsNoTracking().Where(gk => gk.UserId == gkEventHistory.GK_Id)
                                      .FirstOrDefaultAsync();
-            var _event = await db.Events.Where(e => e.Id == gkEventHistory.Event_Id)
+            var _event = await db.Events.AsNoTracking().Where(e => e.Id == gkEventHistory.Event_Id)
                          .FirstOrDefaultAsync();
 
             string _phoneNumber_to = await db.AppSettings.Select(e => e.GateKeeperCheckNotificationsNumber)
@@ -125,9 +125,9 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
 
         public async Task SendGateKeeperUnassignEventMessage(GKEventHistory gkEventHistory)
         {
-            var gkUser = await db.Users.Where(gk => gk.UserId == gkEventHistory.GK_Id)
+            var gkUser = await db.Users.AsNoTracking().Where(gk => gk.UserId == gkEventHistory.GK_Id)
                                      .FirstOrDefaultAsync();
-            var _event = await db.Events.Where(e => e.Id == gkEventHistory.Event_Id)
+            var _event = await db.Events.AsNoTracking().Where(e => e.Id == gkEventHistory.Event_Id)
                          .FirstOrDefaultAsync();
 
             string _phoneNumber_to = await db.AppSettings.Select(e => e.GateKeeperCheckNotificationsNumber)

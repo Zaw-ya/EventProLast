@@ -40,7 +40,7 @@ namespace EventPro.Web.Controllers.Admin
             SetBreadcrum("Settings", "/");
             ViewBag.Icon = "nav-icon fas fa-gear";
 
-            var settings = await db.AppSettings.FirstOrDefaultAsync();
+            var settings = await db.AppSettings.AsNoTracking().FirstOrDefaultAsync();
 
             ViewBag.Profiles = new SelectList(await db.TwilioProfileSettings
                                 .AsNoTracking()

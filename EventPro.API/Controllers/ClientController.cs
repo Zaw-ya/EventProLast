@@ -44,7 +44,7 @@ namespace EventPro.API.Controllers
                 return check;
             }
 
-            UserDto user = await db.Users.Include(u => u.City).ThenInclude(c => c.Country)
+            UserDto user = await db.Users.AsNoTracking().Include(u => u.City).ThenInclude(c => c.Country)
                 .Where(u => u.UserId == userToken.UserId)
                 .Select(u => new UserDto()
                 {
@@ -85,7 +85,7 @@ namespace EventPro.API.Controllers
 
 
                 IQueryable<ClientEventsModel> clientEvents =
-                                             db.Events.Where(e => e.CreatedFor == userToken.UserId && (e.IsDeleted == false || e.IsDeleted == null))
+                                             db.Events.AsNoTracking().Where(e => e.CreatedFor == userToken.UserId && (e.IsDeleted == false || e.IsDeleted == null))
                                             .OrderByDescending(p => p.EventFrom)
                                             .Select(e => new ClientEventsModel()
                                             {
@@ -142,7 +142,7 @@ namespace EventPro.API.Controllers
                     PageSize = int.Parse(_configuration["PageSize"]);
 
                 IQueryable<EventScannInfoModel> eventScannInfo =
-                                             db.Guest.Include(g => g.ScanHistory)
+                                             db.Guest.AsNoTracking().Include(g => g.ScanHistory)
                                             .Include(g => g.Event)
                                             .Where(g => g.EventId == eventId && (g.Event.IsDeleted == false || g.Event.IsDeleted == null))
                                             .OrderByDescending(g => g.FirstName)
@@ -201,7 +201,7 @@ namespace EventPro.API.Controllers
                 if (!string.IsNullOrEmpty(_configuration["PageSize"]) && int.Parse(_configuration["PageSize"]) > 1)
                     PageSize = int.Parse(_configuration["PageSize"]);
 
-                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.Where(p => p.EventId == eventId);
+                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.AsNoTracking().Where(p => p.EventId == eventId);
 
                 long count = await guests.CountAsync();
                 guests = guests.OrderByDescending(e => e.GuestId);
@@ -262,7 +262,7 @@ namespace EventPro.API.Controllers
                 if (!string.IsNullOrEmpty(_configuration["PageSize"]) && int.Parse(_configuration["PageSize"]) > 1)
                     PageSize = int.Parse(_configuration["PageSize"]);
 
-                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.Where(p => p.EventId == eventId &&
+                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.AsNoTracking().Where(p => p.EventId == eventId &&
                 (p.FirstName.Contains(searchValue) ||
                 ("+" + p.SecondaryContactNo + p.PrimaryContactNo)
                 .Contains(searchValue)));
@@ -833,7 +833,7 @@ namespace EventPro.API.Controllers
                     return check;
                 }
 
-                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.Where(p => p.EventId == eventId);
+                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.AsNoTracking().Where(p => p.EventId == eventId);
 
                 if (guests == null)
                 {
@@ -851,7 +851,7 @@ namespace EventPro.API.Controllers
                     );
                 }
 
-                var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+                var evnt = await db.Events.AsNoTracking().Where(e => e.Id == eventId).FirstOrDefaultAsync();
 
                 if (evnt.WhatsappConfirmation != true)
                 {
@@ -941,7 +941,7 @@ namespace EventPro.API.Controllers
                     return check;
                 }
 
-                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.Where(p => p.EventId == eventId);
+                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.AsNoTracking().Where(p => p.EventId == eventId);
 
                 if (guests == null)
                 {
@@ -957,7 +957,7 @@ namespace EventPro.API.Controllers
                     );
                 }
 
-                var evnt = await db.Events.Where(e => e.Id == eventId).FirstOrDefaultAsync();
+                var evnt = await db.Events.AsNoTracking().Where(e => e.Id == eventId).FirstOrDefaultAsync();
 
                 if (evnt.WhatsappPush != true)
                 {
@@ -1496,7 +1496,7 @@ namespace EventPro.API.Controllers
                     return check;
                 }
 
-                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.Where(p => p.EventId == eventId);
+                IQueryable<VwScannedInfo> guests = db.VwScannedInfo.AsNoTracking().Where(p => p.EventId == eventId);
 
                 if (guests == null)
                 {
