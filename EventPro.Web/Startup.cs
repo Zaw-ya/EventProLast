@@ -106,7 +106,7 @@ namespace EventPro.Web
                     PooledConnectionLifetime    = TimeSpan.FromMinutes(2),
                     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
                     MaxConnectionsPerServer     = int.MaxValue,
-                    ConnectTimeout              = TimeSpan.FromSeconds(10)
+                    ConnectTimeout              = TimeSpan.FromSeconds(15)
                 });
 
             // "Twilio": for Twilio REST API calls (auth header set per-request).
@@ -119,8 +119,8 @@ namespace EventPro.Web
             {
                 PooledConnectionLifetime    = TimeSpan.FromMinutes(2),
                 PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
-                MaxConnectionsPerServer     = 10,
-                ConnectTimeout              = TimeSpan.FromSeconds(5)
+                MaxConnectionsPerServer = int.MaxValue,
+                ConnectTimeout = TimeSpan.FromSeconds(15)
             });
 
 
