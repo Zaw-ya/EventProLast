@@ -48,9 +48,7 @@ namespace EventPro.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(LoginModel model)
         {
-            var sw = Stopwatch.StartNew();
             var cacheKey = $"login_{model.UserName}";
-
             var user = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
@@ -70,12 +68,6 @@ namespace EventPro.Web.Controllers
                     })
                     .FirstOrDefaultAsync();
             });
-
-            sw.Stop();
-            Console.WriteLine($"Login Query took {sw.ElapsedMilliseconds} ms");
-            _logger.LogInformation($"Login Query took {sw.ElapsedMilliseconds} ms");
-
-            //TempData["test"] = $"Ahmed From Function {user}";
 
             if (user != null)
             {
