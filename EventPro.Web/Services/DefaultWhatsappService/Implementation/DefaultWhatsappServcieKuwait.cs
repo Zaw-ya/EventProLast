@@ -3,12 +3,13 @@ using Microsoft.Extensions.Configuration;
 using EventPro.Web.Services.DefaultWhatsapp.Interface;
 using OpenQA.Selenium.Chrome;
 using EventPro.Business.Storage.Interface;
+using System.Net.Http;
 
 namespace EventPro.Web.Services.DefaultWhatsapp.Implementation
 {
     public class DefaultWhatsappServcieKuwait : DefaultWhatsappService.Implementation.DefaultWhatsappService, IDefaultWhatsappServcieKuwait
     {
-        public DefaultWhatsappServcieKuwait(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IBlobStorage blobStorage) : base(configuration, httpContextAccessor, blobStorage)
+        public DefaultWhatsappServcieKuwait(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IBlobStorage blobStorage, IHttpClientFactory httpClientFactory) : base(configuration, httpContextAccessor, blobStorage ,httpClientFactory)
         {
         }
         public override ChromeOptions ChromeOptions()

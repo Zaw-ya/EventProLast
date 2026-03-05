@@ -213,7 +213,7 @@ namespace EventPro.Web.Controllers
             , "Value", "Text");
 
             // Populate user dropdown with active administrators and operators
-            var users = await db.Users.Where(p => (p.Role == RoleIds.Administrator || p.Role == RoleIds.Operator) &&
+            var users = await db.Users.AsNoTracking().Where(p => (p.Role == RoleIds.Administrator || p.Role == RoleIds.Operator) &&
                                        p.IsActive == true &&
                                        p.Approved == true)
                                        .OrderByDescending(e => e.UserId)
@@ -225,7 +225,7 @@ namespace EventPro.Web.Controllers
             );
 
             // Load recent 500 audit log entries
-            ViewBag.AuditLogs = await db.AuditLog.Include(e => e.Event)
+            ViewBag.AuditLogs = await db.AuditLog.AsNoTracking().Include(e => e.Event)
                 .Include(e => e.User)
                 .Where(e => e.Event != null && e.Event.IsDeleted == false)
                 .OrderByDescending(x => x.Id).Take(500)
@@ -295,7 +295,7 @@ namespace EventPro.Web.Controllers
                            , "Value", "Text");
 
             // Query audit logs with filters applied
-            ViewBag.AuditLogs = await db.AuditLog.Include(e => e.Event)
+            ViewBag.AuditLogs = await db.AuditLog.AsNoTracking().Include(e => e.Event)
                 .Include(e => e.User)
                 .Where(x =>
                 (string.IsNullOrEmpty(eventTitle) || (x.Event.SystemEventTitle.Contains(eventTitle)))

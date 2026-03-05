@@ -154,6 +154,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
         /// </summary>
         private readonly EventProContext _db;
         private readonly IBlobStorage _blobStorage;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         #endregion
 
@@ -166,12 +167,14 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
         /// <param name="httpContextAccessor">HTTP context for URL generation</param>
         public DefaultWhatsappService(IConfiguration configuration,
             IHttpContextAccessor httpContextAccessor,
-            IBlobStorage blobStorage)
+            IBlobStorage blobStorage,
+            IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
             _db = new EventProContext(configuration);
             _httpContextAccessor = httpContextAccessor;
             _blobStorage = blobStorage;
+            _httpClientFactory = httpClientFactory;
         }
 
         #endregion
@@ -369,7 +372,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
                     string imgUrl = evnt.MessageHeaderImage;
                     tempFilePath = Path.GetTempFileName() + ".jpg";
 
-                    using (var httpClient = new HttpClient())
+                    var httpClient = _httpClientFactory.CreateClient("ImageDownload");
                     {
                         var bytes = await httpClient.GetByteArrayAsync(imgUrl);
                         await File.WriteAllBytesAsync(tempFilePath, bytes);
@@ -494,7 +497,7 @@ namespace EventPro.Web.Services.DefaultWhatsappService.Implementation
 
                 tempFilePath = Path.GetTempFileName() + ".jpg";
                 Log.Debug("Downloading image to temporary file - Path: {TempFile}", tempFilePath);
-                using (var httpClient = new HttpClient())
+                var httpClient = _httpClientFactory.CreateClient("ImageDownload");
                 {
                     var bytes = await httpClient.GetByteArrayAsync(imageUrl);
                     await File.WriteAllBytesAsync(tempFilePath, bytes);

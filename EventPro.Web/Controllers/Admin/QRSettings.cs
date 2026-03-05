@@ -6,7 +6,6 @@ using System.Drawing.Text;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -287,7 +286,7 @@ namespace EventPro.Web.Controllers
             }
 
             List<int> fontSize = new List<int>();
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
 
             var imageUrl = cardInfo.BackgroundImage;
 
@@ -428,7 +427,7 @@ namespace EventPro.Web.Controllers
                 return RedirectToAction("QRSettings", "admin", new { id = info.EventId });
             }
 
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
             var imageUrl = cardInfo.BackgroundImage;
 
             // Validate URL
@@ -660,7 +659,7 @@ namespace EventPro.Web.Controllers
                             string latestUrl = _blobStorage.GetFileUrl(publicId);
 
                             // download image
-                            using var client = new HttpClient();
+                            var client = _httpClientFactory.CreateClient("ImageDownload");
                             var imageBytes = await client.GetByteArrayAsync(latestUrl);
 
                             // fileName in zip folder
@@ -795,7 +794,7 @@ namespace EventPro.Web.Controllers
         /// <param name="guestId">Optional guest ID for individual card generation</param>
         private async Task GenerateCardAsync(CardInfo cardInfo, string barcodePath, string cardPreview, string path, float zoomRatio, int guestId = 0)
         {
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
             var imageUrl = cardInfo.BackgroundImage;
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
 
@@ -940,7 +939,7 @@ namespace EventPro.Web.Controllers
         /// <returns>QR code Image object</returns>
         private async Task<Image> AddBarcodeAsync(CardInfo cardInfo, string barcodePath, Graphics grap, float zoomRatio)
         {
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
 
             // Get QR code URL from database or construct Blob Storage URL
             string imageUrl;

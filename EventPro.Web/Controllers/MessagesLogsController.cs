@@ -19,10 +19,13 @@ namespace EventPro.Web.Controllers
     {
         private readonly EventProContext _context;
         private readonly IWhatsappSendingProviderService _whatsappSendingProvider;
-        public MessagesLogsController(EventProContext db,IWhatsappSendingProviderService sendingProviderService)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public MessagesLogsController(EventProContext db, IWhatsappSendingProviderService sendingProviderService, IHttpClientFactory httpClientFactory)
         {
             _context = db;
             _whatsappSendingProvider = sendingProviderService;
+            _httpClientFactory = httpClientFactory;
         }
 
         [AuthorizeRoles("Administrator", "Supervisor")]
@@ -83,7 +86,7 @@ your server fetches from Twilio with auth, and passes the content through.
 
                 var apiUrl = $"https://api.twilio.com/2010-04-01/Accounts/{twilioProfile.AccountSid}/Messages/{messageSid}/Media/{mediaSid}";
 
-                using var httpClient = new HttpClient();
+                var httpClient = _httpClientFactory.CreateClient("Twilio");
                 var credentials = Convert.ToBase64String(
                     System.Text.Encoding.ASCII.GetBytes($"{twilioProfile.AccountSid}:{twilioProfile.AuthToken}"));
                 httpClient.DefaultRequestHeaders.Authorization =

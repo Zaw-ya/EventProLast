@@ -16,7 +16,7 @@ namespace EventPro.Business.EventService
 
         public async Task<List<Events>> GetAllEvents()
         {
-            return await db.Events.ToListAsync();
+            return await db.Events.AsNoTracking().ToListAsync();
         }
     }
 }
