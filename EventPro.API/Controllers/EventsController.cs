@@ -451,7 +451,7 @@ namespace EventPro.API.Controllers
                 string environment = _configuration.GetSection("environment").Value;
                 //var filename = file.FileName;
                 var extension = file.ContentType.ToLower().Replace(@"image/", "");
-                using var stream = file.OpenReadStream();
+                await using var stream = file.OpenReadStream();
 
                 var fileName = $"GatekeeperEventLocation/{eventId}{Path.GetExtension(file.FileName)}";
 

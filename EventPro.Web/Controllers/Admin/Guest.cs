@@ -2238,7 +2238,7 @@ namespace EventPro.Web.Controllers
                     if (filename.ToLower().EndsWith(".xlsx") || filename.ToLower().EndsWith(".xls"))
                     {
                         // Upload to blob storage
-                        using var stream = file.OpenReadStream();
+                        await using var stream = file.OpenReadStream();
                         await _blobStorage.UploadAsync(stream, "xlsx", environment + path + "/" + filename, cancellationToken: default);
                         DataSet data;
 
