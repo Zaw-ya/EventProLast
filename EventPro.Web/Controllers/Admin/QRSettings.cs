@@ -141,7 +141,7 @@ namespace EventPro.Web.Controllers
                 filename = Guid.NewGuid() + "." + extension;
 
                 // Upload to Blob Storage
-                using var stream = file.OpenReadStream();
+                await using var stream = file.OpenReadStream();
                 backgroundImageUrl = await _blobStorage.UploadAsync(stream, file.ContentType, $"{path.Trim('/')}/{filename}", CancellationToken.None);
                 hasFile = true;
             }
@@ -497,6 +497,14 @@ namespace EventPro.Web.Controllers
                 .AsNoTracking()
                 .CountAsync();
 
+            // If a refresh operation is in progress, read progress from cache
+            string progressKey = "refresh_" + id.ToString();
+            if (_MemoryCacheStoreService.IsExist(progressKey))
+            {
+                int processedCount = _MemoryCacheStoreService.Retrieve(progressKey);
+                return Json(new { totalEventCards = eventCardsCount, totalCreatedCards = processedCount });
+            }
+
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             double createdFiles = 0;
@@ -535,6 +543,8 @@ namespace EventPro.Web.Controllers
             }
 
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string progressKey = "refresh_" + id.ToString();
+            _MemoryCacheStoreService.save(progressKey, 0);
             try
             {
 
@@ -577,10 +587,13 @@ namespace EventPro.Web.Controllers
                 //    await RefreshQRCode(guest, card);
                 //    await RefreshCard(guest, id, card, cardPreview, guestcode, path);
                 //});
+                int processedCount = 0;
                 foreach(var guest in guests)
                 {
                     await RefreshQRCode(guest, card);
                     await RefreshCard(guest, id, card, cardPreview, guestcode, path);
+                    processedCount++;
+                    _MemoryCacheStoreService.save(progressKey, processedCount);
                 }
 
                 // Log audit trail
@@ -593,6 +606,10 @@ namespace EventPro.Web.Controllers
             {
                 Log.Error($"Something went wrong In RefreshAll ,Message:{ex.Message} InnerEx :{ex.InnerException}");
                 return Json(new Response { succeeded = false, result = ex.Message });
+            }
+            finally
+            {
+                _MemoryCacheStoreService.delete(progressKey);
             }
         }
 

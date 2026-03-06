@@ -233,10 +233,10 @@ namespace EventPro.Web.Controllers
                     var file = files[0];
                     if (file != null && file.Length > 0)
                     {
-                        using (var stream = file.OpenReadStream())
+                        await using (var stream = file.OpenReadStream())
                         {
                             //filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "categories");
-                            
+
                             // Upload to Blob Storage in 'categories' folder
                             filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"categories/{file.FileName}", CancellationToken.None);
                         }

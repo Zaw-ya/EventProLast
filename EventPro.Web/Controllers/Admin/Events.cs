@@ -476,7 +476,7 @@ namespace EventPro.Web.Controllers
             {
                 try
                 {
-                    using (var stream = file.OpenReadStream())
+                    await using (var stream = file.OpenReadStream())
                     {
                         if (file.ContentType.Contains("image"))
                         {
@@ -715,7 +715,7 @@ namespace EventPro.Web.Controllers
                 {
                     try
                     {
-                        using (var stream = file.OpenReadStream())
+                        await using (var stream = file.OpenReadStream())
                         {
                             if (file.ContentType.Contains("image"))
                             {
