@@ -37,7 +37,7 @@ namespace EventPro.Business.WhatsAppMessagesProviders.Implementation.Twilio
                                   .Where(e => e.Name == _event.choosenSendingWhatsappProfile)
                                   .AsNoTracking()
                                   .FirstOrDefaultAsync();
-            var templateId = "HX9991cf36445fd255ccf087f67990a061";
+            var templateId = "HXb610d8e6a86c8b35ed3c58c0e80fe6af";
 
             string fullPhoneNumber = _phoneNumber_to;
 
