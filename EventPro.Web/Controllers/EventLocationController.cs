@@ -29,7 +29,7 @@ namespace EventPro.Web.Controllers
         public async Task<IActionResult> Index()
         {
             ViewBag.PageTitle = "Events Locations";
-            return View(await _context.EventLocations.ToListAsync());
+            return View(await _context.EventLocations.AsNoTracking().ToListAsync());
         }
 
         // GET: EventLocationController/Create

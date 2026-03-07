@@ -29,6 +29,7 @@ namespace EventPro.API.Controllers
         {
             var duration = DateTime.Now - TimeSpan.FromDays(14);
             var scanHistory = await db.ScanHistory
+                .AsNoTracking()
                 .Where(e => e.ScannedOn > duration)
                 .ToListAsync();
             /*

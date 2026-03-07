@@ -22,13 +22,13 @@ namespace EventPro.Web.Controllers
         public async Task<IActionResult> Index()
         {
             ViewBag.PageTitle = "Cities";
-            return View(await _context.City.Include(x => x.Country).ToListAsync());
+            return View(await _context.City.AsNoTracking().Include(x => x.Country).ToListAsync());
         }
 
         public async Task<IActionResult> Create()
         {
             ViewBag.countries =
-               new SelectList((await _context.Country.ToListAsync())
+               new SelectList((await _context.Country.AsNoTracking().ToListAsync())
                      .Select(e => new { CountryId = e.Id, CountryName = e.CountryName }), "CountryId", "CountryName");
             return View();
         }
@@ -41,7 +41,7 @@ namespace EventPro.Web.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.countries =
-              new SelectList((await _context.Country.ToListAsync())
+              new SelectList((await _context.Country.AsNoTracking().ToListAsync())
                     .Select(e => new { CountryId = e.Id, CountryName = e.CountryName }), "CountryId", "CountryName");
                 return View(city);
             }
@@ -52,7 +52,7 @@ namespace EventPro.Web.Controllers
                 if (exist)
                 {
                     ViewBag.countries =
-              new SelectList((await _context.Country.ToListAsync())
+              new SelectList((await _context.Country.AsNoTracking().ToListAsync())
                     .Select(e => new { CountryId = e.Id, CountryName = e.CountryName }), "CountryId", "CountryName");
                     ModelState.AddModelError(string.Empty, "Error! This city already exist");
                     return View(city);
@@ -70,10 +70,10 @@ namespace EventPro.Web.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             ViewBag.countries =
-             new SelectList((await _context.Country.ToListAsync())
+             new SelectList((await _context.Country.AsNoTracking().ToListAsync())
                    .Select(e => new { CountryId = e.Id, CountryName = e.CountryName }), "CountryId", "CountryName");
 
-            return View(await _context.City.FirstOrDefaultAsync(x => x.Id == id));
+            return View(await _context.City.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id));
         }
 
         [HttpPost]
@@ -84,7 +84,7 @@ namespace EventPro.Web.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.countries =
-           new SelectList((await _context.Country.ToListAsync())
+           new SelectList((await _context.Country.AsNoTracking().ToListAsync())
                  .Select(e => new { CountryId = e.Id, CountryName = e.CountryName }), "CountryId", "CountryName");
                 return View(city);
             }
@@ -97,7 +97,7 @@ namespace EventPro.Web.Controllers
                 {
                     ModelState.AddModelError(string.Empty, "Error! This country already exist");
                     ViewBag.countries =
-           new SelectList((await _context.Country.ToListAsync())
+           new SelectList((await _context.Country.AsNoTracking().ToListAsync())
                  .Select(e => new { CountryId = e.Id, CountryName = e.CountryName }), "CountryId", "CountryName");
                     return View(city);
                 }

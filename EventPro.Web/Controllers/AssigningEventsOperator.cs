@@ -31,7 +31,7 @@ namespace EventPro.Web.Controllers
             ViewBag.Icon = "nav-icon fas fa-tasks";
             SetBreadcrum("Shared Operator Events", "/admin");
 
-            var users = await db.Users.Where(p => p.Role == RoleIds.Operator &&
+            var users = await db.Users.AsNoTracking().Where(p => p.Role == RoleIds.Operator &&
             p.IsActive == true &&
             p.Approved == true)
               .OrderByDescending(e => e.UserId)
@@ -72,12 +72,14 @@ namespace EventPro.Web.Controllers
                 int BulkID = model.Id;
 
                 var existingEventIds = await db.EventOperator
+                            .AsNoTracking()
                             .Where(e => e.OperatorId == (model.OperatorAssignedToId ?? 0))
                             .Select(e => e.EventId)
                             .ToListAsync();
 
                 // Get all distinct EventIds assigned to the source operator (any assignment type)
                 var sourceEventIds = await db.EventOperator
+                    .AsNoTracking()
                     .Where(e => e.OperatorId == model.OperatorAssignedFromId)
                     .Select(e => e.EventId)
                     .Distinct()
@@ -90,6 +92,7 @@ namespace EventPro.Web.Controllers
 
                 // Fetch the latest event timing for each event to assign
                 var sourceEvents = await db.EventOperator
+                    .AsNoTracking()
                     .Where(e => e.OperatorId == model.OperatorAssignedFromId
                              && eventIdsToAssign.Contains(e.EventId))
                     .GroupBy(e => e.EventId)
@@ -132,6 +135,7 @@ namespace EventPro.Web.Controllers
 
 
             var result = await db.BulkOperatorEvents
+                .AsNoTracking()
                 .Include(e => e.OperatorAssignedFrom)
                 .Include(e => e.OperatorAssignedTo)
                 .Include(e => e.AssignedBy)
@@ -147,7 +151,7 @@ namespace EventPro.Web.Controllers
                 bulkOperatorEventsVMs.Add(bulkOperatorEventsVM);
             }
 
-            var recordsTotal = await db.BulkOperatorEvents.CountAsync();
+            var recordsTotal = await db.BulkOperatorEvents.AsNoTracking().CountAsync();
             var jsonData = new
             {
                 recordsFiltered = recordsTotal,

@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Net;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -2239,7 +2238,7 @@ namespace EventPro.Web.Controllers
                     if (filename.ToLower().EndsWith(".xlsx") || filename.ToLower().EndsWith(".xls"))
                     {
                         // Upload to blob storage
-                        using var stream = file.OpenReadStream();
+                        await using var stream = file.OpenReadStream();
                         await _blobStorage.UploadAsync(stream, "xlsx", environment + path + "/" + filename, cancellationToken: default);
                         DataSet data;
 
@@ -2750,7 +2749,7 @@ namespace EventPro.Web.Controllers
             //    using MemoryStream fs = new MemoryStream(imageData);
             //    img = Image.FromStream(fs);
             //}
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
             var imageUrl = cardInfo.BackgroundImage;
             byte[] imageData = await client.GetByteArrayAsync(imageUrl);
             using MemoryStream fs = new MemoryStream(imageData);
@@ -2764,7 +2763,7 @@ namespace EventPro.Web.Controllers
             }
 
             // Load guest QR code from Blob Storage
-            using HttpClient clientQR = new HttpClient();
+            var clientQR = _httpClientFactory.CreateClient("ImageDownload");
 
             // We refresh qr code before we refresh the card so we have to get the latest version of qr code here
             var qrPublicId = $"QR/{eventId}/{guestId}.png";

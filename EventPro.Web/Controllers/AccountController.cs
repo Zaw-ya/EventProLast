@@ -1,15 +1,21 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using EventPro.DAL.Models;
-using EventPro.Web.Common;
-using EventPro.Web.Models;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
+using EventPro.DAL.Models;
+using EventPro.Web.Common;
+using EventPro.Web.Models;
+
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EventPro.Web.Controllers
 {
@@ -17,11 +23,16 @@ namespace EventPro.Web.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly EventProContext db;
+        private readonly ILogger<AccountController> _logger;
+        private readonly IMemoryCache _cache;
+
         public AccountController(
-            IConfiguration configuration)
+            IConfiguration configuration, ILogger<AccountController> logger, IMemoryCache cache)
         {
             _configuration = configuration;
             db = new EventProContext(configuration);
+            _logger = logger;
+            _cache = cache;
         }
         public IActionResult Index()
         {
@@ -37,21 +48,30 @@ namespace EventPro.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(LoginModel model)
         {
-            List<Roles> roles = await db.Roles.ToListAsync();
+            var cacheKey = $"login_{model.UserName}";
+            var user = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
 
-            var user = await db.Users
-                .Where(p => p.UserName == model.UserName && p.Password == model.Password)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-
-            TempData["test"] = $"Ahmed From Function {user}";
-
+                return await db.Users
+                    .AsNoTracking()
+                    .Where(u => u.UserName == model.UserName)
+                    .Select(u => new
+                    {
+                        u.UserId,
+                        u.UserName,
+                        u.Password,
+                        u.FirstName,
+                        u.LastName,
+                        RoleName = u.RoleNavigation.RoleName,
+                        u.IsActive
+                    })
+                    .FirstOrDefaultAsync();
+            });
 
             if (user != null)
             {
-                var role = roles.Where(p => p.Id == user.Role && user.IsActive == true)
-                                .Select(p => p.RoleName)
-                                .FirstOrDefault();
+                var role = user?.RoleName;
 
                 if (role == null)
                 {
@@ -60,13 +80,13 @@ namespace EventPro.Web.Controllers
                 }
 
                 var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.GivenName, user.FirstName),
-            new Claim(ClaimTypes.Surname, user.LastName),
-            new Claim(ClaimTypes.Role, role)
-        };
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.GivenName, user.FirstName),
+                    new Claim(ClaimTypes.Surname, user.LastName),
+                    new Claim(ClaimTypes.Role, role)
+                };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var authProperties = new AuthenticationProperties

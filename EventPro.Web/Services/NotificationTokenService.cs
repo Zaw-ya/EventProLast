@@ -51,7 +51,7 @@ namespace EventPro.Web.Services
                 DateTime date = DateTime.Now;
                 DateTime toNotifyDate = date.AddDays(beforeDays);
                 // Query events within the reminder period and select notification details along with distinct device tokens for each event
-                var messageRequestTokens = await db.Events.Include(x => x.EventGatekeeperMapping).ThenInclude(x => x.Gatekeeper)
+                var messageRequestTokens = await db.Events.AsNoTracking().Include(x => x.EventGatekeeperMapping).ThenInclude(x => x.Gatekeeper)
                               .Where(ev => ev.AttendanceTime.Value >= date && ev.AttendanceTime.Value <= toNotifyDate)
                               .Select(ev => new MessageRequestTokens()
                               {
@@ -128,7 +128,7 @@ namespace EventPro.Web.Services
                 DateTime date = DateTime.Now;
                 DateTime sendToDate = date.AddDays(beforeDays);
                 // Query events within the reminder period and select gatekeeper details for WhatsApp messages
-                var GKWhatsRemiderMsgModels = await db.Events.Include(x => x.EventGatekeeperMapping).ThenInclude(x => x.Gatekeeper)
+                var GKWhatsRemiderMsgModels = await db.Events.AsNoTracking().Include(x => x.EventGatekeeperMapping).ThenInclude(x => x.Gatekeeper)
                               .Where(ev => ev.AttendanceTime.Value >= date && ev.AttendanceTime.Value <= sendToDate)
                               .Select(ev => new GKWhatsRemiderMsgModel()
                               {

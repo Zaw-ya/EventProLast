@@ -38,10 +38,10 @@ namespace EventPro.API.Controllers
             {
                 return Unauthorized("Token Expire");
             }
-            var allowed = await db.ScanHistory.Where(p => p.ScanBy == userToken.UserId && p.ResponseCode == "Allowed").CountAsync();
-            var declined = await db.ScanHistory.Where(p => p.ScanBy == userToken.UserId && p.ResponseCode == "Declined").CountAsync();
-            var todaysScan = await db.ScanHistory.Where(p => p.ScanBy == userToken.UserId && p.ResponseCode == "Allowed" && p.ScannedOn >= DateTime.Today.Date).CountAsync();
-            var profileInfo = await db.Users.Where(p => p.UserId == userToken.UserId).FirstOrDefaultAsync();
+            var allowed = await db.ScanHistory.AsNoTracking().Where(p => p.ScanBy == userToken.UserId && p.ResponseCode == "Allowed").CountAsync();
+            var declined = await db.ScanHistory.AsNoTracking().Where(p => p.ScanBy == userToken.UserId && p.ResponseCode == "Declined").CountAsync();
+            var todaysScan = await db.ScanHistory.AsNoTracking().Where(p => p.ScanBy == userToken.UserId && p.ResponseCode == "Allowed" && p.ScannedOn >= DateTime.Today.Date).CountAsync();
+            var profileInfo = await db.Users.AsNoTracking().Where(p => p.UserId == userToken.UserId).FirstOrDefaultAsync();
             return Ok(new
             {
                 FullName = profileInfo.FirstName + " " + profileInfo.LastName,

@@ -40,7 +40,7 @@ namespace EventPro.Web.Controllers
             {
                 // Define role display order
                 var roleOrder = new[] { "Administrator", "Operator", "Agent", "Supervisor", "Accounting", "Client", "GateKeeper" };
-                var rolesFromDb = await db.Roles.ToListAsync();
+                var rolesFromDb = await db.Roles.AsNoTracking().ToListAsync();
                 var orderedRoles = rolesFromDb.OrderBy(r => Array.IndexOf(roleOrder, r.RoleName)).ToList();
 
                 // Build role select list with "All" option
@@ -56,7 +56,7 @@ namespace EventPro.Web.Controllers
 
             ViewBag.Icon = "nav-icon fas fa-user";
             SetBreadcrum("Users", "/");
-            ViewBag.Roles = await db.Roles.ToListAsync();
+            ViewBag.Roles = await db.Roles.AsNoTracking().ToListAsync();
 
             return View("Users - Copy");
         }
@@ -103,6 +103,7 @@ namespace EventPro.Web.Controllers
                 // Operators can only see clients from their assigned events or clients they created
                 var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                 var createdForIds = await db.Events
+                    .AsNoTracking()
                     .Where(e => e.EventOperators.Any(p => p.OperatorId == userId))
                     .Select(e => e.CreatedFor)
                     .Distinct()
@@ -173,6 +174,7 @@ namespace EventPro.Web.Controllers
                 // Operators see clients from their events or created by them
                 var userId = int.Parse(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                 var createdForIds = await db.Events
+                    .AsNoTracking()
                     .Where(e => e.EventOperators.Any(p => p.OperatorId == userId))
                     .Select(e => e.CreatedFor)
                     .Distinct()

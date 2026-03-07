@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -113,10 +113,11 @@ namespace EventPro.Web.Controllers
         {
             ViewBag.Icon = "nav-icon fas fa-qrcode";
             var files = Request.Form.Files;
-            string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             string filename = string.Empty;
             bool hasFile = false;
+
+            string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
+
             string backgroundImageUrl = string.Empty;
 
             // Process uploaded background image
@@ -142,14 +143,22 @@ namespace EventPro.Web.Controllers
                 filename = Guid.NewGuid() + "." + extension;
 
                 // Upload to Blob Storage
-                using var stream = file.OpenReadStream();
+                await using var stream = file.OpenReadStream();
                 backgroundImageUrl = await _blobStorage.UploadAsync(stream, file.ContentType, $"{path.Trim('/')}/{filename}", CancellationToken.None);
                 hasFile = true;
             }
 
-            // Update card information
-            CardInfo card = new CardInfo();
-            card = db.CardInfo.Where(p => p.CardId == info.CardId).FirstOrDefault();
+            var card = await db.CardInfo.FirstOrDefaultAsync(p => p.CardId == info.CardId);
+            
+            // Needed to know if we have to regenrate qr code or not (if current is the same dont regenrate qr)
+            var oldBgColor = card.BackgroundColor;
+            var oldFgColor = card.ForegroundColor;
+
+            bool regenerateQr =
+                oldBgColor != info.BackgroundColor ||
+                oldFgColor != info.ForegroundColor;
+
+            
             card.BackgroundColor = info.BackgroundColor;
 
             // Set foreground color with default
@@ -165,63 +174,62 @@ namespace EventPro.Web.Controllers
             // Update card dimensions and barcode settings
             card.CardWidth = info.CardWidth;
             card.CardHeight = info.CardHeight;
+
             card.BarcodeWidth = info.BarcodeWidth;
             card.BarcodeHeight = info.BarcodeHeight;
+            
             card.DefaultFont = info.DefaultFont;
 
             // Save background image URL if uploaded
             if (hasFile)
                 card.BackgroundImage = backgroundImageUrl;
 
-            await db.SaveChangesAsync();
-
-            // Generate QR Code with specified colors
-            string barcodePath = _configuration.GetSection("Uploads").GetSection("Barcode").Value;
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode("My Invite.", QRCodeGenerator.ECCLevel.Q);
-            QRCode qrCode = new QRCode(qrCodeData);
-
-            // Create QR code bitmap with background/foreground colors
-            Bitmap qrCodeImage = qrCode.GetGraphic(5
-                , info.BackgroundColor
-                , info.ForegroundColor
-                , false);
-
-            // Use transparent foreground for white color
-            if (string.Equals(info.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+            // Generate QR only if colors changed
+            if (regenerateQr)
             {
-                qrCodeImage = qrCode.GetGraphic(
-                    5,
-                    ColorTranslator.FromHtml(info.BackgroundColor),
-                    Color.Transparent,
-                    false
-                );
-            }
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode("My Invite.", QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
 
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("environment").Value +
-                _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+                Bitmap qrCodeImage;
 
-            // Create folder structure: QR/{eventId}/{eventId}.png
-            string qrFolderPath = $"QR/{info.EventId}";
-            string qrFileName = $"{info.EventId}.png";
+                if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+                {
+                    qrCodeImage = qrCode.GetGraphic(
+                        5,
+                        ColorTranslator.FromHtml(card.BackgroundColor),
+                        Color.Transparent,
+                        false);
+                }
+                else
+                {
+                    qrCodeImage = qrCode.GetGraphic(
+                        5,
+                        ColorTranslator.FromHtml(card.BackgroundColor),
+                        ColorTranslator.FromHtml(card.ForegroundColor),
+                        false);
+                }
 
-            // Delete existing QR code if any
-            await _blobStorage.DeleteFileAsync($"{qrFolderPath}/{qrFileName}", CancellationToken.None);
+                string qrFolderPath = $"QR/{info.EventId}";
+                string qrFileName = $"{info.EventId}.png";
 
-            // Upload QR code to Blob Storage
-            string qrCodeUrl = string.Empty;
-            using (MemoryStream ms = new MemoryStream())
-            {
-                // Convert to PNG format (supports transparency)
+                using MemoryStream ms = new MemoryStream();
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                qrCodeUrl = await _blobStorage.UploadAsync(ms, "image/png", $"{qrFolderPath}/{qrFileName}", CancellationToken.None);
+
+                var qrCodeUrl = await _blobStorage.UploadAsync(
+                    ms,
+                    "image/png",
+                    $"{qrFolderPath}/{qrFileName}",
+                    CancellationToken.None);
+
+                card.BarcodeColorCode = qrCodeUrl;
+
+                qrCodeImage.Dispose();
             }
 
-            // Store QR code URL in database
-            card.BarcodeColorCode = qrCodeUrl;
+            // Save once only
             db.CardInfo.Update(card);
             await db.SaveChangesAsync();
-            qrCodeImage.Dispose();
             SetBreadcrum("QR Settings", "/admin");
 
             // Validate background image was uploaded
@@ -237,7 +245,6 @@ namespace EventPro.Web.Controllers
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, info.EventId, DAL.Enum.ActionEnum.UpdateQRCode);
 
-            // Redirect to card preview
             return RedirectToAction("CardPreview", "admin", new { id = info.EventId });
         }
 
@@ -287,7 +294,7 @@ namespace EventPro.Web.Controllers
             }
 
             List<int> fontSize = new List<int>();
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
 
             var imageUrl = cardInfo.BackgroundImage;
 
@@ -428,7 +435,7 @@ namespace EventPro.Web.Controllers
                 return RedirectToAction("QRSettings", "admin", new { id = info.EventId });
             }
 
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
             var imageUrl = cardInfo.BackgroundImage;
 
             // Validate URL
@@ -498,6 +505,14 @@ namespace EventPro.Web.Controllers
                 .AsNoTracking()
                 .CountAsync();
 
+            // If a refresh operation is in progress, read progress from cache
+            string progressKey = "refresh_" + id.ToString();
+            if (_MemoryCacheStoreService.IsExist(progressKey))
+            {
+                int processedCount = _MemoryCacheStoreService.Retrieve(progressKey);
+                return Json(new { totalEventCards = eventCardsCount, totalCreatedCards = processedCount });
+            }
+
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             string cardPreview = _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
             double createdFiles = 0;
@@ -536,6 +551,8 @@ namespace EventPro.Web.Controllers
             }
 
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
+            string progressKey = "refresh_" + id.ToString();
+            _MemoryCacheStoreService.save(progressKey, 0);
             try
             {
 
@@ -578,10 +595,13 @@ namespace EventPro.Web.Controllers
                 //    await RefreshQRCode(guest, card);
                 //    await RefreshCard(guest, id, card, cardPreview, guestcode, path);
                 //});
+                int processedCount = 0;
                 foreach(var guest in guests)
                 {
                     await RefreshQRCode(guest, card);
                     await RefreshCard(guest, id, card, cardPreview, guestcode, path);
+                    processedCount++;
+                    _MemoryCacheStoreService.save(progressKey, processedCount);
                 }
 
                 // Log audit trail
@@ -594,6 +614,10 @@ namespace EventPro.Web.Controllers
             {
                 Log.Error($"Something went wrong In RefreshAll ,Message:{ex.Message} InnerEx :{ex.InnerException}");
                 return Json(new Response { succeeded = false, result = ex.Message });
+            }
+            finally
+            {
+                _MemoryCacheStoreService.delete(progressKey);
             }
         }
 
@@ -660,7 +684,7 @@ namespace EventPro.Web.Controllers
                             string latestUrl = _blobStorage.GetFileUrl(publicId);
 
                             // download image
-                            using var client = new HttpClient();
+                            var client = _httpClientFactory.CreateClient("ImageDownload");
                             var imageBytes = await client.GetByteArrayAsync(latestUrl);
 
                             // fileName in zip folder
@@ -795,7 +819,7 @@ namespace EventPro.Web.Controllers
         /// <param name="guestId">Optional guest ID for individual card generation</param>
         private async Task GenerateCardAsync(CardInfo cardInfo, string barcodePath, string cardPreview, string path, float zoomRatio, int guestId = 0)
         {
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
             var imageUrl = cardInfo.BackgroundImage;
             string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
 
@@ -940,7 +964,7 @@ namespace EventPro.Web.Controllers
         /// <returns>QR code Image object</returns>
         private async Task<Image> AddBarcodeAsync(CardInfo cardInfo, string barcodePath, Graphics grap, float zoomRatio)
         {
-            using HttpClient client = new HttpClient();
+            var client = _httpClientFactory.CreateClient("ImageDownload");
 
             // Get QR code URL from database or construct Blob Storage URL
             string imageUrl;

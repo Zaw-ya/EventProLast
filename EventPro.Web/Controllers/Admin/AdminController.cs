@@ -1,3 +1,5 @@
+using System.Net.Http;
+
 using EventPro.Business.MemoryCacheStore.Interface;
 using EventPro.Business.RabbitMQMessaging.Interface;
 using EventPro.Business.Storage.Interface;
@@ -52,6 +54,7 @@ namespace EventPro.Web.Controllers
         private readonly IMemoryCacheStoreService _MemoryCacheStoreService;
         private readonly IBlobStorage _blobStorage;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// Constructor - Initializes AdminController with all required dependencies
@@ -68,7 +71,8 @@ namespace EventPro.Web.Controllers
                                  IBlobStorage blobStorage,
                                  IHttpContextAccessor httpContextAccessor,
                                  IUnitOfWork unitOfWork,
-                                 ILogger<AdminController> logger)
+                                 ILogger<AdminController> logger,
+                                 IHttpClientFactory httpClientFactory)
         {
             SetBreadcrum("Dashboard", "/");
             _configuration = configuration;
@@ -85,6 +89,7 @@ namespace EventPro.Web.Controllers
             _blobStorage = blobStorage;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         #endregion
@@ -119,15 +124,16 @@ namespace EventPro.Web.Controllers
             try
             {
                 // 1. Real-time Counts
-                ViewBag.CategoryCount = await db.EventCategory.CountAsync();
-                ViewBag.EventsCount = await db.Events.CountAsync(e => e.IsDeleted != true);
-                ViewBag.UsersCount = await db.Users.CountAsync(u => u.Approved == true); // Assuming 'Approved' means active user
-                ViewBag.GatekeeperCount = await db.Users.CountAsync(u => u.Role == RoleIds.GateKeeper && u.Approved == true);
-                ViewBag.ClientCount = await db.Users.CountAsync(u => u.Role == RoleIds.Client && u.Approved == true);
+                ViewBag.CategoryCount = await db.EventCategory.AsNoTracking().CountAsync();
+                ViewBag.EventsCount = await db.Events.AsNoTracking().CountAsync(e => e.IsDeleted != true);
+                ViewBag.UsersCount = await db.Users.AsNoTracking().CountAsync(u => u.Approved == true);
+                ViewBag.GatekeeperCount = await db.Users.AsNoTracking().CountAsync(u => u.Role == RoleIds.GateKeeper && u.Approved == true);
+                ViewBag.ClientCount = await db.Users.AsNoTracking().CountAsync(u => u.Role == RoleIds.Client && u.Approved == true);
 
                 // 3. Activity Feed Lists
                 // Load upcoming events (future events only, ordered by date, top 5)
                 ViewBag.UpcomingEvents = await _unitOfWork.Events.GetQueryable()
+                    .AsNoTracking()
                     .Include(e => e.CardInfo)
                     .Include(e => e.CreatedByNavigation)
                     .Include(e => e.TypeNavigation)
@@ -135,9 +141,10 @@ namespace EventPro.Web.Controllers
                     .OrderBy(p => p.EventFrom)
                     .Take(5)
                     .ToListAsync();
-                    
+
                // Load in-progress events (happening today, ordered by date, top 5)
                 ViewBag.InProgressEvents = await _unitOfWork.Events.GetQueryable()
+                    .AsNoTracking()
                     .Include(e => e.CardInfo)
                     .Include(e => e.CreatedByNavigation)
                     .Include(e => e.TypeNavigation)
@@ -148,6 +155,7 @@ namespace EventPro.Web.Controllers
 
                 // Load past events (already completed, ordered by date, top 5)
                 ViewBag.PastEvents = await _unitOfWork.Events.GetQueryable()
+                    .AsNoTracking()
                     .Include(e => e.CardInfo)
                     .Include(e => e.CreatedByNavigation)
                     .Include(e => e.TypeNavigation)
@@ -225,10 +233,10 @@ namespace EventPro.Web.Controllers
                     var file = files[0];
                     if (file != null && file.Length > 0)
                     {
-                        using (var stream = file.OpenReadStream())
+                        await using (var stream = file.OpenReadStream())
                         {
                             //filename = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "categories");
-                            
+
                             // Upload to Blob Storage in 'categories' folder
                             filename = await _blobStorage.UploadAsync(stream, file.ContentType, $"categories/{file.FileName}", CancellationToken.None);
                         }
@@ -409,6 +417,7 @@ namespace EventPro.Web.Controllers
             // Populate gatekeeper dropdown for filtering scan logs
             ViewBag.Gatekeeper = new SelectList(
                 await db.Users
+                    .AsNoTracking()
                     .Where(p => p.Role == RoleIds.GateKeeper)
                     .OrderBy(p => p.FirstName)
                     .Select(p => new
