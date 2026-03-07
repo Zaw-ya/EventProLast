@@ -130,7 +130,7 @@
                                                     Event Guest
                                                     </a>
 
-                                             <a href="#" disabled="disabled" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp;
+                                             <a href="/admin/QRSettings/${row.id}" disabled="disabled" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp;
                                              QR Settings
                                              </a>
                             
@@ -160,7 +160,7 @@
                                                     Event Guest
                                                     </a>
 
-                                             <a href="#" disabled="disabled" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp;
+                                             <a href="/admin/QRSettings/${row.id}" disabled="disabled" class="dropdown-item"><i class="nav-icon fas fa-asterisk" style="color:cornflowerblue"></i>&nbsp;
                                              QR Settings
                                              </a>
                             
