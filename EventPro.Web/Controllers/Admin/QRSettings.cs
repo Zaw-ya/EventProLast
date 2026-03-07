@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
@@ -112,10 +113,11 @@ namespace EventPro.Web.Controllers
         {
             ViewBag.Icon = "nav-icon fas fa-qrcode";
             var files = Request.Form.Files;
-            string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
-            string environment = _configuration.GetSection("Uploads").GetSection("environment").Value;
             string filename = string.Empty;
             bool hasFile = false;
+
+            string path = _configuration.GetSection("Uploads").GetSection("Card").Value;
+
             string backgroundImageUrl = string.Empty;
 
             // Process uploaded background image
@@ -146,9 +148,17 @@ namespace EventPro.Web.Controllers
                 hasFile = true;
             }
 
-            // Update card information
-            CardInfo card = new CardInfo();
-            card = db.CardInfo.Where(p => p.CardId == info.CardId).FirstOrDefault();
+            var card = await db.CardInfo.FirstOrDefaultAsync(p => p.CardId == info.CardId);
+            
+            // Needed to know if we have to regenrate qr code or not (if current is the same dont regenrate qr)
+            var oldBgColor = card.BackgroundColor;
+            var oldFgColor = card.ForegroundColor;
+
+            bool regenerateQr =
+                oldBgColor != info.BackgroundColor ||
+                oldFgColor != info.ForegroundColor;
+
+            
             card.BackgroundColor = info.BackgroundColor;
 
             // Set foreground color with default
@@ -164,63 +174,62 @@ namespace EventPro.Web.Controllers
             // Update card dimensions and barcode settings
             card.CardWidth = info.CardWidth;
             card.CardHeight = info.CardHeight;
+
             card.BarcodeWidth = info.BarcodeWidth;
             card.BarcodeHeight = info.BarcodeHeight;
+            
             card.DefaultFont = info.DefaultFont;
 
             // Save background image URL if uploaded
             if (hasFile)
                 card.BackgroundImage = backgroundImageUrl;
 
-            await db.SaveChangesAsync();
-
-            // Generate QR Code with specified colors
-            string barcodePath = _configuration.GetSection("Uploads").GetSection("Barcode").Value;
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode("My Invite.", QRCodeGenerator.ECCLevel.Q);
-            QRCode qrCode = new QRCode(qrCodeData);
-
-            // Create QR code bitmap with background/foreground colors
-            Bitmap qrCodeImage = qrCode.GetGraphic(5
-                , info.BackgroundColor
-                , info.ForegroundColor
-                , false);
-
-            // Use transparent foreground for white color
-            if (string.Equals(info.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+            // Generate QR only if colors changed
+            if (regenerateQr)
             {
-                qrCodeImage = qrCode.GetGraphic(
-                    5,
-                    ColorTranslator.FromHtml(info.BackgroundColor),
-                    Color.Transparent,
-                    false
-                );
-            }
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode("My Invite.", QRCodeGenerator.ECCLevel.Q);
+                QRCode qrCode = new QRCode(qrCodeData);
 
-            string cardPreview = _configuration.GetSection("Uploads").GetSection("environment").Value +
-                _configuration.GetSection("Uploads").GetSection("Cardpreview").Value;
+                Bitmap qrCodeImage;
 
-            // Create folder structure: QR/{eventId}/{eventId}.png
-            string qrFolderPath = $"QR/{info.EventId}";
-            string qrFileName = $"{info.EventId}.png";
+                if (string.Equals(card.ForegroundColor, "#FFFFFF", StringComparison.OrdinalIgnoreCase))
+                {
+                    qrCodeImage = qrCode.GetGraphic(
+                        5,
+                        ColorTranslator.FromHtml(card.BackgroundColor),
+                        Color.Transparent,
+                        false);
+                }
+                else
+                {
+                    qrCodeImage = qrCode.GetGraphic(
+                        5,
+                        ColorTranslator.FromHtml(card.BackgroundColor),
+                        ColorTranslator.FromHtml(card.ForegroundColor),
+                        false);
+                }
 
-            // Delete existing QR code if any
-            await _blobStorage.DeleteFileAsync($"{qrFolderPath}/{qrFileName}", CancellationToken.None);
+                string qrFolderPath = $"QR/{info.EventId}";
+                string qrFileName = $"{info.EventId}.png";
 
-            // Upload QR code to Blob Storage
-            string qrCodeUrl = string.Empty;
-            using (MemoryStream ms = new MemoryStream())
-            {
-                // Convert to PNG format (supports transparency)
+                using MemoryStream ms = new MemoryStream();
                 qrCodeImage.Save(ms, ImageFormat.Png);
-                qrCodeUrl = await _blobStorage.UploadAsync(ms, "image/png", $"{qrFolderPath}/{qrFileName}", CancellationToken.None);
+
+                var qrCodeUrl = await _blobStorage.UploadAsync(
+                    ms,
+                    "image/png",
+                    $"{qrFolderPath}/{qrFileName}",
+                    CancellationToken.None);
+
+                card.BarcodeColorCode = qrCodeUrl;
+
+                qrCodeImage.Dispose();
             }
 
-            // Store QR code URL in database
-            card.BarcodeColorCode = qrCodeUrl;
+            // Save once only
             db.CardInfo.Update(card);
             await db.SaveChangesAsync();
-            qrCodeImage.Dispose();
             SetBreadcrum("QR Settings", "/admin");
 
             // Validate background image was uploaded
@@ -236,7 +245,6 @@ namespace EventPro.Web.Controllers
             var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             await _auditLogService.AddAsync(userId, info.EventId, DAL.Enum.ActionEnum.UpdateQRCode);
 
-            // Redirect to card preview
             return RedirectToAction("CardPreview", "admin", new { id = info.EventId });
         }
 
